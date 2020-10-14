@@ -11,6 +11,13 @@ begin
 	using Plots
 end
 
+# ╔═╡ 344eb1b0-0d94-11eb-33b0-09830e5938d6
+md"""
+Consider the temperature $T(x,y,t)$
+
+$\frac{\partial T}{\partial t} + \frac{\partial (uT)}{\partial x} + \frac{\partial (vT)}{\partial y} = \kappa  \left( \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}} \right) + (1 - α)S/4 - (A + BT)$
+"""
+
 # ╔═╡ 1a2343ee-0d82-11eb-3b6f-6fadae311344
 md"""
 
@@ -19,7 +26,7 @@ md"""
 Potential vorticity, the fluid-dynamic equivalent of angular momentum, is a useful quantity for oceanography. It is defined as 
 
 $q \equiv R\zeta + y,$
-where $R$ is a constant, called the Rossby number, $\zeta = \frac{\partial v}{\partial x} - \frac{\partial u}{\partial y}$ is the *relative vorticity*, and $y$ is the Coriolis parameter.
+where $R$ is a constant, called the Rossby number, $\zeta = \frac{\partial v}{\partial x} - \frac{\partial u}{\partial y}$ is the *relative vorticity*, and $f=y$ is the Coriolis parameter.
 
 The vorticity equation
 \begin{gather}
@@ -115,7 +122,8 @@ begin
 end
 
 # ╔═╡ Cell order:
-# ╟─1a2343ee-0d82-11eb-3b6f-6fadae311344
+# ╟─344eb1b0-0d94-11eb-33b0-09830e5938d6
+# ╠═1a2343ee-0d82-11eb-3b6f-6fadae311344
 # ╠═776c2c40-0d83-11eb-1824-b3b471bd61bf
 # ╠═e4cf21dc-0d82-11eb-0c3d-f949de09fe3a
 # ╠═bc6a896e-0d87-11eb-0774-c3b15ea8a359
