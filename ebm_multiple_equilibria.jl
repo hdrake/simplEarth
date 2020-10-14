@@ -26,19 +26,23 @@ end
 
 # ╔═╡ fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
 md"""
-### A simple energy balance model
+#### A "zero-dimensional" energy balance model of Earth's climate
 
 The simplest climate model can be conceptualized as:
-\begin{gather}
-\text{\color{brown}{change in heat content}} = \text{\color{orange}{absorbed solar radiation}} - \text{\color{blue}{thermal cooling to space}}
-\end{gather}
+\begin{align}
+\text{\color{brown}{change in heat content}} = &\;\quad \text{\color{orange}{absorbed solar radiation}} \newline
+& - \text{\color{blue}{thermal cooling to space}}
+\newline
+& + \text{\color{grey}{human-caused greenhouse effect}}
+\end{align}
 
 Mathematically, we write this as
 
 \begin{gather}
 \color{brown}{C \frac{dT}{dt}}
 \; \color{black}{=} \; \color{orange}{\frac{(1 - α)S}{4}}
-\; \color{black}{-} \; \color{blue}{(A + BT)},
+\; \color{black}{-} \; \color{blue}{(A + BT)}
+\; \color{black}{+} \; \color{grey}{a \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PI}}} \right)},
 \end{gather}
 where:
 - $ T $ is the Earth's average temperature (units °C),
@@ -48,27 +52,46 @@ where:
 - $ S $ is the incoming solar radiation (units W/m$^2$).
 - $ A $ is a constant that determines Earth's average thermal cooling to space (units W/m$^{2}$) for a reference climate with a temperature of $T=0$°C.
 - $ B $ is a *feedback parameter* that determines how Earth's thermal cooling to space varies with temperature.
+- $ [\text{CO}₂] $ is the atmospheric Carbon Dioxide concentration (units ppm), where the subscript **PI** denotes the **P**re-**I**ndustrial concentration.
+- $ a $ is a constant that determines the strength of the CO₂ greenhouse effect.
 
 
 Note: the factor of 1/4 is the ratio of Earth's cross-sectional area $πR^{2}$– the disk of radius $R$ that intercepts the solar beam– to a sphere's surface area $4πR^{2}$.
 """
 
+# ╔═╡ acdc0180-0dc3-11eb-1c73-bb12aed2e66b
+md"""
+Note: The "thermal cooling to space" term represents the combined effects of negative feedbacks that dampen warming, like **blackbody radiation** (which goes like $\sim \sigma T^{4}$), and positive feedbacks that amplify warming, like the **water vapor feedback** (which goes like $\sim - \exp(T)$). The net effect of all of these feedbacks is the the thermal cooling to space is *approximately linear* across a wide range of parameters, which conveniently makes our linear model $A + BT$ above fairly accurate.
+"""
+
 # ╔═╡ 38346e6a-0d98-11eb-280b-f79787a3c788
 md"""
-Things become much more interesting when we consider the ice-albedo feedback, i.e. the fact that the reflectively (or *albedo*) of the planet depends strongly on whether it is mostly covered in liquid water (which is a very absorbent dark blue) or solid ice (which is a very reflective white). We can approximate this behavior globally by specifying the following step-function for the albedo's dependence on temperature:
+
+### The non-linear ice-albedo feedback
+
+For this section, we will ignore the influence of humans thus the CO₂ concentrations remain equal to their pre-industrial values and thus the term vanishes.
+
+The *ice-albedo feedback* refers to the fact that the reflectively (or *albedo*) of the planet depends strongly on whether it is mostly covered in liquid water (which is a very absorbent dark blue) or solid ice (which is a very reflective white). We can approximate this behavior globally by specifying the following step-function for the albedo's dependence on temperature:
 
 $\alpha(T) = \begin{cases}
 \alpha_{o} &\mbox{if } T > 0\text{°C  (water in liquid phase)}\\
 \alpha_{o} + \alpha_{i} & \mbox{if } T \leq 0\text{°C  (water in solid phase)}
 \end{cases}$
 
-which can be **discretized** in time as
+With this formulation, the energy balance model can be **discretized** in time as
 
-$C \frac{T_{n+1} - T_{n}}{\Delta t} = \frac{1-\alpha(T_{n}) S}{4} - (A + BT_{n}),$
+$C \frac{T_{n+1} - T_{n}}{\Delta t} = \frac{\left( 1-\alpha(T_{n}) \right) S}{4} - (A + BT_{n}),$
 
-where $n$ is the present timestep and $n+1$ is the next timestep $\Delta t$ later, which we can rewrite as
+where $n$ is the present timestep and $n+1$ is the next timestep $\Delta t$ later.
 
-$T_{n+1} = \Delta t \left[ \frac{1}{C} \left( \frac{1-\alpha(T_{n}) S}{4} - (A + BT_{n}) \right) \right]$
+By re-arranging the equation, we can solve for the temperature at the next timestep $n+1$ based on the known temperature at the present timestep $n$:
+
+$T_{n+1} = T_{n} + \Delta t \left[ \frac{1}{C} \left( \frac{ \left( 1-\alpha(T_{n}) \right) S}{4} - (A + BT_{n}) \right) \right]$
+"""
+
+# ╔═╡ 9e6a970c-0dc7-11eb-214e-557763664f31
+md"""
+#### Implementing the energy balance model data structures
 """
 
 # ╔═╡ 6b57e7f8-0d7b-11eb-272e-010167db303b
@@ -108,6 +131,11 @@ md"Next, we specify the function that determines the albedo for a given temperat
 
 # ╔═╡ 9dcae4ba-0d7b-11eb-296e-9745d3f5d70d
 α(T) = αi*(T < 0.) + αo;
+
+# ╔═╡ c1b32e68-0dc7-11eb-3899-a32f36699605
+md"""
+#### Implementing a simple timestepping algorithm
+"""
 
 # ╔═╡ bdc26c98-0d7b-11eb-039c-59253d5f766d
 md"And finally we define our `timestep!` method, which is what we use to solve the energy balance model."
@@ -211,7 +239,7 @@ end
 
 # ╔═╡ 5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
 md"""
-### Exercises:
+### (Possible) Homework Exercises:
 1. What happens if we instead assume the albedo varies continusouly from -10°C to 10°C? Repeat the above analysis with
 
 $\alpha(T) = \begin{cases}
@@ -224,14 +252,17 @@ $\alpha(T) = \begin{cases}
 """
 
 # ╔═╡ Cell order:
-# ╠═fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
+# ╟─fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
+# ╟─acdc0180-0dc3-11eb-1c73-bb12aed2e66b
 # ╟─38346e6a-0d98-11eb-280b-f79787a3c788
+# ╟─9e6a970c-0dc7-11eb-214e-557763664f31
 # ╟─6b57e7f8-0d7b-11eb-272e-010167db303b
 # ╠═a3d177b4-0d67-11eb-3578-d1f2d94f10b2
 # ╟─7e151456-0d7b-11eb-3981-39f1dc096a49
 # ╠═47fce926-0d66-11eb-1659-a1d6e88b3251
 # ╟─a20699f2-0d7b-11eb-3e35-3923eb70affe
 # ╠═9dcae4ba-0d7b-11eb-296e-9745d3f5d70d
+# ╟─c1b32e68-0dc7-11eb-3899-a32f36699605
 # ╠═bdc26c98-0d7b-11eb-039c-59253d5f766d
 # ╠═283abb98-0d66-11eb-14a0-f9673b11f38d
 # ╟─fdabcf98-0d7b-11eb-0ca8-39787e1eedd9
