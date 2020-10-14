@@ -1,1 +1,1 @@
-# simpleEarth
+# simplEarth
