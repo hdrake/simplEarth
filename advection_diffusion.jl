@@ -31,6 +31,8 @@ $\frac{T_{n+1}-T_{n}}{\Delta t} + U \frac{\partial T}{\partial x} = 0$
 
 We now need to discretize the spatial derivative. This is a bit more ambiguous than it was for the time dimension $t$, where it is obvious that we want to advance *forward* in time. For the moment, let us just do a *right-side forward difference* (towards increasing $x$).
 
+$\frac{T_{n+1}-T_{n}}{\Delta t} + U \frac{\partial T}{\partial x} = 0$
+
 """
 
 # ╔═╡ e700c752-0e2d-11eb-2c61-3959bdba269a
@@ -48,18 +50,28 @@ end
 initialize_T(x) = exp.(-((x.-Lx/2.)/0.3).^2);
 
 # ╔═╡ 5b1b6802-0e2e-11eb-1fa6-1ddd5478cc54
-T = initialize_T(x);
+begin
+	# Initial conditions
+	T = initialize_T(x);
+	t = [0.]
+end;
 
 # ╔═╡ 4463cf8c-0ef8-11eb-2c6e-45d982d5687a
 function advect!(T)
 	T .+= Δt*U*(circshift(T, (1)) .- circshift(T, (-1)))/(2Δx)
 end;
 
+# ╔═╡ 67cb0ed2-0efa-11eb-2645-495dba94ea64
+function timestep!(t, T)
+	advect!(T)
+	t .+= Δt
+end
+
 # ╔═╡ 18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
 begin
 	nT = 30
 	for i = 1:nT
-		advect!(T)
+		timestep!(t, T)
 	end
 	⏩ = nothing # dummy variable that triggers plot to udpate
 end
@@ -74,6 +86,7 @@ end
 begin
 	⏩
 	p1 = plot(x, T, label="Temperature", ylim=[0., 1.], xlim=[0., 1.], marker=:c)
+	annotate!(p1, [(0.05, 0.9, string("t = ", round(t[1], digits=2)))])
 	p2 = plot_temperature(T)
 	plot(p1, p2, layout=grid(2, 1, heights=[0.7 , 0.3]), size=(680,250))
 end
@@ -84,7 +97,8 @@ end
 # ╠═254fabac-0e2e-11eb-384d-1b4ac207ccab
 # ╠═5b1b6802-0e2e-11eb-1fa6-1ddd5478cc54
 # ╠═4463cf8c-0ef8-11eb-2c6e-45d982d5687a
-# ╟─00cc530a-0e35-11eb-133b-ef8e30ea7b12
+# ╠═67cb0ed2-0efa-11eb-2645-495dba94ea64
+# ╠═00cc530a-0e35-11eb-133b-ef8e30ea7b12
 # ╠═18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
 # ╠═f2c7638a-0e34-11eb-2210-9f9b0c3519fe
 # ╠═232c24de-0e30-11eb-1544-53cb0b45ec9b
