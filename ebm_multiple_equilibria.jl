@@ -272,7 +272,7 @@ $\alpha(T) = \begin{cases}
 # ╠═477732c4-0daf-11eb-1422-cf0f55cd835b
 # ╠═b5849000-0d68-11eb-3beb-c575e8d0ce8e
 # ╟─e224e96e-0dab-11eb-2499-19cc36f931f1
-# ╟─0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
+# ╠═0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
 # ╠═0f222836-0d6c-11eb-2ee8-45545da73cfd
 # ╟─90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
 # ╟─5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
