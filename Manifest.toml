@@ -171,9 +171,9 @@ uuid = "82899510-4779-5014-852e-03e436cf321d"
 version = "1.0.0"
 
 [[JLLWrappers]]
-git-tree-sha1 = "dbc0967f6403829a6682493fdb4ec7c0ebfd2e68"
+git-tree-sha1 = "7cec881362e5b4e367ff0279dd99a06526d51a55"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
-version = "1.1.1"
+version = "1.1.2"
 
 [[JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
@@ -318,9 +318,9 @@ version = "1.6.10"
 
 [[Pluto]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "UUIDs"]
-git-tree-sha1 = "90aa203b0ed2aeb53b2abbc4f150fdf5a468dfff"
+git-tree-sha1 = "2278b10271e20b0af503acf3ccb87330fa7cb5db"
 uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-version = "0.12.3"
+version = "0.12.4"
 
 [[PlutoUI]]
 deps = ["Base64", "Dates", "Logging", "Markdown", "Random", "Suppressor"]
