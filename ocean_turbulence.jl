@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.3
+# v0.12.4
 
 using Markdown
 using InteractiveUtils
@@ -53,16 +53,13 @@ begin
 	y = δy*(0.5:1.:ny)
 end;
 
-# ╔═╡ bc6a896e-0d87-11eb-0774-c3b15ea8a359
+# ╔═╡ b86a64a6-0d8c-11eb-1cff-6bc28b7bb559
 begin
 	∂x(ϕ) = (ϕ[:,2:end] - ϕ[:,1:end-1])/δx
 	∂y(ϕ) = (ϕ[2:end,:] - ϕ[1:end-1,:])/δy
-end
-
-# ╔═╡ b86a64a6-0d8c-11eb-1cff-6bc28b7bb559
-begin
+	
 	xpad(ϕ) = hcat(zeros(size(ϕ,1)), ϕ, zeros(size(ϕ,1)))
-	ypad(ϕ) = vcat(zeros(size(ϕ,2))', ϕ, zeros(size(ϕ,2)'))
+	ypad(ϕ) = vcat(zeros(size(ϕ,2))', ϕ, zeros(size(ϕ,2))')
 	
 	function diagnose_velocities(ψ)
 		u = ∂y(ψ)
@@ -115,10 +112,9 @@ begin
 end
 
 # ╔═╡ Cell order:
-# ╠═1a2343ee-0d82-11eb-3b6f-6fadae311344
+# ╟─1a2343ee-0d82-11eb-3b6f-6fadae311344
 # ╠═776c2c40-0d83-11eb-1824-b3b471bd61bf
 # ╠═e4cf21dc-0d82-11eb-0c3d-f949de09fe3a
-# ╠═bc6a896e-0d87-11eb-0774-c3b15ea8a359
 # ╠═b86a64a6-0d8c-11eb-1cff-6bc28b7bb559
 # ╠═56dd1c22-0d89-11eb-3e03-b14b380dbc92
 # ╠═44fd3fa4-0d8a-11eb-087d-3546ddd47600

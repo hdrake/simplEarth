@@ -31,23 +31,36 @@ md"""
 
 ##### 1. Advection
 
-Consider the differential equation for temperature $T(x,t)$,
+Consider the following differential equation for temperature $T(x,t)$,
 
-$\frac{\partial T}{\partial t} + U \frac{\partial T}{\partial x} = 0$
+$\frac{\partial T}{\partial t} = - U \frac{\partial T}{\partial x}$
 
-Since this differential equation derivatives in both time $t$ **and** space $x$, we replace the *ordinary* deriative symbole $d$ with a *partial* derivative symbol $\partial$.
+which describes the rate of change of temperature due to a uniform flow of speed $U$ in the $\mathbf{x}$ direction.
 
-As in our soluation of the "zero-dimenisonal" energy balance model **ODE**, we begin by discretizing time using a *forward finite difference* scheme:
+**Notation**:
+Since this differential equation derivatives in both time $t$ **and** space $x$, we replace the *ordinary* deriative symbol $d$ with a *partial* derivative symbol $\partial$, and call the equation a **partial differential equation (PDE)**.
 
-$\frac{T_{n+1}-T_{n}}{\Delta t} + U \frac{\partial T}{\partial x} = 0$
+As in our solution of the "zero-dimenisonal" energy balance model ODE, we begin by discretizing time using a *forward finite difference* scheme:
+
+$\frac{T_{n+1}-T_{n}}{\Delta t} = - U \frac{\partial T}{\partial x}$
 """
+
+# ╔═╡ e74322be-12d6-11eb-3f27-f17821669699
+md"
+We now need to discretize the spatial derivative. Unlike for differencing in time, we no longer have a prefered direction for the discretization and so we use a *centered finite difference*:
+
+$\frac{T_{n+1,\, i}-T_{n,\, i}}{\Delta t} = - U \frac{T_{n,\, i+1} - T_{n,\, i-1}}{2 \Delta x}.$
+"
+
+# ╔═╡ c9a1719a-12d6-11eb-1c8c-13e1f75bc852
+md"Note: You can think of as the *centered* finite difference average of the *right* (forward) and *left* (backward) finite differences:
+
+$\frac{1}{2}\left(\frac{T_{n,\, i+1} - T_{n,\, i}}{\Delta x} + \frac{T_{n,\, i} - T_{n,\, i-1}}{\Delta x} \right) = \frac{T_{n,\, i+1} - T_{n,\, i-1}}{2 \Delta x}$
+
+"
 
 # ╔═╡ c3f99436-0f49-11eb-33b6-e78c150d4ff5
 md"""
-We now need to discretize the spatial derivative. 
-
-$\frac{T_{n+1,\, i}-T_{n,\, i}}{\Delta t} + U \frac{T_{n,\, i+1} - T_{n,\, i-1}}{2 \Delta x} = 0$
-
 Just as before, we re-order the equation to solve for the temperature of the $i$th grid cell at the next timestep $n+1$,
 
 $T_{n+1,\, i} = T_{n,\, i} + \Delta t \left( U \frac{T_{n,\, i+1} - T_{n,\, i-1}}{2 \Delta x} \right)$
@@ -87,13 +100,13 @@ begin
 end;
 
 # ╔═╡ 4463cf8c-0ef8-11eb-2c6e-45d982d5687a
-function advect!(T)
-	T .+= Δt*U*(circshift(T, (1)) .- circshift(T, (-1)))/(2Δx)
-end;
+function advect(T)
+	return U*(circshift(T, (1)) .- circshift(T, (-1)))/(2Δx)
+end
 
 # ╔═╡ 67cb0ed2-0efa-11eb-2645-495dba94ea64
 function timestep!(t, T)
-	advect!(T)
+	T .+= Δt*(advect(T))
 	t .+= Δt
 end
 
@@ -117,10 +130,41 @@ function temperature_heatmap(T)
 end;
 
 # ╔═╡ b19bfb58-0f4e-11eb-218f-8d930b7afff6
-md"#### 2. Diffusion"
+md"#### 2. Diffusion
+
+$\frac{\partial T}{\partial t} = \kappa \frac{\partial^{2} T}{\partial x^{2}}$
+
+
+Again, we discretize the equation by considering the derivatives one at a time:
+
+$\frac{T_{n+1,\, i} - T_{n,\, i}}{\Delta t} = \kappa \frac{\partial^{2} T}{\partial x^{2}}$
+
+$\frac{T_{n+1,\, i} - T_{n,\, i}}{\Delta t} = \kappa \left( \frac{\frac{\partial T}{\partial x}|_{n,\, i+0.5} - \frac{\partial T}{\partial x}|_{n,\, i-0.5}}{\Delta x} \right)$
+
+$\frac{T_{n+1,\, i} - T_{n,\, i}}{\Delta t} = \kappa \left( \frac{\frac{T_{n,\, i+1} - T_{n,\, i}}{\Delta x} - \frac{T_{n,\, i} - T_{n,\, i-1}}{\Delta x}}{\Delta x}\right)$
+
+$\frac{T_{n+1,\, i} - T_{n,\, i}}{\Delta t} = \kappa \left( \frac{T_{n,\, i+1} - 2 T_{n,\, i} + T_{n,\, i-1}}{(\Delta x)^{2}}\right)$
+"
+
+
+
+# ╔═╡ 37bed6e8-12da-11eb-1c36-c7f92fe732e4
+κ = 0.05
+
+# ╔═╡ 3e1d44b6-12da-11eb-16ac-2524d0e0d900
+function diffuse(T)
+	return κ*(circshift(T, (1)) .- 2*T .+ circshift(T, (-1)))/(Δx^2)
+end
 
 # ╔═╡ d2c101c8-0f4e-11eb-0c4f-0972be924ce1
 md"#### 3. Advection-Diffusion"
+
+# ╔═╡ b00f7bec-12da-11eb-3e20-7769cc2bd0ec
+md"
+#### 4. Finite differences as kernels acting on an array
+
+##### Blurring in image processing as diffusion
+"
 
 # ╔═╡ 70ae3138-0f44-11eb-1a8d-d3b5a39c1b42
 md"""#### Pluto Book-keeping"""
@@ -138,7 +182,9 @@ begin
 end |> as_svg
 
 # ╔═╡ Cell order:
-# ╠═beed7b48-0e2b-11eb-2805-edf0be651fc3
+# ╟─beed7b48-0e2b-11eb-2805-edf0be651fc3
+# ╟─e74322be-12d6-11eb-3f27-f17821669699
+# ╟─c9a1719a-12d6-11eb-1c8c-13e1f75bc852
 # ╟─c3f99436-0f49-11eb-33b6-e78c150d4ff5
 # ╟─0967dc46-0f4d-11eb-13b2-2b2042595b6e
 # ╟─19273c8a-0f4d-11eb-3caf-678f073c6b1a
@@ -151,7 +197,10 @@ end |> as_svg
 # ╠═18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
 # ╠═f2c7638a-0e34-11eb-2210-9f9b0c3519fe
 # ╟─b19bfb58-0f4e-11eb-218f-8d930b7afff6
+# ╠═37bed6e8-12da-11eb-1c36-c7f92fe732e4
+# ╠═3e1d44b6-12da-11eb-16ac-2524d0e0d900
 # ╟─d2c101c8-0f4e-11eb-0c4f-0972be924ce1
+# ╟─b00f7bec-12da-11eb-3e20-7769cc2bd0ec
 # ╟─70ae3138-0f44-11eb-1a8d-d3b5a39c1b42
 # ╠═232c24de-0e30-11eb-1544-53cb0b45ec9b
 # ╠═845e102a-0f44-11eb-3935-2d9a0efecedc
