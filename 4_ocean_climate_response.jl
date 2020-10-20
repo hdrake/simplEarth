@@ -57,7 +57,7 @@ function diffuse(T)
 		κ.*(circshift(T, (1, 0)) .- 2*T .+ circshift(T, (-1, 0)))/(2Δy)
 	)
 	return tend
-end
+end;
 
 # ╔═╡ 440fe49a-12e5-11eb-1c08-f706f5f33c84
 @bind go Button("Timestep")
@@ -126,13 +126,13 @@ function advect(T)
 		V.*(circshift(T, (1, 0)) .- circshift(T, (-1, 0)))/(2Δy)
 	)
 	return tend
-end
+end;
 
 # ╔═╡ 87bfc240-12e3-11eb-03cc-756dc00efa6c
 function timestep!(t, T)
 	T .+= Δt*(advect(T) .+ diffuse(T))
 	t .+= Δt
-end
+end;
 
 # ╔═╡ 3b0e16a2-12e5-11eb-3130-c763c1c85182
 begin
