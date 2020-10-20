@@ -104,9 +104,9 @@ begin
 		.+ ϵ*exp.((x .- 1.)/ϵ)
 	)
 	
-	u,v = diagnose_velocities(ψ̂(xψ, yψ)) ./10.
-	U = xitp(u)
-	V = yitp(v)
+	u,v = diagnose_velocities(ψ̂(xψ, yψ))
+	U = xitp(u) ./10.
+	V = yitp(v) ./10.
 end;
 
 # ╔═╡ 35e38798-12fe-11eb-1e89-c70a35af576b
@@ -144,6 +144,9 @@ begin
 	end
 end;
 
+# ╔═╡ 3cc1218e-1307-11eb-1907-e7cd68f6af35
+heatmap(x', y, ψ̂)
+
 # ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
 as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
 
@@ -153,7 +156,7 @@ begin
 	X = repeat(xitp(x), size(yitp(y),1), 1)
 	Y = repeat(yitp(y), 1, size(xitp(x),2))
 	p = temperature_heatmap(T)
-	quiver!(p, X[1:10:end], Y[1:10:end], quiver=(U[1:10:end], V[1:10:end])./20., color=:black, alpha=0.7)
+	quiver!(p, X[4:8:end], Y[4:8:end], quiver=(U[4:8:end]./10., V[4:8:end]./10.), color=:black, alpha=0.7)
 	plot!(p, xlims=(0., 1.), ylims=(-1, 1.))
 	plot!(p, xlabel="longitudinal distance", ylabel="latitudinal distance")
 	plot!(p, clabel="Temperature")
@@ -172,6 +175,7 @@ end |> as_svg
 # ╠═87bfc240-12e3-11eb-03cc-756dc00efa6c
 # ╟─440fe49a-12e5-11eb-1c08-f706f5f33c84
 # ╠═bd879bbe-12de-11eb-0d1d-93bba42b6ff9
+# ╠═3cc1218e-1307-11eb-1907-e7cd68f6af35
 # ╠═3b0e16a2-12e5-11eb-3130-c763c1c85182
 # ╠═1528ed7e-12e5-11eb-34cf-112d2baa7353
 # ╠═bb084ace-12e2-11eb-2dfc-111e90eabfdd
