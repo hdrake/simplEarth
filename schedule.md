@@ -7,7 +7,7 @@
   - Nov 12 – Nonlinear climate dynamics and "snowball" Earth ([lecture 2 notebook](https://github.com/hdrake/simplEarth/blob/main/2_ebm_multiple_equilibria.jl))
     - Aux lectures: David or Grant on "Nonlinear dynamical systems, stability, and multiple equilibria"
   
-- Homework X: Probing uncertainty in climate projections with Monte Carlo simulation
+- **Homework X** – Probing uncertainty in climate projections with Monte Carlo simulation
   
 - **Week 11** – Introduction to ocean modelling
   - Nov 17 – Solving the one-dimensional advection-diffusion equation ([lecture 3 notebook](https://github.com/hdrake/simplEarth/blob/main/3_advection_diffusion.jl))
@@ -15,7 +15,7 @@
   - Nov 19 – Heat transport by ocean currents ([lecture 4 notebook](https://github.com/hdrake/simplEarth/blob/main/4_ocean_climate_response.jl))
     - Aux lectures: David, Alan, or James on "Numerical stencils & boundary conditions"
   
-- Homework X: Ocean turbulence and its role in climate (combining ideas from Weeks 10 and 11)
+- **Homework X** –  Ocean turbulence and its role in climate (combining ideas from Weeks 10 and 11)
   
 - **Week 12** – Atmosphere-ocean climate modelling
   - Dec 1 – Putting it all together: building a simple atmosphere-ocean climate model ([lecture 5 notebook](https://github.com/hdrake/simplEarth/blob/main/5_ocean_turbulence.jl))
