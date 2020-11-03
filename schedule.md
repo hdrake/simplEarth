@@ -2,7 +2,6 @@
 
 - **Week 10** – Introduction to climate change and a simple energy balance model of global warming
   - Nov 10 – Climate physics and the "zero"-dimensional energy balance model ([lecture 1 notebook](https://github.com/hdrake/simplEarth/blob/main/1_energy_balance_model.jl))
-    - Aux lectures: Monte Carlo simulation (for the homework?)
     - Aux lectures: David or Grant on "Nonlinear dynamical systems, stability, and multiple equilibria"
   - Nov 12 – Nonlinear climate dynamics and "snowball" Earth ([lecture 2 notebook](https://github.com/hdrake/simplEarth/blob/main/2_ebm_multiple_equilibria.jl))
   
