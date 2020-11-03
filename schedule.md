@@ -17,8 +17,8 @@
 - **Week 12** – Atmosphere-ocean climate modelling
   - Dec 1 – Ocean turbulence ([lecture 5 notebook](https://github.com/hdrake/simplEarth/blob/main/5_ocean_turbulence.jl))
     - Aux lectures: Oceananigans
-  
-  - Dec 3 – Overview of the the current state of Climate Modelling ([lecture 6 notebook](https://github.com/hdrake/simplEarth/blob/main/6_ocean_climate_feedbacks.jl))
     - Aux lectures: Alan or James on CliMA? Fons or Henri on MARGO demo?
+    
+  - Dec 3 – Overview of the the current state of Climate Modelling ([lecture 6 notebook](https://github.com/hdrake/simplEarth/blob/main/6_ocean_climate_feedbacks.jl))
 
 - **Homework X** – Putting it all together: building a simple atmosphere-ocean climate model (combining ideas from Weeks 10 and 11)
