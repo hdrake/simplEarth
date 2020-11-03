@@ -7,7 +7,7 @@
   - Nov 12 – Nonlinear climate dynamics and "snowball" Earth ([lecture 2 notebook](https://github.com/hdrake/simplEarth/blob/main/2_ebm_multiple_equilibria.jl))
     - Aux lectures: David or Grant on "Nonlinear dynamical systems, stability, and multiple equilibria"
   
-- **Homework X** – Probing uncertainty in climate projections with Monte Carlo simulation
+- **Homework X** – Probing uncertainty in climate projections with Monte Carlo simulation and "How do you melt a snowball"?
   
 - **Week 11** – Introduction to ocean modelling
   - Nov 17 – Solving the one-dimensional advection-diffusion equation ([lecture 3 notebook](https://github.com/hdrake/simplEarth/blob/main/3_advection_diffusion.jl))
