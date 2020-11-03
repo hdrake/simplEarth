@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.6
 
 using Markdown
 using InteractiveUtils
@@ -15,8 +15,10 @@ end
 
 # ╔═╡ 9c8a7e5a-12dd-11eb-1b99-cd1d52aefa1d
 begin
-	using Pkg
+	import Pkg
+	Pkg.activate(mktempdir())
 	Pkg.add("Plots")
+	Pkg.add("PlutoUI")
 	using Plots
 	using PlutoUI
 end

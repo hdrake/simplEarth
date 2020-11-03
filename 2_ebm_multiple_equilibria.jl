@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.6
 
 using Markdown
 using InteractiveUtils
@@ -13,148 +13,32 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ e9ad66b0-0d6b-11eb-26c0-27413c19dd32
-begin
-	using Pkg
-	Pkg.add("Plots")
-	Pkg.add("PlutoUI")
-	Pkg.add("LaTeXStrings")
-	using LaTeXStrings
-	using Plots
-	using PlutoUI
-end
+# ╔═╡ 05031b60-1df4-11eb-2b61-956e526b3d4a
+md"## Lecture 2: Snowball Earth, the ice-albedo feedback, and multiple equilibria"
 
-# ╔═╡ fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
-md"""
-#### A "zero-dimensional" energy balance model of Earth's climate
+# ╔═╡ 016c1074-1df4-11eb-2da8-578e25d9456b
+md"### The non-linear ice-albedo feedback"
 
-The simplest climate model can be conceptualized as:
-\begin{align}
-\text{\color{brown}{change in heat content}} = &\;\quad \text{\color{orange}{absorbed solar radiation}} \newline
-& - \text{\color{blue}{thermal cooling to space}}
-\newline
-& + \text{\color{grey}{human-caused greenhouse effect}}
-\end{align}
-
-Mathematically, we write this as
-
-\begin{gather}
-\color{brown}{C \frac{dT}{dt}}
-\; \color{black}{=} \; \color{orange}{\frac{(1 - α)S}{4}}
-\; \color{black}{-} \; \color{blue}{(A + BT)}
-\; \color{black}{+} \; \color{grey}{a \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PI}}} \right)},
-\end{gather}
-where:
-- $ T $ is the Earth's average temperature (units °C),
-- $ C $ is the heat content of the (units ??)
-- $ \frac{d}{d t} $ is a derivative with respect to time (units 1/s),
-- $ \alpha $ is the planetary reflectivity, or *albedo*  (unitless $\in [0,1]$)
-- $ S $ is the incoming solar radiation (units W/m$^2$).
-- $ A $ is a constant that determines Earth's average thermal cooling to space (units W/m$^{2}$) for a reference climate with a temperature of $T=0$°C.
-- $ B $ is a *feedback parameter* that determines how Earth's thermal cooling to space varies with temperature.
-- $ [\text{CO}₂] $ is the atmospheric Carbon Dioxide concentration (units ppm), where the subscript **PI** denotes the **P**re-**I**ndustrial concentration.
-- $ a $ is a constant that determines the strength of the CO₂ greenhouse effect.
-
-
-Note: the factor of 1/4 is the ratio of Earth's cross-sectional area $πR^{2}$– the disk of radius $R$ that intercepts the solar beam– to a sphere's surface area $4πR^{2}$.
-"""
-
-# ╔═╡ acdc0180-0dc3-11eb-1c73-bb12aed2e66b
-md"""
-Note: The "thermal cooling to space" term represents the combined effects of negative feedbacks that dampen warming, like **blackbody radiation** (which goes like $\sim \sigma T^{4}$), and positive feedbacks that amplify warming, like the **water vapor feedback** (which goes like $\sim - \exp(T)$). The net effect of all of these feedbacks is the the thermal cooling to space is *approximately linear* across a wide range of parameters, which conveniently makes our linear model $A + BT$ above fairly accurate.
-"""
+# ╔═╡ 9c118f9a-1df0-11eb-22dd-b14428994076
+md"![](https://upload.wikimedia.org/wikipedia/commons/d/df/Ice_albedo_feedback.jpg)"
 
 # ╔═╡ 38346e6a-0d98-11eb-280b-f79787a3c788
 md"""
 
-### The non-linear ice-albedo feedback
-
-For this section, we will ignore the influence of humans thus the CO₂ concentrations remain equal to their pre-industrial values and thus the term vanishes.
+For this section, we will ignore the influence of humans and thus assume the CO₂ concentrations remain equal to their pre-industrial values.
 
 The *ice-albedo feedback* refers to the fact that the reflectively (or *albedo*) of the planet depends strongly on whether it is mostly covered in liquid water (which is a very absorbent dark blue) or solid ice (which is a very reflective white). We can approximate this behavior globally by specifying the following step-function for the albedo's dependence on temperature:
 
 $\alpha(T) = \begin{cases}
-\alpha_{o} &\mbox{if } T > 0\text{°C  (water in liquid phase)}\\
-\alpha_{o} + \alpha_{i} & \mbox{if } T \leq 0\text{°C  (water in solid phase)}
+\alpha_{0} &\mbox{if } T > 0\text{°C  (water in liquid phase)}\\
+\alpha_{i} & \mbox{if } T \leq 0\text{°C  (water in solid phase)}
 \end{cases}$
-
-With this formulation, the energy balance model can be **discretized** in time as
-
-$C \frac{T_{n+1} - T_{n}}{\Delta t} = \frac{\left( 1-\alpha(T_{n}) \right) S}{4} - (A + BT_{n}),$
-
-where $n$ is the present timestep and $n+1$ is the next timestep $\Delta t$ later.
-
-By re-arranging the equation, we can solve for the temperature at the next timestep $n+1$ based on the known temperature at the present timestep $n$:
-
-$T_{n+1} = T_{n} + \Delta t \left[ \frac{1}{C} \left( \frac{ \left( 1-\alpha(T_{n}) \right) S}{4} - (A + BT_{n}) \right) \right]$
 """
 
-# ╔═╡ 9e6a970c-0dc7-11eb-214e-557763664f31
+# ╔═╡ a8dcc0fc-1df8-11eb-21fd-1fdebe5dabfc
 md"""
-#### Implementing the energy balance model data structures
+All we have to do to modify our energy balance model from Lecture 1 is to overwrite the definition of the timestep! to specify that the albedo be a function of the present temperature.
 """
-
-# ╔═╡ 6b57e7f8-0d7b-11eb-272e-010167db303b
-md"""
-We begin by creating a data structure to store the present temperature and timestep.
-"""
-
-# ╔═╡ a3d177b4-0d67-11eb-3578-d1f2d94f10b2
-begin
-	mutable struct EBM
-		T::Float64
-		t::Float64
-	end
-	EBM(T) = EBM(T, 0.)
-end
-
-# ╔═╡ 7e151456-0d7b-11eb-3981-39f1dc096a49
-md"""Then, we set the values of the various parameters"""
-
-# ╔═╡ 47fce926-0d66-11eb-1659-a1d6e88b3251
-
-begin
-	dt = 1.;
-	
-	C = 40.
-	αo = 0.30
-	αi = 0.20
-	S0 = 1365.
-	
-	T0 = 14.
-	B = 1.13
-	A = (1. - αo) * S0/4 - B*T0
-end;
-
-# ╔═╡ a20699f2-0d7b-11eb-3e35-3923eb70affe
-md"Next, we specify the function that determines the albedo for a given temperature"
-
-# ╔═╡ 9dcae4ba-0d7b-11eb-296e-9745d3f5d70d
-α(T) = αi*(T < 0.) + αo;
-
-# ╔═╡ c1b32e68-0dc7-11eb-3899-a32f36699605
-md"""
-#### Implementing a simple timestepping algorithm
-"""
-
-# ╔═╡ bdc26c98-0d7b-11eb-039c-59253d5f766d
-md"And finally we define our `timestep!` method, which is what we use to solve the energy balance model."
-
-# ╔═╡ 283abb98-0d66-11eb-14a0-f9673b11f38d
-function timestep!(ebm::EBM; S=S0)
-	ebm.T += dt * (1. /C) * ( (1 - α(ebm.T))*S/4 - (A + B*ebm.T))
-	ebm.t += dt
-end
-
-# ╔═╡ fdabcf98-0d7b-11eb-0ca8-39787e1eedd9
-md"As a shortcut, we'll also define a `run!` method that will run our energy balance model for a specified amount of time."
-
-# ╔═╡ dc68c934-0d68-11eb-02cc-5d181cfaaae3
-function run!(ebm; nt=1000, S=S0)
-	for i=1.:nt
-		timestep!(ebm, S=S)
-	end
-end
 
 # ╔═╡ 29f90d22-0d7c-11eb-3a04-87ccea95d4f1
 md"""
@@ -166,33 +50,15 @@ How could this have happened?
 
 """
 
-# ╔═╡ 7765f834-0db0-11eb-2c46-ef65f4a1fd1d
-begin
-	traj_ebm = EBM(-50.)
-	
-	ntraj = 20
-	Ttraj = repeat([NaN], ntraj)
-	Straj = repeat([NaN], ntraj)
-end;
+# ╔═╡ 61fc91ec-1df8-11eb-13c1-098c113b46ec
+function restart_ebm!(ebm)
+	ebm.T = [ebm.T[end]]
+	ebm.t = [ebm.t[1]]
+end
 
-# ╔═╡ b5849000-0d68-11eb-3beb-c575e8d0ce8e
-begin
-	ebm = EBM(-100.)
-	
-	Svec = 1200.:1.:1850.
-	Svec = vcat(Svec, reverse(Svec))
-	Tvec = zeros(size(Svec))
-	
-	for (i, S)=enumerate(Svec)
-		run!(ebm, S=S)
-		Tvec[i] = copy(ebm.T)
-	end
-end;
-
-# ╔═╡ e224e96e-0dab-11eb-2499-19cc36f931f1
+# ╔═╡ 9b39df12-1df9-11eb-2eb0-f138980be597
 function plot_trajectory!(p, x, y; lw=8)
 	n = size(x,1)
-
 	plot!(x, y, color="black", alpha=collect(1/n:1/n:1.), linewidth=collect(0.:lw/n:lw), label=nothing)
 	plot!((x[end], y[end]), color="black", marker=:c, markersize=lw/2*1.2, label=nothing, markerstrokecolor=nothing, markerstrokewidth=0.)
 	return p
@@ -200,41 +66,21 @@ end;
 
 # ╔═╡ 90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
 begin
-		Sneo = 1270.
-		Tneo = -57
+		Sneo = 1250.
+		Tneo = -50.
 end;
+
+# ╔═╡ 5ca7ac14-1df9-11eb-13f3-e5c86333ef83
+begin
+	solarSlider = @bind S Slider(1200:2.:1850, default=Sneo);
+	md"1200 W/m² $(solarSlider) 1850 W/m²"
+end
 
 # ╔═╡ 0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
 begin
-	solarSlider = @bind S Slider(1200:2.:1850, default=Sneo)
 	md"""
-	
-	Solar insolation \$S = \$ $(S) [W/m²]     $(solarSlider)
+	*Move the slider below to change the solar insolation:* S = $(S) [W/m²]
 	"""
-end
-
-# ╔═╡ 477732c4-0daf-11eb-1422-cf0f55cd835b
-begin
-	run!(ebm, S=S)
-
-	insert!(Straj, 1, copy(S))
-	pop!(Straj)
-
-	insert!(Ttraj, 1, copy(ebm.T))
-	pop!(Ttraj)
-end;
-
-# ╔═╡ 0f222836-0d6c-11eb-2ee8-45545da73cfd
-begin
-	S
-	warming_mask = (1:size(Svec)[1]) .< size(Svec)./2
-	p = plot(Svec[warming_mask], Tvec[warming_mask], color="blue",lw=3., alpha=0.5, label="cool branch")
-	plot!(Svec[.!warming_mask], Tvec[.!warming_mask], color="red", lw=3., alpha=0.5, label="warm branch")
-	plot!(legend=:topleft)
-	plot!(xlabel="solar insolation S [W/m²]", ylabel="Global temperature T [°C]")
-	plot!([S0], [T0], marker=:c, label="present day", color="orange", markersize=8)
-	plot!([Sneo], [Tneo], marker=:c, label="neoproterozoic", color="lightblue", markersize=8)
-	plot_trajectory!(p, reverse(Straj), reverse(Ttraj), lw=9)
 end
 
 # ╔═╡ 5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
@@ -251,29 +97,121 @@ $\alpha(T) = \begin{cases}
 2. What happens if we add CO2 to the neoprotorezoic atmosphere? How much CO2 would we need to add (relevant to a modern background of 280 ppm) to un-freeze the snowball?
 """
 
+# ╔═╡ 1dc709e2-1de8-11eb-28da-fd7469ec50c2
+function ingredients(path::String)
+	# this is from the Julia source code (evalfile in base/loading.jl)
+	# but with the modification that it returns the module instead of the last object
+	name = Symbol(basename(path))
+	m = Module(name)
+	Core.eval(m,
+        Expr(:toplevel,
+             :(eval(x) = $(Expr(:core, :eval))($name, x)),
+             :(include(x) = $(Expr(:top, :include))($name, x)),
+             :(include(mapexpr::Function, x) = $(Expr(:top, :include))(mapexpr, $name, x)),
+             :(include($path))))
+	m
+end
+
+# ╔═╡ e9ad66b0-0d6b-11eb-26c0-27413c19dd32
+begin
+	import Pkg
+	Pkg.activate(mktempdir())
+	Pkg.add("Plots")
+	Pkg.add("PlutoUI")
+	Pkg.add("LaTeXStrings")
+	using LaTeXStrings
+	using Plots
+	using PlutoUI
+	Model = ingredients("1_energy_balance_model.jl");
+end;
+
+# ╔═╡ 262fc3c6-1df2-11eb-332d-c1c9561b3710
+function α(T; α0=Model.α, αi=0.5)
+	if T >= 0.
+		return α0
+	elseif T < 0.
+		return αi
+	end
+end
+
+# ╔═╡ 872c8f2a-1df1-11eb-3cfc-3dd568926442
+function Model.timestep!(ebm)
+	ebm.α = α(ebm.T[end])
+	append!(ebm.T, ebm.T[end] + ebm.Δt*Model.tendency(ebm));
+	append!(ebm.t, ebm.t[end] + ebm.Δt);
+end;
+
+# ╔═╡ 7765f834-0db0-11eb-2c46-ef65f4a1fd1d
+begin
+	ebm = Model.EBM(Tneo, 0., 1., Model.CO2_const)
+	ebm.S = Sneo
+	
+	ntraj = 20
+	Ttraj = repeat([NaN], ntraj)
+	Straj = repeat([NaN], ntraj)
+end;
+
+# ╔═╡ 477732c4-0daf-11eb-1422-cf0f55cd835b
+begin
+	S
+	restart_ebm!(ebm)
+	ebm.S = S
+	Model.run!(ebm, 500)
+
+	insert!(Straj, 1, copy(S))
+	pop!(Straj)
+
+	insert!(Ttraj, 1, copy(ebm.T[end]))
+	pop!(Ttraj)
+end;
+
+# ╔═╡ b5849000-0d68-11eb-3beb-c575e8d0ce8e
+begin
+	Svec = 1200.:1.:1850.
+	Svec = vcat(Svec, reverse(Svec))
+	Tvec = zeros(size(Svec))
+
+	local T_restart = -100.
+	for (i, S) = enumerate(Svec)
+		ebm = Model.EBM(T_restart, 0., 1., Model.CO2_const);
+		ebm.S = S
+		Model.run!(ebm, 500.)
+		T_restart = ebm.T[end]
+		Tvec[i] = deepcopy(T_restart)
+	end
+end;
+
+# ╔═╡ 0f222836-0d6c-11eb-2ee8-45545da73cfd
+begin
+	S
+	warming_mask = (1:size(Svec)[1]) .< size(Svec)./2
+	p = plot(Svec[warming_mask], Tvec[warming_mask], color="blue",lw=3., alpha=0.5, label="cool branch")
+	plot!(Svec[.!warming_mask], Tvec[.!warming_mask], color="red", lw=3., alpha=0.5, label="warm branch")
+	plot!(legend=:topleft)
+	plot!(xlabel="solar insolation S [W/m²]", ylabel="Global temperature T [°C]")
+	plot!([Model.S], [Model.T0], marker=:c, label="present day", color="orange", markersize=8)
+	plot!([Sneo], [Tneo], marker=:c, label="neoproterozoic", color="lightblue", markersize=8)
+	plot_trajectory!(p, reverse(Straj), reverse(Ttraj), lw=9)
+end
+
 # ╔═╡ Cell order:
-# ╟─fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
-# ╟─acdc0180-0dc3-11eb-1c73-bb12aed2e66b
+# ╟─05031b60-1df4-11eb-2b61-956e526b3d4a
+# ╟─016c1074-1df4-11eb-2da8-578e25d9456b
+# ╟─9c118f9a-1df0-11eb-22dd-b14428994076
 # ╟─38346e6a-0d98-11eb-280b-f79787a3c788
-# ╟─9e6a970c-0dc7-11eb-214e-557763664f31
-# ╟─6b57e7f8-0d7b-11eb-272e-010167db303b
-# ╠═a3d177b4-0d67-11eb-3578-d1f2d94f10b2
-# ╟─7e151456-0d7b-11eb-3981-39f1dc096a49
-# ╠═47fce926-0d66-11eb-1659-a1d6e88b3251
-# ╟─a20699f2-0d7b-11eb-3e35-3923eb70affe
-# ╠═9dcae4ba-0d7b-11eb-296e-9745d3f5d70d
-# ╟─c1b32e68-0dc7-11eb-3899-a32f36699605
-# ╠═bdc26c98-0d7b-11eb-039c-59253d5f766d
-# ╠═283abb98-0d66-11eb-14a0-f9673b11f38d
-# ╟─fdabcf98-0d7b-11eb-0ca8-39787e1eedd9
-# ╠═dc68c934-0d68-11eb-02cc-5d181cfaaae3
+# ╠═262fc3c6-1df2-11eb-332d-c1c9561b3710
+# ╟─a8dcc0fc-1df8-11eb-21fd-1fdebe5dabfc
+# ╠═872c8f2a-1df1-11eb-3cfc-3dd568926442
 # ╟─29f90d22-0d7c-11eb-3a04-87ccea95d4f1
+# ╟─0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
+# ╟─5ca7ac14-1df9-11eb-13f3-e5c86333ef83
+# ╠═0f222836-0d6c-11eb-2ee8-45545da73cfd
+# ╠═61fc91ec-1df8-11eb-13c1-098c113b46ec
 # ╠═7765f834-0db0-11eb-2c46-ef65f4a1fd1d
 # ╠═477732c4-0daf-11eb-1422-cf0f55cd835b
 # ╠═b5849000-0d68-11eb-3beb-c575e8d0ce8e
-# ╟─e224e96e-0dab-11eb-2499-19cc36f931f1
-# ╟─0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
-# ╟─0f222836-0d6c-11eb-2ee8-45545da73cfd
-# ╟─90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
+# ╠═9b39df12-1df9-11eb-2eb0-f138980be597
+# ╠═90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
 # ╟─5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
 # ╠═e9ad66b0-0d6b-11eb-26c0-27413c19dd32
+# ╟─1dc709e2-1de8-11eb-28da-fd7469ec50c2

@@ -1,12 +1,22 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.6
 
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        el
+    end
+end
+
 # ╔═╡ 5bf00f46-17b9-11eb-2625-bf3f33c273e2
 begin
-	using Pkg
+	import Pkg
+	Pkg.activate(mktempdir())
 	Pkg.add("Plots")
 	Pkg.add("PlutoUI")
 	Pkg.add("LaTeXStrings")
@@ -44,21 +54,21 @@ md"To make this simple conceptual model quantitative, we need a mathematical for
 md"""
 **1. Absorbed solar radiation.**
 
-At Earth's orbital distance from the Sun, the power of the Sun's rays that intercept the Earth are about 
+At Earth's orbital distance from the Sun, the power of the Sun's rays that intercept the Earth is equal to
 """
 
 # ╔═╡ 98c68d84-1785-11eb-17c3-dda87383ebca
-S0 = 1368; # solar insolation [W/m^2 (energy per unit time per unit area)]
+S = 1368; # solar insolation [W/m^2 (energy per unit time per unit area)]
 
 # ╔═╡ 6095cb6a-1786-11eb-3a5d-31718db7ad94
 md"A small fraction"
 
 # ╔═╡ e9a6a1da-1785-11eb-23f2-e7334e12d7ee
-α0 = 0.3; # albedo [unitless]
+α = 0.3; # albedo [unitless]
 
 # ╔═╡ 99b9f320-1785-11eb-14a8-03c323a1254b
 md"""
-of this incoming solar radiation is reflected back out to space (by reflective surfaces like white clouds, snow, and ice), meaning that the remaining fraction $(1-\alpha_{0})$ is absorbed.
+of this incoming solar radiation is reflected back out to space (by reflective surfaces like white clouds, snow, and ice), with the remaining fraction $(1-\alpha_{0})$ being absorbed.
 
 Since the incoming solar rays are all approximately parallel this far from the Sun, the cross-sectional area of the Earth that intercepts them is just a disc of area $\pi R^{2}$. Since all of the other terms we will consider act on the entire surface area $4\pi R^{2}$ of the spherical Earth, the absorbed solar radiation *per unit surface area* (averaged over the entire globe) is reduced by a factor of 4.
 
@@ -70,7 +80,7 @@ $\textcolor{orange}{\text{absorbed solar radiation} \equiv \frac{S(1-\alpha_{0})
 """
 
 # ╔═╡ 9fd1be88-179d-11eb-15c3-fb779a666f45
-absorbed_solar_radiation(; α=α0, S=S0) = (1 - α)*S/4;
+absorbed_solar_radiation(; α=α, S=S) = S*(1 - α)/4; # [W/m^2]
 
 # ╔═╡ d5293b24-177f-11eb-1135-4f6395003637
 md"""**Outgoing thermal radiation**
@@ -107,7 +117,7 @@ outgoing_thermal_radiation(T; A=A, B=B) = A + B*T;
 md"""The value of the *climate feedback parameter* used here,"""
 
 # ╔═╡ bd01be7a-1786-11eb-047d-cbfaa63f93a2
-B = 1.3; # climate feedback parameter [W/m^2/°C]
+B = 1.3; # climate feedback parameter [W/m^2/°C],
 
 # ╔═╡ d6fb4d64-1786-11eb-3859-9dc874b99e17
 md"""comes from a bottom-up estimate based on the best understanding of the various climate feedbacks (read more [here](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwikwbfrm9LsAhVjhuAKHQhZCm8QFjAEegQIAhAC&url=https%3A%2F%2Fclimateextremes.org.au%2Fwp-content%2Fuploads%2F2020%2F07%2FWCRP_ECS_Final_manuscript_2019RG000678R_FINAL_200720.pdf&usg=AOvVaw0hWIM3t4kJTovxoeobcRIN)). The value of $A$ is given by the definition of a preindustrial equilibrium, i.e. the fact that before human influence, Earth's energy budget was perfectly balanced:
@@ -118,11 +128,11 @@ or
 
 $\color{orange}{\frac{S(1-\alpha)}{4}} \;\color{black}{=}\; \color{blue}{A + BT_{0}}$
 
-which, rearranged, defines
+By rearanging this equation, we find that the value of $A$ is given by
 """
 
 # ╔═╡ f258767c-1786-11eb-0a9b-ad9f0094a8a0
-A = S0*(1. - α0)/4 - B*T0; # [W/m^2]
+A = S*(1. - α)/4 - B*T0; # [W/m^2].
 
 # ╔═╡ eaceee7e-177f-11eb-3d94-778732ca8768
 md"""
@@ -143,7 +153,7 @@ md"where"
 a = 5.0; # CO2 forcing coefficient [W/m^2]
 
 # ╔═╡ 91b1ff3a-179c-11eb-3fc1-2d991840a4a1
-CO2_PI = 280.; # [ppm]
+CO2_PI = 280.; # preindustrial CO2 concentration [parts per million; ppm];
 
 # ╔═╡ d42ff276-177f-11eb-32e5-b5ce2c4cd42f
 md"""
@@ -203,9 +213,9 @@ md"where the tendency is a function of the present temperature $T_{n}$, as well 
 
 # ╔═╡ 35dfe0d2-17b0-11eb-20dc-7d7f4c5568ae
 tendency(ebm) = (1. /ebm.C) * (
-	+ absorbed_solar_radiation()
-	- outgoing_thermal_radiation(ebm.T[end])
-	+ greenhouse_effect(ebm.CO2(ebm.t[end]))
+	+ absorbed_solar_radiation(α=ebm.α, S=ebm.S)
+	- outgoing_thermal_radiation(ebm.T[end], A=ebm.A, B=ebm.B)
+	+ greenhouse_effect(ebm.CO2(ebm.t[end]), a=ebm.A, CO2_PI=ebm.CO2_PI)
 );
 
 # ╔═╡ 27aa62a0-17b0-11eb-2029-a3c797e769eb
@@ -233,21 +243,21 @@ begin
 		B::Float64
 		CO2_PI::Float64
 	
-		α0::Float64
+		α::Float64
 		S::Float64
 	end;
 	
 	# Make constant parameters optional kwargs
 	EBM(T::Array{Float64, 1}, t::Array{Float64, 1}, Δt::Float64, CO2::Function;
-		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α0=α0, S0=S0) = (
-		EBM(T, t, Δt, CO2, C, a, A, B, CO2_PI, α0, S0)
+		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S) = (
+		EBM(T, t, Δt, CO2, C, a, A, B, CO2_PI, α, S)
 	);
 	
 	# Construct from float inputs for convenience
 	EBM(T0::Float64, t0::Float64, Δt::Float64, CO2::Function;
-		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α0=α0, S0=S0) = (
+		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S) = (
 		EBM([T0], [t0], Δt, CO2;
-			C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α0=α0, S0=S0);
+			C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S);
 	);
 end;
 
@@ -255,11 +265,15 @@ end;
 md"Let's define a function that runs an `EBM` simulation by timestepping forward until a given `end_year`."
 
 # ╔═╡ e5902d52-17b0-11eb-1ba3-4be6c2bbc90f
-function run!(ebm::EBM, end_year::Real)
-	while ebm.t[end] < end_year
-		timestep!(ebm)
-	end
-end;
+begin
+	function run!(ebm::EBM, end_year::Real)
+		while ebm.t[end] < end_year
+			timestep!(ebm)
+		end
+	end;
+	
+	run!(ebm) = run!(ebm, 200.) # run for 200 years by default
+end
 
 # ╔═╡ 38346e6a-0d98-11eb-280b-f79787a3c788
 md"""
@@ -270,10 +284,10 @@ Let us consider the simple case where CO₂ concentrations remain at their pre-i
 """
 
 # ╔═╡ e5b20bda-17a0-11eb-38de-6d4d72b4e56d
-CO2_const(t) = CO2_PI;
+CO2_const(t) = CO2_PI; # constant CO2 concentrations
 
 # ╔═╡ d85f2a90-17b0-11eb-007b-d39c79660dca
-md"What happens if we perturb the pre-industrial temepratures away from their equilibrium value?"
+md"What happens if we perturb the pre-industrial temepratures away from their equilibrium value of T₀ = $(T0) °C?"
 
 # ╔═╡ cadbddec-179e-11eb-3a1e-3502e2534937
 begin	
@@ -291,9 +305,14 @@ begin
 	p_equil
 end
 
+# ╔═╡ e967605a-1de9-11eb-39d4-831533aed676
+md"This figure shows that, no matter where we start out, positive feedbacks ($B>0$) restore the temperature to the preindustrial equilibrum value of T₀ = $(T0) °C, over an exponential timescale of about 100 years."
+
 # ╔═╡ 0c393822-1789-11eb-30b3-7ff90191d89e
 md"""
 #### Exercise B: Greenhouse-gas fueled historical global warming
+
+Human greenhouse gas emissions have fundamentally altered Earth's energy balance, moving us away from the stable preindustrial climate of the past few thousand years.
 
 Since human CO₂ emissions are the main driver of global warming, we expect that if we force our model with historical CO₂ increases, we should roughly reproduce the observed historical global warming.
 
@@ -306,16 +325,36 @@ begin
 	fractional_increase(t) = ((t .- 1850.)/220).^3;
 end;
 
+# ╔═╡ 0c3db0a0-1dec-11eb-3105-a75ada72d69d
+md"The figure below shows the simulated curve of historical CO₂ concentrations, as well as its simulated effect on global temperatures. To check how accurate this simple model is in reproducing observed warming over this period, click the checkbox below."
+
+# ╔═╡ 70039d58-1deb-11eb-053d-b96c2001b182
+md"*Click to reveal observations of global warming* $(@bind show_obs CheckBox(default=false))"
+
+# ╔═╡ 0b7d6da2-1dee-11eb-279b-dfc5318338e5
+md"Now that we've convinced ourselves that the model accurately reproduces historical warming, we can use it to project how much warming we might expect due to *future* CO₂ emissions."
+
 # ╔═╡ 3cd3b9bc-1789-11eb-3373-3f54fa426e28
 md""" #### Exercise C: Best- and worst-case future projections of human-caused global warming
 
 """
 
+# ╔═╡ 5fd0d45c-1dee-11eb-2fb9-355f29d3d3dd
+md"""Below we imagine two divergent hypothetical futures:
+1. a **low-emissions** world in which emissions decrease such that CO2 concentrations stay below 500 ppm by 2100 (known in climate circles as "RCP8.5") and
+2. a **high-emissions** world in which emissions continue increasing and CO2 concentrations soar upwards of 1200 ppm ("RCP2.6").
+"""
+
 # ╔═╡ b9ff4090-179e-11eb-2380-69c7a9a7a999
 begin
 	CO2_RCP85(t) = CO2_PI * (1 .+ fractional_increase(t) .* max.(1., exp.(((t .-1850.).-170)/100)));
-	CO2_RCP26(t) = CO2_PI * (1 .+ fractional_increase(t) .* min.(1., exp.(-((t .-1850.).-170)/75))) ;
+	CO2_RCP26(t) = CO2_PI * (1 .+ fractional_increase(t) .* min.(1., exp.(-((t .-1850.).-170)/100))) ;
 end;
+
+# ╔═╡ 8e45f67c-1def-11eb-32af-5b0feec3e56f
+md"""
+In the low-emissions scenario, the temperature increase stays below $ΔT = 2$ °C by 2100, while in the high-emissions scenario temperatures soar upwards of 3.5ºC above pre-industrial levels.
+"""
 
 # ╔═╡ fcbe38c2-17ae-11eb-3edf-d1d5dbd0af08
 begin
@@ -332,7 +371,8 @@ end;
 
 # ╔═╡ 461c15d2-17a2-11eb-32ed-97e2ebbc6c93
 begin
-	p1 = plot(legend=:topleft); p2 = plot(); p = plot(p1, p2, size=(680, 300))
+	p1 = plot(title="Cause...", legend=:topleft);
+	p2 = plot(title="... and effect"); p = plot(p1, p2, size=(680, 300))
 	
 	RCP26 = EBM(T0, 1850., 1., CO2_RCP26)
 	run!(RCP26, 2100.)
@@ -348,7 +388,7 @@ begin
 end
 
 # ╔═╡ 59526360-17b9-11eb-04eb-b9771e718149
-md"### Data and package dependencies"
+md"### Data sources and package dependencies"
 
 # ╔═╡ 8aa337b4-17b9-11eb-3790-95da62666b85
 md"**Temperature data**"
@@ -390,13 +430,16 @@ end;
 begin
 	hist = EBM(T0, 1850., 1., CO2_hist)
 	run!(hist, 2020.)
-	pCO2 = plot(title="Cause..."); 
-	plot_obs_CO2!(pCO2)
+	pCO2 = plot(title="Cause...", ylims=(270, 420), xlims=(1850, 2020)); 
 	plot_CO2!(pCO2, hist.t, CO2_hist)
+	plot_obs_CO2!(pCO2)
 	
-	pT = plot(title="... and effect");
-	plot_obs_T!(pT)
+	pT = plot(title="... and effect", ylims=(13.6, 15.3), xlims=(1850, 2020));
 	plot_T!(pT, hist.t, hist.T)
+	
+	if show_obs;
+		plot_obs_T!(pT)
+	end
 	
 	plot(pCO2, pT, size=(680, 300))
 end
@@ -418,7 +461,7 @@ end
 # ╟─8b076962-179d-11eb-2c44-b5bf340e92ab
 # ╠═bd01be7a-1786-11eb-047d-cbfaa63f93a2
 # ╟─d6fb4d64-1786-11eb-3859-9dc874b99e17
-# ╠═f258767c-1786-11eb-0a9b-ad9f0094a8a0
+# ╟─f258767c-1786-11eb-0a9b-ad9f0094a8a0
 # ╟─eaceee7e-177f-11eb-3d94-778732ca8768
 # ╠═19c127ce-179e-11eb-2500-bd1680754ba0
 # ╟─14c4c8ac-179e-11eb-3c26-e51c3191532d
@@ -440,11 +483,17 @@ end
 # ╠═e5b20bda-17a0-11eb-38de-6d4d72b4e56d
 # ╟─d85f2a90-17b0-11eb-007b-d39c79660dca
 # ╟─cadbddec-179e-11eb-3a1e-3502e2534937
+# ╟─e967605a-1de9-11eb-39d4-831533aed676
 # ╟─0c393822-1789-11eb-30b3-7ff90191d89e
 # ╠═b8527aa8-179e-11eb-3023-05bb5d40a1bd
+# ╟─0c3db0a0-1dec-11eb-3105-a75ada72d69d
+# ╟─70039d58-1deb-11eb-053d-b96c2001b182
 # ╟─c394ec66-17a0-11eb-259f-6b57f8cd4ece
+# ╟─0b7d6da2-1dee-11eb-279b-dfc5318338e5
 # ╟─3cd3b9bc-1789-11eb-3373-3f54fa426e28
+# ╟─5fd0d45c-1dee-11eb-2fb9-355f29d3d3dd
 # ╠═b9ff4090-179e-11eb-2380-69c7a9a7a999
+# ╟─8e45f67c-1def-11eb-32af-5b0feec3e56f
 # ╟─461c15d2-17a2-11eb-32ed-97e2ebbc6c93
 # ╟─fcbe38c2-17ae-11eb-3edf-d1d5dbd0af08
 # ╟─59526360-17b9-11eb-04eb-b9771e718149
