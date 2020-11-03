@@ -59,6 +59,9 @@ function diffuse(T)
 	return tend
 end;
 
+# ╔═╡ a21195b2-130e-11eb-0b04-39d88d891a4c
+diff_filter = [[0, 1, 0], [1, -4, 1], [0, 1, 0]]
+
 # ╔═╡ 440fe49a-12e5-11eb-1c08-f706f5f33c84
 @bind go Button("Timestep")
 
@@ -172,6 +175,7 @@ end |> as_svg
 # ╟─f9824610-12e7-11eb-3e61-f96c900a0636
 # ╠═1aa84632-12e3-11eb-0c5b-ebc4315d820c
 # ╠═07a48564-12e8-11eb-0eda-17b9a22cf94c
+# ╠═a21195b2-130e-11eb-0b04-39d88d891a4c
 # ╠═87bfc240-12e3-11eb-03cc-756dc00efa6c
 # ╟─440fe49a-12e5-11eb-1c08-f706f5f33c84
 # ╠═bd879bbe-12de-11eb-0d1d-93bba42b6ff9

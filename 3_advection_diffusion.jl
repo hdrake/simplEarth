@@ -104,24 +104,8 @@ function advect(T)
 	return U*(circshift(T, (1)) .- circshift(T, (-1)))/(2Δx)
 end
 
-# ╔═╡ 67cb0ed2-0efa-11eb-2645-495dba94ea64
-function timestep!(t, T)
-	T .+= Δt*(advect(T))
-	t .+= Δt
-end
-
 # ╔═╡ ba1ea938-0f44-11eb-0fac-cd1afe507d57
 @bind go Button("Timestep")
-
-# ╔═╡ 18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
-begin
-	⏩ = nothing
-	go
-	nT = 50
-	for i = 1:nT
-		timestep!(t, T)
-	end
-end;
 
 # ╔═╡ f2c7638a-0e34-11eb-2210-9f9b0c3519fe
 function temperature_heatmap(T)
@@ -155,6 +139,22 @@ $\frac{T_{n+1,\, i} - T_{n,\, i}}{\Delta t} = \kappa \left( \frac{T_{n,\, i+1} -
 function diffuse(T)
 	return κ*(circshift(T, (1)) .- 2*T .+ circshift(T, (-1)))/(Δx^2)
 end
+
+# ╔═╡ 67cb0ed2-0efa-11eb-2645-495dba94ea64
+function timestep!(t, T)
+	T .+= Δt*(advect(T) .+ diffuse(T))
+	t .+= Δt
+end
+
+# ╔═╡ 18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
+begin
+	⏩ = nothing
+	go
+	nT = 50
+	for i = 1:nT
+		timestep!(t, T)
+	end
+end;
 
 # ╔═╡ d2c101c8-0f4e-11eb-0c4f-0972be924ce1
 md"#### 3. Advection-Diffusion"
