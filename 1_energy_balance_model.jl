@@ -58,17 +58,17 @@ At Earth's orbital distance from the Sun, the power of the Sun's rays that inter
 """
 
 # ╔═╡ 98c68d84-1785-11eb-17c3-dda87383ebca
-S = 1368; # solar insolation [W/m^2 (energy per unit time per unit area)]
+S = 1368; # solar insolation [W/m^2]  (energy per unit time per unit area)
 
 # ╔═╡ 6095cb6a-1786-11eb-3a5d-31718db7ad94
 md"A small fraction"
 
 # ╔═╡ e9a6a1da-1785-11eb-23f2-e7334e12d7ee
-α = 0.3; # albedo [unitless]
+α = 0.3; # albedo, or planetary reflectivity [unitless]
 
 # ╔═╡ 99b9f320-1785-11eb-14a8-03c323a1254b
 md"""
-of this incoming solar radiation is reflected back out to space (by reflective surfaces like white clouds, snow, and ice), with the remaining fraction $(1-\alpha_{0})$ being absorbed.
+of this incoming solar radiation is reflected back out to space (by reflective surfaces like white clouds, snow, and ice), with the remaining fraction $(1-\alpha)$ being absorbed.
 
 Since the incoming solar rays are all approximately parallel this far from the Sun, the cross-sectional area of the Earth that intercepts them is just a disc of area $\pi R^{2}$. Since all of the other terms we will consider act on the entire surface area $4\pi R^{2}$ of the spherical Earth, the absorbed solar radiation *per unit surface area* (averaged over the entire globe) is reduced by a factor of 4.
 
@@ -76,7 +76,7 @@ Since the incoming solar rays are all approximately parallel this far from the S
 
 The absorbed solar radiation per unit area is thus
 
-$\textcolor{orange}{\text{absorbed solar radiation} \equiv \frac{S(1-\alpha_{0})}{4}}$
+$\textcolor{orange}{\text{absorbed solar radiation} \equiv \frac{S(1-\alpha)}{4}}$
 """
 
 # ╔═╡ 9fd1be88-179d-11eb-15c3-fb779a666f45
@@ -85,7 +85,7 @@ absorbed_solar_radiation(; α=α, S=S) = S*(1 - α)/4; # [W/m^2]
 # ╔═╡ d5293b24-177f-11eb-1135-4f6395003637
 md"""**Outgoing thermal radiation**
 
-The outgoing thermal radiation term $\mathcal{G}(T)$ (or "blackbody cooling to space") represents the combined effects of negative feedbacks that dampen warming, such as **blackbody radiation** (which goes like $\sim \sigma T^{4}$), and positive feedbacks that amplify warming, such as the **water vapor feedback** (which goes like $\sim - \exp(T)$).
+The outgoing thermal radiation term $\mathcal{G}(T)$ (or "blackbody cooling to space") represents the combined effects of *negative feedbacks that dampen warming*, such as **blackbody radiation**, and *positive feedbacks that amplify warming*, such as the **water vapor feedback**.
 
 Since these physics are too complicated to deal with here, we *linearize* the model by considering only the first term of a Taylor Series expansion
 
@@ -102,37 +102,41 @@ md"""To simplify the expression, we define:
 
 \begin{align}
 & A \equiv \mathcal{G}(T₀) - \mathcal{G}'(T₀)(T₀) & \\\\
-& B \equiv \mathcal{G}'(T₀) & \text{(the climate feedback parameter)},
+& B \equiv -\mathcal{G}'(T₀) & \text{(the climate feedback parameter)},
 \end{align}
 
 which gives
 
-$\color{blue}{\text{outgoing thermal radiation} \equiv \mathcal{G}(T) \approx A + BT}$
+$\color{blue}{\text{outgoing thermal radiation} \equiv \mathcal{G}(T) \approx A - BT}$
 """
 
 # ╔═╡ 83421922-179d-11eb-0658-fd87f7adaed9
-outgoing_thermal_radiation(T; A=A, B=B) = A + B*T;
+outgoing_thermal_radiation(T; A=A, B=B) = A - B*T;
 
 # ╔═╡ 8b076962-179d-11eb-2c44-b5bf340e92ab
 md"""The value of the *climate feedback parameter* used here,"""
 
 # ╔═╡ bd01be7a-1786-11eb-047d-cbfaa63f93a2
-B = 1.3; # climate feedback parameter [W/m^2/°C],
+B = -1.3; # climate feedback parameter [W/m^2/°C],
 
 # ╔═╡ d6fb4d64-1786-11eb-3859-9dc874b99e17
-md"""comes from a bottom-up estimate based on the best understanding of the various climate feedbacks (read more [here](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwikwbfrm9LsAhVjhuAKHQhZCm8QFjAEegQIAhAC&url=https%3A%2F%2Fclimateextremes.org.au%2Fwp-content%2Fuploads%2F2020%2F07%2FWCRP_ECS_Final_manuscript_2019RG000678R_FINAL_200720.pdf&usg=AOvVaw0hWIM3t4kJTovxoeobcRIN)). The value of $A$ is given by the definition of a preindustrial equilibrium, i.e. the fact that before human influence, Earth's energy budget was perfectly balanced:
+md"""comes from a bottom-up estimate based on the best understanding of the various climate feedbacks (read more [here](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwikwbfrm9LsAhVjhuAKHQhZCm8QFjAEegQIAhAC&url=https%3A%2F%2Fclimateextremes.org.au%2Fwp-content%2Fuploads%2F2020%2F07%2FWCRP_ECS_Final_manuscript_2019RG000678R_FINAL_200720.pdf&usg=AOvVaw0hWIM3t4kJTovxoeobcRIN)).
+
+**Note:** Since $B < 0$, this tells us that the overall climate feedback is *negative* (i.e. stabilizing). Positivefeedbacks cause $B$ to become less negative, reducing the efficiency with which Earth cools itself by radiating thermal energy to space, and thus amplifying warming. 
+
+The value of $A$ is given by the definition of a preindustrial equilibrium, i.e. the fact that before human influence, Earth's energy budget was perfectly balanced:
 
 $\text{\color{orange}{absorbed solar radiation}} = \text{\color{blue}{outgoing thermal radiation}}$
 
 or
 
-$\color{orange}{\frac{S(1-\alpha)}{4}} \;\color{black}{=}\; \color{blue}{A + BT_{0}}$
+$\color{orange}{\frac{S(1-\alpha)}{4}} \;\color{black}{=}\; \color{blue}{A - BT_{0}}$
 
 By rearanging this equation, we find that the value of $A$ is given by
 """
 
 # ╔═╡ f258767c-1786-11eb-0a9b-ad9f0094a8a0
-A = S*(1. - α)/4 - B*T0; # [W/m^2].
+A = S*(1. - α)/4 + B*T0; # [W/m^2].
 
 # ╔═╡ eaceee7e-177f-11eb-3d94-778732ca8768
 md"""
@@ -182,7 +186,7 @@ Combining all of these subcomponent models, we write the governing equation of t
 \begin{gather}
 \color{brown}{C \frac{dT}{dt}}
 \; \color{black}{=} \; \color{orange}{\frac{(1 - α)S}{4}}
-\; \color{black}{-} \; \color{blue}{(A + BT)}
+\; \color{black}{-} \; \color{blue}{(A - BT)}
 \; \color{black}{+} \; \color{grey}{a \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PI}}} \right)},
 \end{gather}
 
@@ -195,13 +199,13 @@ md"""
 
 The energy balance model equation above can be **discretized** in time as
 
-$C \frac{T_{n+1} - T_{n}}{\Delta t} = \frac{\left( 1-\alpha_{0} \right) S}{4} - (A + BT_{n}) + a \ln \left( \frac{[\text{CO}₂]_{n}}{[\text{CO}₂]_{\text{PI}}} \right),$
+$C \frac{T_{n+1} - T_{n}}{\Delta t} = \frac{\left( 1-\alpha \right) S}{4} - (A - BT_{n}) + a \ln \left( \frac{[\text{CO}₂]_{n}}{[\text{CO}₂]_{\text{PI}}} \right),$
 
 where the subscript $n$ denotes the present timestep and $n+1$ is the next timestep $\Delta t$ later.
 
 By re-arranging the equation, we can solve for the temperature at the next timestep $n+1$ based on the known temperature at the present timestep $n$:
 
-$T_{n+1} = T_{n} + \frac{\Delta t}{C} \left[ \frac{ \left( 1-\alpha_{0} \right) S}{4} - (A + BT_{n}) + a \ln \left( \frac{[\text{CO}₂]_{n}}{[\text{CO}₂]_{\text{PI}}} \right) \right]$
+$T_{n+1} = T_{n} + \frac{\Delta t}{C} \left[ \frac{ \left( 1-\alpha \right) S}{4} - (A - BT_{n}) + a \ln \left( \frac{[\text{CO}₂]_{n}}{[\text{CO}₂]_{\text{PI}}} \right) \right]$
 
 More generally, we recognize this equation is of the form:
 
@@ -215,7 +219,7 @@ md"where the tendency is a function of the present temperature $T_{n}$, as well 
 tendency(ebm) = (1. /ebm.C) * (
 	+ absorbed_solar_radiation(α=ebm.α, S=ebm.S)
 	- outgoing_thermal_radiation(ebm.T[end], A=ebm.A, B=ebm.B)
-	+ greenhouse_effect(ebm.CO2(ebm.t[end]), a=ebm.A, CO2_PI=ebm.CO2_PI)
+	+ greenhouse_effect(ebm.CO2(ebm.t[end]), a=ebm.a, CO2_PI=ebm.CO2_PI)
 );
 
 # ╔═╡ 27aa62a0-17b0-11eb-2029-a3c797e769eb
@@ -291,22 +295,18 @@ md"What happens if we perturb the pre-industrial temepratures away from their eq
 
 # ╔═╡ cadbddec-179e-11eb-3a1e-3502e2534937
 begin	
-	p_equil = plot()
-	
+	p_equil = plot(xlabel="year", ylabel="temperature [°C]")
 	for T0_sample in (0.:2.:28.)
 		ebm = EBM(T0_sample, 0., 1., CO2_const)
-		run!(ebm, 150)
-			
-		plot!(
-			p_equil, ebm.t, ebm.T, label=nothing,
-			xlabel="year", ylabel="temperature [°C]"
-		)
+		run!(ebm, 200)
+		
+		plot!(p_equil, ebm.t, ebm.T, label=nothing, )
 	end
 	p_equil
 end
 
 # ╔═╡ e967605a-1de9-11eb-39d4-831533aed676
-md"This figure shows that, no matter where we start out, positive feedbacks ($B>0$) restore the temperature to the preindustrial equilibrum value of T₀ = $(T0) °C, over an exponential timescale of about 100 years."
+md"This figure shows that, no matter where we start out, the overall negative feedbacks ($B<0$) restore the temperature to the preindustrial equilibrum value of T₀ = $(T0) °C, over an exponential timescale of about 100 years."
 
 # ╔═╡ 0c393822-1789-11eb-30b3-7ff90191d89e
 md"""
@@ -314,25 +314,56 @@ md"""
 
 Human greenhouse gas emissions have fundamentally altered Earth's energy balance, moving us away from the stable preindustrial climate of the past few thousand years.
 
-Since human CO₂ emissions are the main driver of global warming, we expect that if we force our model with historical CO₂ increases, we should roughly reproduce the observed historical global warming.
+Since human CO₂ emissions are the main driver of global warming, we expect that if we plug historical CO₂ increases into our model ("forcing" it), we should roughly reproduce the observed historical global warming.
 
-The observed increase of CO2 concentrations be fairly accurately modelled by the simple cubic formula below.
+The observed increase of CO2 concentrations can be fairly accurately modelled by the simple cubic formula below.
 """
 
 # ╔═╡ b8527aa8-179e-11eb-3023-05bb5d40a1bd
 begin
 	CO2_hist(t) = CO2_PI * (1 .+ fractional_increase(t));
 	fractional_increase(t) = ((t .- 1850.)/220).^3;
+
 end;
 
+# ╔═╡ 6cb04022-1e0c-11eb-026f-f74661459a9e
+md"Feeding this CO₂ function into our model, we can run it forward from 1850 to 2020 to try and simulate the amount of global warming that observed over this historical period."
+
+# ╔═╡ 6ad84f92-1e0c-11eb-066f-d1b8c28a2cb2
+begin
+	hist = EBM(T0, 1850., 1., CO2_hist)
+	run!(hist, 2020.)
+end
+
 # ╔═╡ 0c3db0a0-1dec-11eb-3105-a75ada72d69d
-md"The figure below shows the simulated curve of historical CO₂ concentrations, as well as its simulated effect on global temperatures. To check how accurate this simple model is in reproducing observed warming over this period, click the checkbox below."
+md"To check how accurate this simple model is in reproducing observed warming over this period, click the checkbox below."
 
 # ╔═╡ 70039d58-1deb-11eb-053d-b96c2001b182
 md"*Click to reveal observations of global warming* $(@bind show_obs CheckBox(default=false))"
 
+# ╔═╡ caf982c0-1f73-11eb-2648-d3b71d230c6d
+if show_obs
+	md"""
+	##### CO₂ emissions predict the trend, but what about the climate noise?
+	
+	Our model does a good job of predicting the long-term trend of increasing temperatures, but what about all of the noise in the observations? These are real signals due to **natural variability** of the Earth system, not artifacts due to instrumental noise.
+
+	This natural noise arises due to the **turbulent and chaotic fluid dynamics** of the atmosphere and ocean, which we will explore further in Lecture 4 and are illustrated below.
+	"""
+end
+
+# ╔═╡ 448db99e-1f74-11eb-3637-a1aec60e5a10
+if show_obs
+	html"""
+
+	<div style="padding:0 0 0 0;position:relative;"><iframe width="700" height="394" src="https://www.youtube.com/embed/oRsY_UviBPE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+	"""
+end
+
 # ╔═╡ 0b7d6da2-1dee-11eb-279b-dfc5318338e5
-md"Now that we've convinced ourselves that the model accurately reproduces historical warming, we can use it to project how much warming we might expect due to *future* CO₂ emissions."
+if show_obs
+	md"Now that we've convinced ourselves that the model accurately reproduces historical warming, we can use it to project how much warming we might expect due to *future* CO₂ emissions."
+end
 
 # ╔═╡ 3cd3b9bc-1789-11eb-3373-3f54fa426e28
 md""" #### Exercise C: Best- and worst-case future projections of human-caused global warming
@@ -340,15 +371,20 @@ md""" #### Exercise C: Best- and worst-case future projections of human-caused g
 """
 
 # ╔═╡ 5fd0d45c-1dee-11eb-2fb9-355f29d3d3dd
-md"""Below we imagine two divergent hypothetical futures:
+md"""Consider two divergent hypothetical futures:
 1. a **low-emissions** world in which emissions decrease such that CO2 concentrations stay below 500 ppm by 2100 (known in climate circles as "RCP8.5") and
 2. a **high-emissions** world in which emissions continue increasing and CO2 concentrations soar upwards of 1200 ppm ("RCP2.6").
 """
 
 # ╔═╡ b9ff4090-179e-11eb-2380-69c7a9a7a999
-begin
-	CO2_RCP85(t) = CO2_PI * (1 .+ fractional_increase(t) .* max.(1., exp.(((t .-1850.).-170)/100)));
+begin	
 	CO2_RCP26(t) = CO2_PI * (1 .+ fractional_increase(t) .* min.(1., exp.(-((t .-1850.).-170)/100))) ;
+	RCP26 = EBM(T0, 1850., 1., CO2_RCP26)
+	run!(RCP26, 2100.)
+	
+	CO2_RCP85(t) = CO2_PI * (1 .+ fractional_increase(t) .* max.(1., exp.(((t .-1850.).-170)/100)));
+	RCP85 = EBM(T0, 1850., 1., CO2_RCP85)
+	run!(RCP85, 2100.)
 end;
 
 # ╔═╡ 8e45f67c-1def-11eb-32af-5b0feec3e56f
@@ -356,39 +392,19 @@ md"""
 In the low-emissions scenario, the temperature increase stays below $ΔT = 2$ °C by 2100, while in the high-emissions scenario temperatures soar upwards of 3.5ºC above pre-industrial levels.
 """
 
-# ╔═╡ fcbe38c2-17ae-11eb-3edf-d1d5dbd0af08
-begin
-	function plot_CO2!(p, t, CO2; label=nothing)
-		plot!(p, xlabel="year", ylabel="CO₂ concentration [ppm]")
-		plot!(p, t, CO2(t), lw=2.5, label=label)
-	end;
-	
-	function plot_T!(p, t, T; label=nothing)
-		plot!(p, xlabel="year", ylabel="temperature [°C]")
-		plot!(p, t, T, lw=2.5, label=label)
-	end;
-end;
+# ╔═╡ 48aa58f0-1f85-11eb-3279-bfcfae88c6dc
+md"Although the greenhouse effect due to human-caused CO₂ emissions is the dominant forcing behind historical and future-projected warming, modern climate modelling considers a fairly exhaustive list of other forcing factors (aerosols, other greenhouse gases, ozone, land-use changes, etc.). The video below shows a breakdown of these forcing factors in a state-of-the-art climate model simulation of the historical period."
 
-# ╔═╡ 461c15d2-17a2-11eb-32ed-97e2ebbc6c93
-begin
-	p1 = plot(title="Cause...", legend=:topleft);
-	p2 = plot(title="... and effect"); p = plot(p1, p2, size=(680, 300))
-	
-	RCP26 = EBM(T0, 1850., 1., CO2_RCP26)
-	run!(RCP26, 2100.)
-	plot_CO2!(p1, RCP26.t, CO2_RCP26, label="Low emissions")
-	plot_T!(p2, RCP26.t, RCP26.T)
-	
-	RCP85 = EBM(T0, 1850., 1., CO2_RCP85)
-	run!(RCP85, 2100.)
-	plot_CO2!(p1, RCP85.t, CO2_RCP85, label="High emissions")
-	plot_T!(p2, RCP85.t, RCP85.T)
-	
-	p
-end
+# ╔═╡ d04e6a94-1f85-11eb-081c-ff22bc849191
+html"""
+<iframe width="700" height="394" src="https://www.youtube.com/embed/E7kMr2OYKSU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+"""
 
 # ╔═╡ 59526360-17b9-11eb-04eb-b9771e718149
-md"### Data sources and package dependencies"
+md"## Appendix"
+
+# ╔═╡ 255623ac-1f85-11eb-2cd1-058dd5bbcd7e
+md"#### Data sources"
 
 # ╔═╡ 8aa337b4-17b9-11eb-3790-95da62666b85
 md"**Temperature data**"
@@ -400,11 +416,6 @@ begin
 	T_df = DataFrame(T_f);
 	first(T_df, 3)
 end
-
-# ╔═╡ 63cb08b8-17b6-11eb-20ba-2d96ab0c5ff7
-function plot_obs_T!(p)	
-	plot!(p, parse.(Float64, T_df[:,1]), parse.(Float64, T_df[:,2]) .+ 14.15, color=:black, label="NASA Observations", legend=:topleft)
-end;
 
 # ╔═╡ 94d9dc06-17b9-11eb-3588-03e0ca9391c6
 md"**CO₂ data**"
@@ -419,17 +430,36 @@ begin
 	first(CO2_df, 3)
 end
 
+# ╔═╡ 32f2d79e-1f85-11eb-0ecf-cb589ce85c1e
+md"#### Plotting functions"
+
 # ╔═╡ 391fdb60-17b7-11eb-3e58-4598f229f679
 function plot_obs_CO2!(p)
 	CO2_tmp = CO2_df[:,5]
 	CO2_tmp[CO2_tmp .<= 0.] .= NaN
 	plot!(p, CO2_df[:,4], CO2_tmp, color=:black, label="Keeling Curve (Mauna Loa observations)", legend=:topleft)
-end;
+end
+
+# ╔═╡ 7467143e-1f86-11eb-0be2-5f57b6b169ad
+function plot_obs_T!(p)	
+	plot!(p, parse.(Float64, T_df[:,1]), parse.(Float64, T_df[:,2]) .+ 14.15, color=:black, label="NASA Observations", legend=:topleft)
+end
+
+# ╔═╡ fcbe38c2-17ae-11eb-3edf-d1d5dbd0af08
+begin
+	function plot_CO2!(p, t, CO2; label=nothing)
+		plot!(p, xlabel="year", ylabel="CO₂ concentration [ppm]")
+		plot!(p, t, CO2(t), lw=2.5, label=label)
+	end
+	
+	function plot_T!(p, t, T; label=nothing)
+		plot!(p, xlabel="year", ylabel="temperature [°C]")
+		plot!(p, t, T, lw=2.5, label=label)
+	end
+end
 
 # ╔═╡ c394ec66-17a0-11eb-259f-6b57f8cd4ece
 begin
-	hist = EBM(T0, 1850., 1., CO2_hist)
-	run!(hist, 2020.)
 	pCO2 = plot(title="Cause...", ylims=(270, 420), xlims=(1850, 2020)); 
 	plot_CO2!(pCO2, hist.t, CO2_hist)
 	plot_obs_CO2!(pCO2)
@@ -443,6 +473,24 @@ begin
 	
 	plot(pCO2, pT, size=(680, 300))
 end
+
+# ╔═╡ 461c15d2-17a2-11eb-32ed-97e2ebbc6c93
+begin
+	p1 = plot(title="Cause...", legend=:topleft);
+	p2 = plot(title="... and effect"); p = plot(p1, p2, size=(680, 300))
+	plot_CO2!(p1, RCP26.t, CO2_RCP26, label="Low emissions")
+	plot_T!(p2, RCP26.t, RCP26.T)
+	plot_CO2!(p1, RCP85.t, CO2_RCP85, label="High emissions")
+	plot_T!(p2, RCP85.t, RCP85.T)
+	plot!(p2, [1850, 2100], [T0+2., T0+2.],
+		color=:black, linestyle=:dash, alpha=0.5, label="Paris Agreement threshold (2°C warming)")
+	mi, i = findmin(abs.(RCP26.t .- 2020.))
+	plot!(p1, [RCP26.t[i]], [CO2_RCP26(RCP26.t[i])], marker=:o, color=:darkred, label="You Are Here")
+	p
+end
+
+# ╔═╡ 3d1c5fba-1f85-11eb-06e9-33c26a60b893
+md"#### Package dependencies"
 
 # ╔═╡ Cell order:
 # ╟─e428f43e-13a1-11eb-15a5-2f677335bdd9
@@ -461,7 +509,7 @@ end
 # ╟─8b076962-179d-11eb-2c44-b5bf340e92ab
 # ╠═bd01be7a-1786-11eb-047d-cbfaa63f93a2
 # ╟─d6fb4d64-1786-11eb-3859-9dc874b99e17
-# ╟─f258767c-1786-11eb-0a9b-ad9f0094a8a0
+# ╠═f258767c-1786-11eb-0a9b-ad9f0094a8a0
 # ╟─eaceee7e-177f-11eb-3d94-778732ca8768
 # ╠═19c127ce-179e-11eb-2500-bd1680754ba0
 # ╟─14c4c8ac-179e-11eb-3c26-e51c3191532d
@@ -486,21 +534,30 @@ end
 # ╟─e967605a-1de9-11eb-39d4-831533aed676
 # ╟─0c393822-1789-11eb-30b3-7ff90191d89e
 # ╠═b8527aa8-179e-11eb-3023-05bb5d40a1bd
+# ╟─6cb04022-1e0c-11eb-026f-f74661459a9e
+# ╠═6ad84f92-1e0c-11eb-066f-d1b8c28a2cb2
 # ╟─0c3db0a0-1dec-11eb-3105-a75ada72d69d
 # ╟─70039d58-1deb-11eb-053d-b96c2001b182
 # ╟─c394ec66-17a0-11eb-259f-6b57f8cd4ece
+# ╟─caf982c0-1f73-11eb-2648-d3b71d230c6d
+# ╟─448db99e-1f74-11eb-3637-a1aec60e5a10
 # ╟─0b7d6da2-1dee-11eb-279b-dfc5318338e5
 # ╟─3cd3b9bc-1789-11eb-3373-3f54fa426e28
 # ╟─5fd0d45c-1dee-11eb-2fb9-355f29d3d3dd
 # ╠═b9ff4090-179e-11eb-2380-69c7a9a7a999
 # ╟─8e45f67c-1def-11eb-32af-5b0feec3e56f
 # ╟─461c15d2-17a2-11eb-32ed-97e2ebbc6c93
-# ╟─fcbe38c2-17ae-11eb-3edf-d1d5dbd0af08
+# ╟─48aa58f0-1f85-11eb-3279-bfcfae88c6dc
+# ╟─d04e6a94-1f85-11eb-081c-ff22bc849191
 # ╟─59526360-17b9-11eb-04eb-b9771e718149
+# ╟─255623ac-1f85-11eb-2cd1-058dd5bbcd7e
 # ╟─8aa337b4-17b9-11eb-3790-95da62666b85
 # ╟─4d251386-17b5-11eb-369e-b3113d5c80c7
-# ╠═63cb08b8-17b6-11eb-20ba-2d96ab0c5ff7
 # ╟─94d9dc06-17b9-11eb-3588-03e0ca9391c6
 # ╟─bf1611ae-17b6-11eb-371d-dda63ceb69c1
+# ╟─32f2d79e-1f85-11eb-0ecf-cb589ce85c1e
 # ╠═391fdb60-17b7-11eb-3e58-4598f229f679
+# ╠═7467143e-1f86-11eb-0be2-5f57b6b169ad
+# ╠═fcbe38c2-17ae-11eb-3edf-d1d5dbd0af08
+# ╟─3d1c5fba-1f85-11eb-06e9-33c26a60b893
 # ╠═5bf00f46-17b9-11eb-2625-bf3f33c273e2
