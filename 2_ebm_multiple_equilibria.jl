@@ -23,7 +23,9 @@ begin
 	using LaTeXStrings
 	using Plots
 	using PlutoUI
-end;
+	
+	md"#### Package dependencies"
+end
 
 # ╔═╡ 05031b60-1df4-11eb-2b61-956e526b3d4a
 md"## Lecture 2: Snowball Earth, the ice-albedo feedback, and multiple equilibria"
@@ -64,7 +66,9 @@ To implement this into our energy balance model from Lecture 1, all we have to d
 """
 
 # ╔═╡ 13f42334-1e27-11eb-11a0-f51af4574a6b
-md"""#### Multiple Equilibria (or the existence of "alternate Earths")
+md"""### Multiple Equilibria
+**OR: the existence of "alternate Earths"**
+
 Human civilization flourished over the last several thousand years in part because Earth's global climate has been remarkably stable and forgiving. The preindustrial combination of natural greenhouse effect and incoming solar radiation yielded temperatures between the freezing and boiling points of water across most of the planet, allowing ecoystems based on liquid water to thrive.
 
 The climate system, however, is rife with non-linear effects like the **ice-albedo effect**, which reveal just how fragile our habitable planet is and just how unique our stable pre-industrial climate was.
@@ -74,7 +78,7 @@ We know from Lecture 1 that in response to temperature fluctuations, *negative f
 
 # ╔═╡ 58e9b802-1e11-11eb-3479-0f7eb69b2c3a
 md"
-##### Turning up the Sun
+### Turning up the Sun
 
 Over the entire history of the Earth, the Sun is thought to have brightened by about 40%."
 
@@ -86,7 +90,7 @@ html"""
 # ╔═╡ 873befc2-1f7e-11eb-16af-fba7f1e52eeb
 md"In the Neoproterozoic, the Sun was 93% as bright as it is today, such that the incoming solar radiation was $S =$ 1272 W/m², Earth's average temperature plunged to $T = -50$°C, and Earth's ice-covered surface had a high albedo (reflectivity) of $α_{i} = 0.6$.
 
-##### How did Snowball Earth melt?
+##### Did the increasing brightness of the Sun melt the Snowball?
 If we increase solar insolation to today's value of $S =$ 1368 W/m², can we warm the planet up to the pre-industrial temperature of $T=14$°C?
 "
 
@@ -105,22 +109,27 @@ else
 end
 
 # ╔═╡ 9474f8e4-1f80-11eb-3c9e-c54e662cc29c
-md"""In this model, temperature variations are fairly smooth unless temperatures rise above -10°C or fall below 10°C, in which case the *ice-albedo positive feedback* kicks in and causes an **abrupt climate transition**. While this is just a simple hypothetical model, these kinds of abrupt climate transitions show up all the time in the paleoclimate record and in more realistic climate model simulations.
+if extend_S
+	md"""
+	### Abrupt climate transitions
+	
+	In this model, temperature variations are fairly smooth unless temperatures rise above -10°C or fall below 10°C, in which case the *ice-albedo positive feedback* kicks in and causes an **abrupt climate transition**. While this is just a simple hypothetical model, these kinds of abrupt climate transitions show up all the time in the paleoclimate record and in more realistic climate model simulations.
 
-This simulation teaches us that we should not take the stability of our climate for granted and that pushing our present climate outside of its historical regime of stability could trigger catastrophic abrupt climate transitions.
-"""
+	This simulation teaches us that we should not take the stability of our climate for granted and that pushing our present climate outside of its historical regime of stability could trigger catastrophic abrupt climate transitions.
+	"""
+end
 
 # ╔═╡ 6eca000c-1f81-11eb-068e-01d06c1beeb9
 md"""
-##### If it wasn't the Sun, how did the neoprotorezoic snowball melt?
+#### If not the Sun, how did Snowball Earth eventually melt?
 
-In **Homework Problem Set XX**, you extend the above model to include the effect of CO2 and determine how much CO2 would need to be added to the snowball for it to melt.
+In **Homework Problem Set XX**, you will extend the above model to include the effect of CO₂ and determine how much CO2 would need to be added to the snowball for it to melt.
 """
 
 # ╔═╡ da4df78a-1e2c-11eb-1d4c-69b86e196526
-md"""### Towards more realistic modelling
+md"""### Towards realistic climate modelling
 
-In this simple model, the preindustrial climate of $T=14$°C so warm that there is no ice anywhere on the planet. Indeed, the only 
+In this simple model, the preindustrial climate of $T=14$°C is so warm that there is no ice anywhere on the planet. Indeed, the only two valid stable climates are one with *no ice* or one with *ice everywhere*. 
 
 So how did Earth's preindustrial climate, which was relatively stable for thousands of years, have substantial ice caps at the poles?
 
@@ -142,23 +151,6 @@ html"""
 <iframe width="700" height="394" src="https://www.youtube.com/embed/lYm_IyBHMUs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
-# ╔═╡ d2f4d882-1e2c-11eb-206b-b9ef5031a1bb
-md"### Pluto Magic"
-
-# ╔═╡ 61fc91ec-1df8-11eb-13c1-098c113b46ec
-function restart_ebm!(ebm)
-	ebm.T = [ebm.T[end]]
-	ebm.t = [ebm.t[1]]
-end
-
-# ╔═╡ 9b39df12-1df9-11eb-2eb0-f138980be597
-function plot_trajectory!(p, x, y; lw=8)
-	n = size(x,1)
-	plot!(x, y, color="black", alpha=collect(1/n:1/n:1.), linewidth=collect(0.:lw/n:lw), label=nothing)
-	plot!((x[end], y[end]), color="black", marker=:c, markersize=lw/2*1.2, label=nothing, markerstrokecolor=nothing, markerstrokewidth=0.)
-	return p
-end;
-
 # ╔═╡ 5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
 md"""
 ### (Possible) Homework Exercises:
@@ -167,8 +159,11 @@ md"""
 
 # ╔═╡ d6a7e652-1f7d-11eb-2a5f-13ff13b9850c
 md"""
-### Appendix
+## Appendix
 """
+
+# ╔═╡ d2f4d882-1e2c-11eb-206b-b9ef5031a1bb
+md"#### Pluto Magic"
 
 # ╔═╡ 1dc709e2-1de8-11eb-28da-fd7469ec50c2
 function ingredients(path::String)
@@ -245,11 +240,30 @@ begin
 		plot!(p_equil, ebm_meta.t, ebm_meta.T, label=nothing, linestyle=:dash)
 	end
 	
-	plot!(p_equil, [200], [Model.T0], marker=:., label="Our pre-industrial climate (warm branch)", color=:orange, markersize=8)
-	plot!(p_equil, [200], [-38.3], marker=:., label="Alternate universe pre-industrial climate (cold branch)", color=:aqua, markersize=8)
+	plot!(p_equil, [200], [Model.T0], marker=:., label="Our pre-industrial climate (stable ''warm'' branch)", color=:orange, markersize=8)
+	plot!(p_equil, [200], [-38.3], marker=:., label="Alternate universe pre-industrial climate (stable ''cold'' branch)", color=:aqua, markersize=8)
 	plot!(p_equil, [200], [T_meta], marker=:d, label="Impossible alternate climate (metastable branch)", color=:pink, markersize=8, markerstrokecolor=:white, alpha=1., markerstrokestyle=:dash)
 	p_equil
 end
+
+# ╔═╡ 8e28ef88-1f88-11eb-2d5d-bff2f59ea998
+md"""
+#### Bifurcation diagram helper functions
+"""
+
+# ╔═╡ 61fc91ec-1df8-11eb-13c1-098c113b46ec
+function restart_ebm!(ebm)
+	ebm.T = [ebm.T[end]]
+	ebm.t = [ebm.t[1]]
+end
+
+# ╔═╡ 9b39df12-1df9-11eb-2eb0-f138980be597
+function plot_trajectory!(p, x, y; lw=8)
+	n = size(x,1)
+	plot!(x, y, color="black", alpha=collect(1/n:1/n:1.), linewidth=collect(0.:lw/n:lw), label=nothing)
+	plot!((x[end], y[end]), color="black", marker=:c, markersize=lw/2*1.2, label=nothing, markerstrokecolor=nothing, markerstrokewidth=0.)
+	return p
+end;
 
 # ╔═╡ b5849000-0d68-11eb-3beb-c575e8d0ce8e
 begin
@@ -268,7 +282,9 @@ begin
 		T_restart = ebm.T[end]
 		Tvec[i] = deepcopy(T_restart)
 	end
-end;
+	
+	md"**Data structures for storing warm & cool branch climates**"
+end
 
 # ╔═╡ 364e1d2a-1f78-11eb-177b-9dcec4b6da38
 md"""
@@ -277,9 +293,10 @@ For insolations $S$ between $(Smin) W/m² and $(Smax_limited) W/m², temperature
 
 # ╔═╡ 90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
 begin
-		Sneo = Model.S*0.93
-		Tneo = -48.
-end;
+	Sneo = Model.S*0.93
+	Tneo = -48.
+	md"**Initial conditions**"
+end
 
 # ╔═╡ 5ca7ac14-1df9-11eb-13f3-e5c86333ef83
 begin
@@ -307,13 +324,15 @@ begin
 	ntraj = 10
 	Ttraj = repeat([NaN], ntraj)
 	Straj = repeat([NaN], ntraj)
-end;
+	
+	md"**Data structures for storing trajectories of recent climates**"
+end
 
 # ╔═╡ 0f222836-0d6c-11eb-2ee8-45545da73cfd
 begin
 	S
 	warming_mask = (1:size(Svec)[1]) .< size(Svec)./2
-	p = plot(xlims=(Smin, Smax_limited), ylims=(-55, 75))
+	p = plot(xlims=(Smin, Smax_limited), ylims=(-55, 75), title="Earth's solar insolation bifurcation diagram")
 	plot!([Model.S, Model.S], [-55, 75], color=:darkred, alpha=0.3, lw=5, label="Pre-industrial / present insolation")
 	if extend_S
 		plot!(p, xlims=(Smin, Smax))
@@ -380,14 +399,15 @@ end;
 # ╟─da4df78a-1e2c-11eb-1d4c-69b86e196526
 # ╟─908b50a2-1f76-11eb-0eb5-11318be6896b
 # ╟─507342e0-1f76-11eb-098a-0973155652e2
-# ╠═d2f4d882-1e2c-11eb-206b-b9ef5031a1bb
+# ╟─5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
+# ╟─d6a7e652-1f7d-11eb-2a5f-13ff13b9850c
+# ╟─d2f4d882-1e2c-11eb-206b-b9ef5031a1bb
+# ╟─1dc709e2-1de8-11eb-28da-fd7469ec50c2
+# ╟─8e28ef88-1f88-11eb-2d5d-bff2f59ea998
 # ╠═61fc91ec-1df8-11eb-13c1-098c113b46ec
 # ╠═7765f834-0db0-11eb-2c46-ef65f4a1fd1d
 # ╠═477732c4-0daf-11eb-1422-cf0f55cd835b
-# ╠═b5849000-0d68-11eb-3beb-c575e8d0ce8e
 # ╠═9b39df12-1df9-11eb-2eb0-f138980be597
+# ╠═b5849000-0d68-11eb-3beb-c575e8d0ce8e
 # ╠═90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
-# ╟─5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
-# ╟─d6a7e652-1f7d-11eb-2a5f-13ff13b9850c
-# ╟─1dc709e2-1de8-11eb-28da-fd7469ec50c2
 # ╠═e9ad66b0-0d6b-11eb-26c0-27413c19dd32
