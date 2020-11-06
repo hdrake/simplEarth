@@ -98,10 +98,10 @@ deps = ["Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[EarCut_jll]]
-deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "eabac56550a7d7e0be499125673fbff560eb8b20"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "92d8f9f208637e8d2d28c664051a00569c01493d"
 uuid = "5ae413db-bbd1-5e63-b57d-d24a61df00f5"
-version = "2.1.5+0"
+version = "2.1.5+1"
 
 [[FFMPEG]]
 deps = ["FFMPEG_jll", "x264_jll"]
@@ -222,9 +222,9 @@ version = "1.2.0"
 
 [[Latexify]]
 deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "Printf", "Requires"]
-git-tree-sha1 = "73292a3259e0141521753065c1df0f91c7e4d5e6"
+git-tree-sha1 = "a8bea922a4678d5d2314b2fc97df0170a2271126"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.14.2"
+version = "0.14.3"
 
 [[LibGit2]]
 deps = ["Printf"]
@@ -346,9 +346,9 @@ version = "1.7.3"
 
 [[Pluto]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "UUIDs"]
-git-tree-sha1 = "2b1e403cbb3603f50da4c771f792f13396220f26"
+git-tree-sha1 = "872651e9642e78c2d90b0cb13e5d9fec676ad297"
 uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-version = "0.12.6"
+version = "0.12.7"
 
 [[PlutoUI]]
 deps = ["Base64", "Dates", "Logging", "Markdown", "Random", "Suppressor"]

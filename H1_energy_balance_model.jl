@@ -72,7 +72,7 @@ histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabe
 md"**Question:** What happens if the climate feedback parameter $B$ is less than or equal to zero? How often does this scenario occur?"
 
 # ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
-md"""**Answer:** endless warming!!! ahhhhh**
+md"""**Answer:** endless warming!!! ahhhhh
 
 **If answered correctly:** This is known as the "runaway greenhouse effect", where warming self-amplifies so strongly through *positive feedbacks* that the warming continues forever (or until the oceans boil away and there is no longer a reservoir or water to support a *water vapor feedback*. This is thought to explain Venus' extremely hot and hostile climate, but as you can see is extremely unlikely to occur on present-day Earth.
 """

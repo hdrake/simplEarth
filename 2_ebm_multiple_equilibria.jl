@@ -119,7 +119,7 @@ if extend_S
 	md"""
 	*"Cold" branch* $(@bind show_cold CheckBox(default=false))    |   
 	*"Warm" branch* $(@bind show_warm CheckBox(default=false))    |   
-	*"Metastable" branch* $(@bind show_meta CheckBox(default=false))
+	*Unstable branch* $(@bind show_unstable CheckBox(default=false))
 	"""
 else
 	show_cold = true;
@@ -351,14 +351,14 @@ For insolations $S$ between $(Smin) W/m² and $(Smax_limited) W/m², temperature
 
 # ╔═╡ b4357da4-1f9e-11eb-2925-55cd6f37be22
 begin
-	T_metastable(S, A, B, αi, α0) = (
+	T_unstable_branch(S, A, B, αi, α0) = (
 		(A/B-S/(4B)*(1-0.5(αi+α0))) /
 		(1+S*(αi-α0)/(80B))
 	)
-	S_metabranch = Smin:2:Smax
-	T_metabranch = T_metastable.(S_metabranch, Model.A, Model.B, 0.5, 0.3)
-	T_metabranch[.~(0.3 .< α.(T_metabranch) .< 0.5)] .= NaN
-	md"**Metastable branch solution**"
+	S_unstable = Smin:2:Smax
+	T_unstable = T_unstable_branch.(S_unstable, Model.A, Model.B, 0.5, 0.3)
+	T_unstable[.~(0.3 .< α.(T_unstable) .< 0.5)] .= NaN
+	md"**Unstable branch solution**"
 end
 
 # ╔═╡ 90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
@@ -412,8 +412,8 @@ begin
 		if show_warm
 			plot!(Svec[.!warming_mask], Tvec[.!warming_mask], color="red", lw=3., alpha=0.5, label="warm branch")
 		end
-		if show_meta
-			plot!(S_metabranch, T_metabranch, color=:darkgray, lw=3., alpha=0.4, ls=:dash, label="metastable branch")
+		if show_unstable
+			plot!(S_unstable, T_unstable, color=:darkgray, lw=3., alpha=0.4, ls=:dash, label="unstable branch")
 		end
 	end
 	plot!(legend=:topleft)

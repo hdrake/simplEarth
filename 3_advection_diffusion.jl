@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.6
+# v0.12.7
 
 using Markdown
 using InteractiveUtils
@@ -23,13 +23,12 @@ begin
 	using Colors
 	using Plots
 	using PlutoUI
-	gr()
 end
 
 # ╔═╡ beed7b48-0e2b-11eb-2805-edf0be651fc3
 md"""
 ### Numerically solving partial differential equations
-#### Learning through one-dimensional advection and diffusion
+**Learning through one-dimensional advection and diffusion**
 
 ##### 1. Advection
 
@@ -40,7 +39,7 @@ $\frac{\partial T}{\partial t} = - U \frac{\partial T}{\partial x}$
 which describes the rate of change of temperature due to a uniform flow of speed $U$ in the $\mathbf{x}$ direction.
 
 **Notation**:
-Since this differential equation derivatives in both time $t$ **and** space $x$, we replace the *ordinary* deriative symbol $d$ with a *partial* derivative symbol $\partial$, and call the equation a **partial differential equation (PDE)**.
+Since this differential equation includes derivatives in both time $t$ **and** space $x$, we replace the *ordinary* deriative symbol $d$ with a *partial* derivative symbol $\partial$, and call the equation a **partial differential equation (PDE)**.
 
 As in our solution of the "zero-dimenisonal" energy balance model ODE, we begin by discretizing time using a *forward finite difference* scheme:
 
@@ -106,8 +105,24 @@ function advect(T)
 	return U*(circshift(T, (1)) .- circshift(T, (-1)))/(2Δx)
 end
 
+# ╔═╡ 67cb0ed2-0efa-11eb-2645-495dba94ea64
+function timestep!(t, T)
+	T .+= Δt*(advect(T))
+	t .+= Δt
+end
+
 # ╔═╡ ba1ea938-0f44-11eb-0fac-cd1afe507d57
 @bind go Button("Timestep")
+
+# ╔═╡ 18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
+begin
+	⏩ = nothing
+	go
+	nT = 50
+	for i = 1:nT
+		timestep!(t, T)
+	end
+end;
 
 # ╔═╡ f2c7638a-0e34-11eb-2210-9f9b0c3519fe
 function temperature_heatmap(T)
@@ -142,22 +157,6 @@ function diffuse(T)
 	return κ*(circshift(T, (1)) .- 2*T .+ circshift(T, (-1)))/(Δx^2)
 end
 
-# ╔═╡ 67cb0ed2-0efa-11eb-2645-495dba94ea64
-function timestep!(t, T)
-	T .+= Δt*(advect(T) .+ diffuse(T))
-	t .+= Δt
-end
-
-# ╔═╡ 18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
-begin
-	⏩ = nothing
-	go
-	nT = 50
-	for i = 1:nT
-		timestep!(t, T)
-	end
-end;
-
 # ╔═╡ d2c101c8-0f4e-11eb-0c4f-0972be924ce1
 md"#### 3. Advection-Diffusion"
 
@@ -181,7 +180,8 @@ begin
 	annotate!(p1, [(0.05, 0.9, string("t = ", round(t[1], digits=2)))])
 	p2 = temperature_heatmap(T)
 	p = plot(p1, p2, layout=grid(2, 1, heights=[0.7 , 0.3]), size=(680,250))
-end |> as_svg
+	as_svg(p)
+end
 
 # ╔═╡ Cell order:
 # ╟─beed7b48-0e2b-11eb-2805-edf0be651fc3
@@ -194,7 +194,7 @@ end |> as_svg
 # ╠═5b1b6802-0e2e-11eb-1fa6-1ddd5478cc54
 # ╠═4463cf8c-0ef8-11eb-2c6e-45d982d5687a
 # ╠═67cb0ed2-0efa-11eb-2645-495dba94ea64
-# ╟─ba1ea938-0f44-11eb-0fac-cd1afe507d57
+# ╠═ba1ea938-0f44-11eb-0fac-cd1afe507d57
 # ╠═00cc530a-0e35-11eb-133b-ef8e30ea7b12
 # ╠═18a3f9dc-0e6d-11eb-0b31-0b5296c2e83b
 # ╠═f2c7638a-0e34-11eb-2210-9f9b0c3519fe
