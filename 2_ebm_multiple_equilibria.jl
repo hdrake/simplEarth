@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.6
+# v0.12.7
 
 using Markdown
 using InteractiveUtils
@@ -176,7 +176,7 @@ In **Homework Problem Set XX**, you will build a simple two-dimensional version 
 
 # ╔═╡ 507342e0-1f76-11eb-098a-0973155652e2
 html"""
-<iframe width="700" height="394" src="https://www.youtube.com/embed/lYm_IyBHMUs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/lYm_IyBHMUs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
 # ╔═╡ d6a7e652-1f7d-11eb-2a5f-13ff13b9850c

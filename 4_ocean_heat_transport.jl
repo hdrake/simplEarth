@@ -19,28 +19,29 @@ begin
 	Pkg.activate(mktempdir())
 	Pkg.add("Plots")
 	Pkg.add("PlutoUI")
-	Pkg.add("ImageIO")
 	Pkg.add("Images")
-	Pkg.add("ImageFiltering")
-	Pkg.add("OffsetArrays")
+	Pkg.add("FileIO")
+	Pkg.add("ImageMagick")
+	Pkg.add("ImageIO")
+	Pkg.add(url="https://github.com/JuliaArrays/OffsetArrays.jl")
 	using Plots
 	using PlutoUI
-	using ImageIO, Images, ImageFiltering
+	using Images
 	using OffsetArrays
 end
 
 # ╔═╡ ed741ec6-1f75-11eb-03be-ad6284abaab8
 html"""
-<iframe width="700" height="394" src="https://www.youtube.com/embed/H4HUJs6LQfI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/H4HUJs6LQfI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
 # ╔═╡ 65da5b38-12dc-11eb-3505-bdaf7834afaa
 begin
 	Δx = 0.02
 	Δy = 0.02
-	Δt = 0.001
+	Δt = 0.002
 	
-	κ = 0.1
+	κ = 0.01
 	
 	x = (0. -Δx/2.:Δx:1. +Δx/2.)'
 	y = (-1. -Δy/2.:Δy:1. +Δx/2.)
@@ -51,10 +52,10 @@ end;
 
 # ╔═╡ 9036dc6a-204e-11eb-305d-45e760e62bef
 begin
-	diff_kernel = OffsetArray(zeros(3,3), -1:1, -1:1)
+	diff_kernel = OffsetArray(zeros(Float64, 3,3), -1:1, -1:1)
 	diff_kernel[0, 0] = -4
-	diff_kernel[-1, 0] = 1; diff_kernel[1, 0] = 1;
-	diff_kernel[0, -1] = 1; diff_kernel[0, 1] = 1;
+	diff_kernel[-1, 0] = 1.; diff_kernel[1, 0] = 1.;
+	diff_kernel[0, -1] = 1.; diff_kernel[0, 1] = 1.;
 	diff_kernel
 end
 
@@ -63,16 +64,29 @@ begin
 	function diffuse(T, j, i)
 		return κ.*sum(diff_kernel[-1:1,-1:1].*T[j-1:j+1, i-1:i+1])/(2Δx^2)
 	end
-	diffuse(T) = [diffuse(deepcopy(T), j, i) for j=2:Ny-1, i=2:Nx-1]
+	diffuse(T) = [diffuse(T, j, i) for j=2:Ny-1, i=2:Nx-1]
 end
 
 # ╔═╡ 1cea2b90-205d-11eb-0d06-7df64faf1b53
 begin
-	adv_kernel = OffsetArray(zeros(3,3), -1:1, -1:1)
-	adv_kernel[-1, 0] = -1; adv_kernel[1, 0] = 1;
-	adv_kernel[0, -1] = -1; adv_kernel[0, 1] = 1;
+	adv_kernel = OffsetArray(zeros(Float64, 3,3), -1:1, -1:1)
+	adv_kernel[-1, 0] = -1.; adv_kernel[1, 0] = 1.;
+	adv_kernel[0, -1] = -1.; adv_kernel[0, 1] = 1.;
 	adv_kernel
 end
+
+# ╔═╡ 6b3b6030-2066-11eb-3343-e19284638efb
+plot_kernel(A) = heatmap(
+	OffsetArray(A, 1:size(A,1), 1:size(A,2)),
+	color=:bluesreds, clims=(-maximum(abs.(A)), maximum(abs.(A))), colorbar=false,
+	xticks=false, yticks=false, size=(100, 100), xaxis=false, yaxis=false
+)
+
+# ╔═╡ fd07ee24-2067-11eb-0ac8-7b3da3993223
+ plot_kernel(diff_kernel)
+
+# ╔═╡ dab0f406-2067-11eb-176d-9dab6819dc98
+ plot_kernel(adv_kernel)
 
 # ╔═╡ b68ca886-2053-11eb-2e39-35c724ed3a3c
 function update_ghostcells!(A; option="no-flux")
@@ -162,7 +176,7 @@ begin
 			sum(adv_kernel[-1:1, 0].*(V[j-1:j+1, i].*T[j-1:j+1, i]))/(2Δy)
 		)
 	end
-	advect(T) = [advect(deepcopy(T), j, i) for j=2:Ny-1, i=2:Nx-1]
+	advect(T) = [advect(T, j, i) for j=2:Ny-1, i=2:Nx-1]
 end
 
 # ╔═╡ 87bfc240-12e3-11eb-03cc-756dc00efa6c
@@ -213,8 +227,11 @@ end |> as_svg
 # ╟─ed741ec6-1f75-11eb-03be-ad6284abaab8
 # ╠═65da5b38-12dc-11eb-3505-bdaf7834afaa
 # ╠═9036dc6a-204e-11eb-305d-45e760e62bef
+# ╠═fd07ee24-2067-11eb-0ac8-7b3da3993223
 # ╠═79a0086c-2050-11eb-1974-49d430b5eecd
 # ╠═1cea2b90-205d-11eb-0d06-7df64faf1b53
+# ╠═dab0f406-2067-11eb-176d-9dab6819dc98
+# ╠═6b3b6030-2066-11eb-3343-e19284638efb
 # ╠═989df49a-205c-11eb-25b0-4d0119d3adef
 # ╠═b68ca886-2053-11eb-2e39-35c724ed3a3c
 # ╠═c4424838-12e2-11eb-25eb-058344b39c8b
@@ -222,7 +239,7 @@ end |> as_svg
 # ╟─f5ae1756-12e9-11eb-1228-8f03879c154a
 # ╟─f9824610-12e7-11eb-3e61-f96c900a0636
 # ╠═87bfc240-12e3-11eb-03cc-756dc00efa6c
-# ╟─440fe49a-12e5-11eb-1c08-f706f5f33c84
+# ╠═440fe49a-12e5-11eb-1c08-f706f5f33c84
 # ╠═bd879bbe-12de-11eb-0d1d-93bba42b6ff9
 # ╠═3cc1218e-1307-11eb-1907-e7cd68f6af35
 # ╠═3b0e16a2-12e5-11eb-3130-c763c1c85182

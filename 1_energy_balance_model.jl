@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.6
+# v0.12.7
 
 using Markdown
 using InteractiveUtils
@@ -29,9 +29,20 @@ begin
 	using CSV, HTTP, DataFrames
 end
 
+# ╔═╡ 576a92f4-209a-11eb-36f8-0b27b3ededa7
+md"""
+# MIT 18.S191 – Introduction to Computational Thinking
+"""
+
+# ╔═╡ b01a3292-209a-11eb-2515-27f4a0227242
+md"## Module 4: Climate Modelling
+"
+
 # ╔═╡ e428f43e-13a1-11eb-15a5-2f677335bdd9
 md"""
-## Lecture 1: A "zero-dimensional" energy balance model of Earth's climate
+## Lecture 20: A "zero-dimensional" energy balance model of Earth's climate
+
+#### 1) Climate physics background
 
 The simplest climate model can be conceptualized as:
 \begin{align}
@@ -52,7 +63,7 @@ md"To make this simple conceptual model quantitative, we need a mathematical for
 
 # ╔═╡ 619e8dde-13a2-11eb-1ac4-f1ce7f27b724
 md"""
-**1. Absorbed solar radiation.**
+##### 1.1 Absorbed solar radiation
 
 At Earth's orbital distance from the Sun, the power of the Sun's rays that intercept the Earth is equal to
 """
@@ -83,7 +94,7 @@ $\textcolor{orange}{\text{absorbed solar radiation} \equiv \frac{S(1-\alpha)}{4}
 absorbed_solar_radiation(; α=α, S=S) = S*(1 - α)/4; # [W/m^2]
 
 # ╔═╡ d5293b24-177f-11eb-1135-4f6395003637
-md"""**Outgoing thermal radiation**
+md"""##### 1.2) Outgoing thermal radiation
 
 The outgoing thermal radiation term $\mathcal{G}(T)$ (or "blackbody cooling to space") represents the combined effects of *negative feedbacks that dampen warming*, such as **blackbody radiation**, and *positive feedbacks that amplify warming*, such as the **water vapor feedback**.
 
@@ -140,7 +151,7 @@ A = S*(1. - α)/4 + B*T0; # [W/m^2].
 
 # ╔═╡ eaceee7e-177f-11eb-3d94-778732ca8768
 md"""
-**Human-caused greenhouse effect**
+##### 1.3) Human-caused greenhouse effect
 
 Empirically, the greenhouse effect is known to be a logarithmic function of CO2 concentrations
 
@@ -161,7 +172,7 @@ CO2_PI = 280.; # preindustrial CO2 concentration [parts per million; ppm];
 
 # ╔═╡ d42ff276-177f-11eb-32e5-b5ce2c4cd42f
 md"""
-**Change in heat content**
+##### 1.4) Change in heat content
 
 The heat content $CT$ is determined by the temperature $T$ (in Kelvin) and the heat capacity of the climate system. While we are interested in the temperature of the atmosphere, which has a very small heat capacity, its heat is closely coupled with that of the upper ocean, which has a much larger heat capacity of 
 """
@@ -179,7 +190,7 @@ $\color{brown}{\text{change in heat content } =\; C \frac{dT}{dt}}$
 # ╔═╡ fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
 md"""
 
-##### The "zero-dimensional" climate model equation
+##### 1.5) "zero-dimensional" climate model equation
 
 Combining all of these subcomponent models, we write the governing equation of the "zero-dimensional" energy balance climate model as the **Ordinary Differential Equation (ODE)**:
 
@@ -195,7 +206,9 @@ which determines the time evolution of Earth's globally-averaged surface tempera
 
 # ╔═╡ 8d6d7fc6-1788-11eb-234d-59f27a1b79d2
 md"""
-#### Numerical solution method and data structures
+#### 2) Numerical solution method and data structures
+
+##### 2.1) Discretization
 
 The energy balance model equation above can be **discretized** in time as
 
@@ -207,13 +220,17 @@ By re-arranging the equation, we can solve for the temperature at the next times
 
 $T_{n+1} = T_{n} + \frac{\Delta t}{C} \left[ \frac{ \left( 1-\alpha \right) S}{4} - (A - BT_{n}) + a \ln \left( \frac{[\text{CO}₂]_{n}}{[\text{CO}₂]_{\text{PI}}} \right) \right]$
 
-More generally, we recognize this equation is of the form:
+##### 2.2) Timestepping
+
+More generally, we recognize this equation to be of the form:
 
 $T_{n+1} = T_{n} + \Delta t * \text{tendency}(T_{n} \,; ...),$
+
+which we implement below (don't forget to update the time as well, $t_{n+1} = t_{n} + \Delta t$), which takes in an instance of our anticipated energy balance model `EBM` type as its only argument.
 """
 
 # ╔═╡ 5a51fac0-179c-11eb-0b65-859cc9232a3a
-md"where the tendency is a function of the present temperature $T_{n}$, as well as a number of other parameters."
+md"where the `tendency(ebm)` is the sum of the various physical forcing mechanisms and is a function of the present temperature $T_{n}$, as well as a number of other parameters."
 
 # ╔═╡ 35dfe0d2-17b0-11eb-20dc-7d7f4c5568ae
 tendency(ebm) = (1. /ebm.C) * (
@@ -229,7 +246,13 @@ function timestep!(ebm)
 end;
 
 # ╔═╡ 3a549f2a-17b0-11eb-1d80-4bc2abc3dba6
-md"It is convenient to write these functions as generally as possible in case we want to change any of the model parameters are functions later on."
+md"
+##### 2.3) Data structure
+
+We implement our custom `EBM` type as use a `mutable struct` because we want to be able to modify the model's parameters in between different simulations, or even as time goes on in a single simulation.
+
+To save ourselves some time later on, we also make use of **multiple dispatch** to define methods of the EBM that take on default values for many of the parameters.
+"
 
 # ╔═╡ d0bf9b06-179c-11eb-0f1c-2fd535cb0e57
 begin
@@ -266,7 +289,9 @@ begin
 end;
 
 # ╔═╡ e81fc2f8-17b0-11eb-20f8-2f4e890dc867
-md"Let's define a function that runs an `EBM` simulation by timestepping forward until a given `end_year`."
+md"
+##### 2.4) Running simulations of the energy balance model
+Let's define a function that runs an `EBM` simulation by timestepping forward until a given `end_year`."
 
 # ╔═╡ e5902d52-17b0-11eb-1ba3-4be6c2bbc90f
 begin
@@ -281,8 +306,9 @@ end
 
 # ╔═╡ 38346e6a-0d98-11eb-280b-f79787a3c788
 md"""
+#### 3) Energy balance model applications
 
-#### Exercise A: Earth's preindustrial stable equilibrium
+##### 3.1) Why was Earth's preindustrial climate so stable?
 
 Let us consider the simple case where CO₂ concentrations remain at their pre-industrial temperatures.
 """
@@ -310,7 +336,7 @@ md"This figure shows that, no matter where we start out, the overall negative fe
 
 # ╔═╡ 0c393822-1789-11eb-30b3-7ff90191d89e
 md"""
-#### Exercise B: Greenhouse-gas fueled historical global warming
+##### 3.2) Historical global warming fueled by greenhouse gas emissions
 
 Human greenhouse gas emissions have fundamentally altered Earth's energy balance, moving us away from the stable preindustrial climate of the past few thousand years.
 
@@ -329,17 +355,43 @@ end;
 # ╔═╡ 6cb04022-1e0c-11eb-026f-f74661459a9e
 md"Feeding this CO₂ function into our model, we can run it forward from 1850 to 2020 to try and simulate the amount of global warming that observed over this historical period."
 
-# ╔═╡ 6ad84f92-1e0c-11eb-066f-d1b8c28a2cb2
-begin
-	hist = EBM(T0, 1850., 1., CO2_hist)
-	run!(hist, 2020.)
-end
-
 # ╔═╡ 0c3db0a0-1dec-11eb-3105-a75ada72d69d
 md"To check how accurate this simple model is in reproducing observed warming over this period, click the checkbox below."
 
 # ╔═╡ 70039d58-1deb-11eb-053d-b96c2001b182
 md"*Click to reveal observations of global warming* $(@bind show_obs CheckBox(default=false))"
+
+# ╔═╡ 1e9a7382-209e-11eb-0a1f-c54079d1fb11
+begin
+	Bmin = -4.; Bmax = -0.;
+	Bslider = @bind Bvary Slider(Bmin: 0.1: Bmax, default=B);
+	md""" $(Bmin) W/m²/K $(Bslider) $(Bmax) W/m²/K"""
+end
+
+# ╔═╡ 2ad598ce-209f-11eb-3aa7-d10c0c267470
+md"""
+*Move the slider below* to change the strength of **climate feedbacks**: B = $(Bvary) [W/m²/K] 
+"""
+
+# ╔═╡ e4029e6c-209f-11eb-3c0f-11ac0759a30f
+begin
+	Cmin = 10.; Cmax = 200.;
+	Cslider = @bind Cvary Slider(Cmin: 0.1: Cmax, default=C);
+	md""" $(Cmin)  J/m²/K $(Cslider) $(Cmax)  J/m²/K,"""
+end
+
+# ╔═╡ 6ad84f92-1e0c-11eb-066f-d1b8c28a2cb2
+begin
+	hist = EBM(T0, 1850., 1., CO2_hist,
+		C=Cvary, B=Bvary, A=(S*(1. - α)/4 + Bvary*T0)
+	)
+	run!(hist, 2020.)
+end
+
+# ╔═╡ d36ca536-209f-11eb-0489-051bbb54410f
+md"""
+or the **oceans' heat capacity**: C = $(Cvary) [W/m²/K],
+"""
 
 # ╔═╡ caf982c0-1f73-11eb-2648-d3b71d230c6d
 if show_obs
@@ -356,7 +408,7 @@ end
 if show_obs
 	html"""
 
-	<div style="padding:0 0 0 0;position:relative;"><iframe width="700" height="394" src="https://www.youtube.com/embed/oRsY_UviBPE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+	<div style="padding:0 0 0 0;position:relative;"><iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/oRsY_UviBPE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
 	"""
 end
 
@@ -366,7 +418,7 @@ if show_obs
 end
 
 # ╔═╡ 3cd3b9bc-1789-11eb-3373-3f54fa426e28
-md""" #### Exercise C: Best- and worst-case future projections of human-caused global warming
+md""" ##### 3.3) Best- and worst-case projections of future global warming
 
 """
 
@@ -397,7 +449,7 @@ md"Although the greenhouse effect due to human-caused CO₂ emissions is the dom
 
 # ╔═╡ d04e6a94-1f85-11eb-081c-ff22bc849191
 html"""
-<iframe width="700" height="394" src="https://www.youtube.com/embed/E7kMr2OYKSU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/E7kMr2OYKSU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
 # ╔═╡ 59526360-17b9-11eb-04eb-b9771e718149
@@ -432,6 +484,9 @@ end
 
 # ╔═╡ 32f2d79e-1f85-11eb-0ecf-cb589ce85c1e
 md"#### Plotting functions"
+
+# ╔═╡ 5d77e3a4-209f-11eb-09d6-a792d0c54aec
+as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
 
 # ╔═╡ 391fdb60-17b7-11eb-3e58-4598f229f679
 function plot_obs_CO2!(p)
@@ -472,7 +527,7 @@ begin
 	end
 	
 	plot(pCO2, pT, size=(680, 300))
-end
+end |> as_svg
 
 # ╔═╡ 461c15d2-17a2-11eb-32ed-97e2ebbc6c93
 begin
@@ -493,6 +548,8 @@ end
 md"#### Package dependencies"
 
 # ╔═╡ Cell order:
+# ╟─576a92f4-209a-11eb-36f8-0b27b3ededa7
+# ╟─b01a3292-209a-11eb-2515-27f4a0227242
 # ╟─e428f43e-13a1-11eb-15a5-2f677335bdd9
 # ╟─ef62c780-13a1-11eb-3895-ff3abe0fdf5d
 # ╟─c30dd85a-177f-11eb-3bbf-2bde4399ebbe
@@ -535,10 +592,14 @@ md"#### Package dependencies"
 # ╟─0c393822-1789-11eb-30b3-7ff90191d89e
 # ╠═b8527aa8-179e-11eb-3023-05bb5d40a1bd
 # ╟─6cb04022-1e0c-11eb-026f-f74661459a9e
-# ╠═6ad84f92-1e0c-11eb-066f-d1b8c28a2cb2
+# ╟─6ad84f92-1e0c-11eb-066f-d1b8c28a2cb2
 # ╟─0c3db0a0-1dec-11eb-3105-a75ada72d69d
 # ╟─70039d58-1deb-11eb-053d-b96c2001b182
 # ╟─c394ec66-17a0-11eb-259f-6b57f8cd4ece
+# ╟─2ad598ce-209f-11eb-3aa7-d10c0c267470
+# ╟─1e9a7382-209e-11eb-0a1f-c54079d1fb11
+# ╟─d36ca536-209f-11eb-0489-051bbb54410f
+# ╟─e4029e6c-209f-11eb-3c0f-11ac0759a30f
 # ╟─caf982c0-1f73-11eb-2648-d3b71d230c6d
 # ╟─448db99e-1f74-11eb-3637-a1aec60e5a10
 # ╟─0b7d6da2-1dee-11eb-279b-dfc5318338e5
@@ -556,6 +617,7 @@ md"#### Package dependencies"
 # ╟─94d9dc06-17b9-11eb-3588-03e0ca9391c6
 # ╟─bf1611ae-17b6-11eb-371d-dda63ceb69c1
 # ╟─32f2d79e-1f85-11eb-0ecf-cb589ce85c1e
+# ╠═5d77e3a4-209f-11eb-09d6-a792d0c54aec
 # ╠═391fdb60-17b7-11eb-3e58-4598f229f679
 # ╠═7467143e-1f86-11eb-0be2-5f57b6b169ad
 # ╠═fcbe38c2-17ae-11eb-3edf-d1d5dbd0af08
