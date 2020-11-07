@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.6
+# v0.12.7
 
 using Markdown
 using InteractiveUtils
@@ -135,6 +135,9 @@ begin
 	histogram(ECS_samples, xlims=(0, 8), size=(500, 240))
 end
 
+# ╔═╡ 6392bf28-210f-11eb-0793-835be433c454
+scatter(B_samples, ECS_samples, ylims=[0, 20])
+
 # ╔═╡ 25f92dec-1fc4-11eb-055d-f34deea81d0e
 begin
 	double_CO2(t) = 2*Model.CO2_PI
@@ -156,13 +159,14 @@ end
 # ╟─1312525c-1fc0-11eb-2756-5bc3101d2260
 # ╠═c4398f9c-1fc4-11eb-0bbb-37f066c6027d
 # ╟─7f961bc0-1fc5-11eb-1f18-612aeff0d8df
-# ╟─25f92dec-1fc4-11eb-055d-f34deea81d0e
+# ╠═25f92dec-1fc4-11eb-055d-f34deea81d0e
 # ╟─16348b6a-1fc2-11eb-0b9c-65df528db2a1
 # ╠═930d7154-1fbf-11eb-1c3a-b1970d291811
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╟─49cb5174-1fc3-11eb-3670-c3868c9b0255
 # ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
 # ╟─82f8fe38-1fc3-11eb-3a89-ffe737246a28
+# ╠═6392bf28-210f-11eb-0793-835be433c454
 # ╟─7d815988-1fc7-11eb-322a-4509e7128ce3
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc

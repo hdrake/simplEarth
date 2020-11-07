@@ -36,13 +36,29 @@ md"""
 
 # ╔═╡ b01a3292-209a-11eb-2515-27f4a0227242
 md"## Module 4: Climate Modelling
+
+**Learning goals:**
+- Applied mathematics
+  - Dynamical systems theory: stability & hysteresis
+  - Numerical methods for solving PDEs
+  - Advection, diffusion, and Navier-Stokes equations
+
+- Computer Science
+  - Developing modular problem-specific software
+  - Analogies between image processing & PDEs
+  - Modelling complex systems
+
+- Climate Science
+  - Fundamental climate physics: radiation, albedo, and the greenhouse effect
+  - Basics of climate modelling, parameterization, and dynamical coupling
+  - Ocean gyres and geophysical turbulence
 "
 
 # ╔═╡ e428f43e-13a1-11eb-15a5-2f677335bdd9
 md"""
 ## Lecture 20: A "zero-dimensional" energy balance model of Earth's climate
 
-#### 1) Climate physics background
+#### 1) Background: climate physics
 
 The simplest climate model can be conceptualized as:
 \begin{align}

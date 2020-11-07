@@ -28,7 +28,7 @@ begin
 end
 
 # ╔═╡ 05031b60-1df4-11eb-2b61-956e526b3d4a
-md"## Lecture 2: Snowball Earth, the ice-albedo feedback, and multiple equilibria"
+md"## Lecture 21: Snowball Earth, the ice-albedo feedback, and multiple equilibria"
 
 # ╔═╡ a05bd3ce-1e06-11eb-1af2-65886cab38ef
 md"![](https://static01.nyt.com/images/2019/12/17/science/02TB-SNOWBALLEARTH1/02TB-SNOWBALLEARTH1-superJumbo-v2.jpg?quality=90&auto=webp)
@@ -37,7 +37,7 @@ md"![](https://static01.nyt.com/images/2019/12/17/science/02TB-SNOWBALLEARTH1/02
 
 # ╔═╡ 4f5f3038-1e06-11eb-16a2-b11035701fb8
 md"""
-### Snowball Earth
+#### 1) Background: Snowball Earth
 
 Geological evidence shows that the Neoproterozoic Era (550 to 1000 million years ago) is marked by two global glaciation events, in which Earth's surface was covered in ice and snow from the Equator to the poles (see review by [Pierrehumbert et al. 2011](https://www.annualreviews.org/doi/full/10.1146/annurev-earth-040809-152447)).
 
@@ -68,7 +68,7 @@ To implement this into our energy balance model from Lecture 1, all we have to d
 """
 
 # ╔═╡ 13f42334-1e27-11eb-11a0-f51af4574a6b
-md"""### Multiple Equilibria
+md"""### 2) Multiple Equilibria
 **OR: the existence of "alternate Earths"**
 
 Human civilization flourished over the last several thousand years in part because Earth's global climate has been remarkably stable and forgiving. The preindustrial combination of natural greenhouse effect and incoming solar radiation yielded temperatures between the freezing and boiling points of water across most of the planet, allowing ecoystems based on liquid water to thrive.
@@ -80,7 +80,7 @@ We know from Lecture 1 that in response to temperature fluctuations, *negative f
 
 # ╔═╡ 67f43076-1fa5-11eb-093f-75e406d054c6
 md"""
-##### Radiative stability analysis
+##### 2.1) Radiative stability analysis
 
 We can understand why our model has two stable equilibria and one unstable equilibrium by applying concepts from dynamical systems theory.
 
@@ -95,7 +95,7 @@ In particular, by plotting right-hand-side tendency terms (proportional to $\dot
 
 # ╔═╡ 58e9b802-1e11-11eb-3479-0f7eb69b2c3a
 md"
-### Turning up the Sun
+##### 3.2) Turning up the Sun
 
 Over the entire history of the Earth, the Sun is thought to have brightened by about 40%."
 
@@ -107,7 +107,7 @@ html"""
 # ╔═╡ 873befc2-1f7e-11eb-16af-fba7f1e52eeb
 md"In the Neoproterozoic, the Sun was 93% as bright as it is today, such that the incoming solar radiation was $S =$ 1272 W/m², Earth's average temperature plunged to $T = -50$°C, and Earth's ice-covered surface had a high albedo (reflectivity) of $α_{i} = 0.6$.
 
-##### Did the increasing brightness of the Sun melt the Snowball?
+##### 3.3) Did the increasing brightness of the Sun melt the Snowball?
 If we increase solar insolation to today's value of $S =$ 1368 W/m², can we warm the planet up to the pre-industrial temperature of $T=14$°C?
 "
 
@@ -129,7 +129,7 @@ end
 # ╔═╡ 9474f8e4-1f80-11eb-3c9e-c54e662cc29c
 if extend_S
 	md"""
-	### Abrupt climate transitions
+	##### Abrupt climate transitions
 	
 	In this model, temperature variations are fairly smooth unless temperatures rise above -10°C or fall below 10°C, in which case the *ice-albedo positive feedback* kicks in and causes an **abrupt climate transition**. While this is just a simple hypothetical model, these kinds of abrupt climate transitions show up all the time in the paleoclimate record and in more realistic climate model simulations.
 
@@ -139,7 +139,7 @@ end
 
 # ╔═╡ 6eca000c-1f81-11eb-068e-01d06c1beeb9
 md"""
-### If not the Sun, how did Snowball Earth melt?
+##### 3.4) If not the Sun, how did Snowball Earth melt?
 
 The leading theory is that a slow but steady outgassing of CO₂ from volcanoes eventually caused a strong enough greenhouse gas effect to offset the cooling effect of the frozen surface's high albedo and raise temperatures above the melting point $-10$°C.
 """
@@ -151,11 +151,11 @@ html"""
 
 # ╔═╡ bda79af4-1fa4-11eb-17da-21b452f43d92
 md"""
-In **Homework Problem Set XX**, you will extend the above model to include the effect of CO₂ and determine how much CO2 would need to be added to the snowball for it to melt.
+In **Homework 9**, you will extend the above model to include the effect of CO₂ and determine how much CO2 would need to be added to the snowball for it to melt.
 """
 
 # ╔═╡ da4df78a-1e2c-11eb-1d4c-69b86e196526
-md"""### Towards realistic climate modelling
+md"""##### 3.5) Towards realistic climate modelling
 
 In this simple model, the preindustrial climate of $T=14$°C is so warm that there is no ice anywhere on the planet. Indeed, the only two valid stable climates are one with *no ice* or one with *ice everywhere*. 
 
@@ -171,7 +171,7 @@ An "Aquaplanet" is a three-dimensional global climate simulation of a hypothetic
 
 The video below shows that the Aquaplanet simulation exhibits a third equilibrium state, with a *mostly-liquid ocean but ice caps at the poles*, in addition to the two we found in our zero-dimensional model.
 
-In **Homework Problem Set XX**, you will build a simple two-dimensional version of the aqua-planet and explore its stability.
+In **Homework 10**, you will build a simple two-dimensional version of the aqua-planet and explore its stability.
 """
 
 # ╔═╡ 507342e0-1f76-11eb-098a-0973155652e2
@@ -206,7 +206,7 @@ end
 Model = ingredients("1_energy_balance_model.jl"); # see ingredients function below
 
 # ╔═╡ 016c1074-1df4-11eb-2da8-578e25d9456b
-md"""### The ice-albedo feedback
+md"""##### 1.1) The ice-albedo feedback
 
 In Lecture 1, we used a **constant** value $α =$ $(Model.hist.α) for Earth's planetary albedo, which is a reasonable thing to do for small climate variations relative to the present (such as the difference between the present-day and preindustrial climates). In the case of large variations, however, this approximation is not very reliable.
 
