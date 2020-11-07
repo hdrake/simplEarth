@@ -28,7 +28,7 @@ end
 # ╔═╡ beed7b48-0e2b-11eb-2805-edf0be651fc3
 md"""
 ### Lecture 22: Solving Partial Differential Equations (PDEs) Numerically
-**Modelling one-dimensional advection and diffusion**
+**Part I: One-dimensional advection and diffusion**
 
 #### 1) Advection
 
@@ -194,9 +194,13 @@ timestepButton
 
 # ╔═╡ b00f7bec-12da-11eb-3e20-7769cc2bd0ec
 md"
-#### 4. Finite differences as kernels acting on an array
+#### 4) Finite differences as kernels acting on an array
 
-##### Blurring in image processing as diffusion
+##### 4.1) Analogies between image processing and PDEs
+
+##### 4.1.1) Blurring (Gaussian kernel) vs. Laplacian operator
+
+##### 4.1.2) Edge detection (Sobel kernel) vs. Gradient operator
 "
 
 # ╔═╡ 70ae3138-0f44-11eb-1a8d-d3b5a39c1b42

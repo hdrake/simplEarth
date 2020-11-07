@@ -39,19 +39,19 @@ md"## Module 4: Climate Modelling
 
 **Learning goals:**
 - Applied mathematics
-  - Dynamical systems theory: stability & hysteresis
-  - Numerical methods for solving PDEs
+  - Dynamical systems theory: stability, hysteresis, and chaos
+  - Numerical methods for solving time-dependent PDEs
   - Advection, diffusion, and Navier-Stokes equations
 
 - Computer Science
-  - Developing modular problem-specific software
+  - Developing software that is modular, robust, and collaborative
+  - Modelling complex systems using hierarchies
   - Analogies between image processing & PDEs
-  - Modelling complex systems
 
 - Climate Science
   - Fundamental climate physics: radiation, albedo, and the greenhouse effect
   - Basics of climate modelling, parameterization, and dynamical coupling
-  - Ocean gyres and geophysical turbulence
+  - Ocean currents and geophysical turbulence
 "
 
 # ╔═╡ e428f43e-13a1-11eb-15a5-2f677335bdd9

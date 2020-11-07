@@ -31,11 +31,98 @@ begin
 end
 
 # ╔═╡ 0f8db6f4-2113-11eb-18b4-21a469c67f3a
-
+md"""
+### Lecture 23: Solving Partial Differential Equations (PDEs) Numerically
+**Part II: Heat transport by ocean currents (two-dimensional advection and diffusion)**
+"""
 
 # ╔═╡ ed741ec6-1f75-11eb-03be-ad6284abaab8
 html"""
 <iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/H4HUJs6LQfI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+"""
+
+# ╔═╡ ac759b96-2114-11eb-24cb-d50b556f4142
+md"""
+### 1) Background: two-dimensional advection-diffusion
+
+##### 1.1) The two-dimensional advection-diffusion equation
+Recall from **Lecture 22** that the one-dimensional advection-diffusion equation is written as
+
+$\frac{\partial T(x,t)}{\partial t} = -U \frac{\partial T}{\partial x} + \kappa \frac{\partial^{2} T}{\partial x^{2}},$
+
+where $T(x, t)$ is the temperature, $U$ is a constant advective velocity and $\kappa$ is the diffusivity.
+
+The two-dimensional advection diffusion equation simply adds advection and diffusion operators acting in a second dimensions $y$ (orthogonal to $x$). 
+
+$\frac{\partial T(x,y,t)}{\partial t} = u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y} + \kappa \left( \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}} \right),$
+
+where $\vec{u}(x,y) = (u, v) = u\,\mathbf{\hat{x}} + v\,\mathbf{\hat{y}}$ is a velocity vector field.
+
+Throughout the rest of the Climate Modelling module, we will consider $x$ to be the *longitundinal* direction (positive from west to east) and $y$ to the be the *latitudinal* direction (positive from south to north).
+"""
+
+# ╔═╡ 3a4a1aea-2118-11eb-30a9-57b87f2ddfae
+md"""
+##### 1.2) Multivariable shorthand notation
+
+Conventionally, the two-dimensional advection-diffusion equation is written more succintly as
+
+$\frac{\partial T(x,y,t)}{\partial t} = - \vec{u} \cdot \nabla T + \kappa \nabla^{2} T,$
+
+using the following shorthand notation.
+
+The **gradient** operator is defined as 
+
+$\nabla \equiv (\frac{\partial}{\partial x}, \frac{\partial }{\partial y})$
+
+such that
+
+$\nabla T = (\frac{\partial T}{\partial x}, \frac{\partial T}{\partial y})$ and 
+
+$\vec{u} \cdot \nabla T = (u, v) \cdot (\frac{\partial T}{\partial x}, \frac{\partial T}{\partial y}) = u \frac{\partial T}{\partial x} + v\frac{\partial T}{\partial y}.$
+
+The **Laplacian** operator $\nabla^{2}$ (sometimes denoted $\Delta$) is defined as 
+
+$\nabla^{2} = \frac{\partial^{2}}{\partial x^{2}} + \frac{\partial^{2}}{\partial y^{2}}$
+
+such that
+
+$\nabla^{2} T = \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}}.$
+
+The **divergence** operator is defined as $\nabla \cdot [\quad]$, such that
+
+$\nabla \cdot \vec{u} = \left(\frac{\partial}{\partial x}, \frac{\partial}{\partial x} \right) \cdot (u,v) = \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y}.$
+
+**Note:** Since seawater is largely incompressible, we can approximate ocean currents as a *non-divergent flow*, with $\nabla \cdot \vec{u} = \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} = 0$. Among other implications, this allows us to write:
+
+\begin{align}
+\vec{u} \cdot \nabla T&=
+u\frac{\partial T(x,y,t)}{\partial x} + v\frac{\partial T(x,y,t)}{\partial y}\newline &=
+u\frac{\partial T}{\partial x} + v\frac{\partial T}{\partial y} + T\left(\frac{\partial u}{\partial x} + \frac{\partial v}{\partial y}\right)\newline &=
+\left( u\frac{\partial T}{\partial x} + T\frac{\partial u}{\partial x} \right) +
+\left( v\frac{\partial T}{\partial y} + \frac{\partial v}{\partial y} \right)
+\newline &=
+\frac{\partial (uT)}{\partial x} + \frac{\partial (vT)}{\partial x}\newline &=
+\nabla \cdot (\vec{u}T)
+\end{align}
+
+using the product rule (separately in both $x$ and $y$).
+"""
+
+# ╔═╡ a60e5550-211a-11eb-3cf8-f9bae0a9efd3
+md"""
+##### 1.3) The flux-form two-dimensional advection-diffusion equation
+
+This lets us finally re-write the two-dimensional advection-diffusion equation as:
+
+$\frac{\partial T}{\partial t} = - \nabla \cdot (\vec{u}T) + \kappa \nabla^{2} T$
+
+which is the form we will use in our numerical algorithm below.
+"""
+
+# ╔═╡ b1b5625e-211a-11eb-3ee1-3ba9c9cc375a
+md"""
+### 2)
 """
 
 # ╔═╡ 65da5b38-12dc-11eb-3505-bdaf7834afaa
@@ -174,7 +261,7 @@ begin
 	U[:,end] .= 0.; V[:,end] .= 0.;
 end;
 
-# ╔═╡ 989df49a-205c-11eb-25b0-4d0119d3adef
+# ╔═╡ 16b72cfc-2114-11eb-257d-b7747a99e155
 begin
 	function advect(T, j, i)
 		return .-(
@@ -230,8 +317,12 @@ begin
 end |> as_svg
 
 # ╔═╡ Cell order:
-# ╠═0f8db6f4-2113-11eb-18b4-21a469c67f3a
+# ╟─0f8db6f4-2113-11eb-18b4-21a469c67f3a
 # ╟─ed741ec6-1f75-11eb-03be-ad6284abaab8
+# ╟─ac759b96-2114-11eb-24cb-d50b556f4142
+# ╟─3a4a1aea-2118-11eb-30a9-57b87f2ddfae
+# ╟─a60e5550-211a-11eb-3cf8-f9bae0a9efd3
+# ╠═b1b5625e-211a-11eb-3ee1-3ba9c9cc375a
 # ╠═65da5b38-12dc-11eb-3505-bdaf7834afaa
 # ╠═9036dc6a-204e-11eb-305d-45e760e62bef
 # ╠═fd07ee24-2067-11eb-0ac8-7b3da3993223
@@ -239,7 +330,7 @@ end |> as_svg
 # ╠═1cea2b90-205d-11eb-0d06-7df64faf1b53
 # ╠═dab0f406-2067-11eb-176d-9dab6819dc98
 # ╠═6b3b6030-2066-11eb-3343-e19284638efb
-# ╠═989df49a-205c-11eb-25b0-4d0119d3adef
+# ╠═16b72cfc-2114-11eb-257d-b7747a99e155
 # ╠═b68ca886-2053-11eb-2e39-35c724ed3a3c
 # ╠═c4424838-12e2-11eb-25eb-058344b39c8b
 # ╠═3b4e4722-12fe-11eb-238d-17aea2c23f58
