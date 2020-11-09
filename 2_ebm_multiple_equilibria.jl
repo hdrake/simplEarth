@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.7
 
 using Markdown
 using InteractiveUtils
@@ -15,265 +15,478 @@ end
 
 # ╔═╡ e9ad66b0-0d6b-11eb-26c0-27413c19dd32
 begin
-	using Pkg
+	import Pkg
+	Pkg.activate(mktempdir())
 	Pkg.add("Plots")
 	Pkg.add("PlutoUI")
 	Pkg.add("LaTeXStrings")
 	using LaTeXStrings
 	using Plots
 	using PlutoUI
+	
+	md"#### Package dependencies"
 end
 
-# ╔═╡ fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
+# ╔═╡ 05031b60-1df4-11eb-2b61-956e526b3d4a
+md"## Lecture 21: Snowball Earth, the ice-albedo feedback, and multiple equilibria"
+
+# ╔═╡ a05bd3ce-1e06-11eb-1af2-65886cab38ef
+md"![](https://static01.nyt.com/images/2019/12/17/science/02TB-SNOWBALLEARTH1/02TB-SNOWBALLEARTH1-superJumbo-v2.jpg?quality=90&auto=webp)
+[Source (New York Times)](https://static01.nyt.com/images/2019/12/17/science/02TB-SNOWBALLEARTH1/02TB-SNOWBALLEARTH1-superJumbo-v2.jpg?quality=90&auto=webp)
+"
+
+# ╔═╡ 4f5f3038-1e06-11eb-16a2-b11035701fb8
 md"""
-#### A "zero-dimensional" energy balance model of Earth's climate
+#### 1) Background: Snowball Earth
 
-The simplest climate model can be conceptualized as:
-\begin{align}
-\text{\color{brown}{change in heat content}} = &\;\quad \text{\color{orange}{absorbed solar radiation}} \newline
-& - \text{\color{blue}{thermal cooling to space}}
-\newline
-& + \text{\color{grey}{human-caused greenhouse effect}}
-\end{align}
+Geological evidence shows that the Neoproterozoic Era (550 to 1000 million years ago) is marked by two global glaciation events, in which Earth's surface was covered in ice and snow from the Equator to the poles (see review by [Pierrehumbert et al. 2011](https://www.annualreviews.org/doi/full/10.1146/annurev-earth-040809-152447)).
 
-Mathematically, we write this as
+![](https://news.cnrs.fr/sites/default/files/styles/asset_image_full/public/assets/images/frise_earths_glaciations_72dpi.jpg?itok=MgKrHlIV)
 
-\begin{gather}
-\color{brown}{C \frac{dT}{dt}}
-\; \color{black}{=} \; \color{orange}{\frac{(1 - α)S}{4}}
-\; \color{black}{-} \; \color{blue}{(A + BT)}
-\; \color{black}{+} \; \color{grey}{a \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PI}}} \right)},
-\end{gather}
-where:
-- $ T $ is the Earth's average temperature (units °C),
-- $ C $ is the heat content of the (units ??)
-- $ \frac{d}{d t} $ is a derivative with respect to time (units 1/s),
-- $ \alpha $ is the planetary reflectivity, or *albedo*  (unitless $\in [0,1]$)
-- $ S $ is the incoming solar radiation (units W/m$^2$).
-- $ A $ is a constant that determines Earth's average thermal cooling to space (units W/m$^{2}$) for a reference climate with a temperature of $T=0$°C.
-- $ B $ is a *feedback parameter* that determines how Earth's thermal cooling to space varies with temperature.
-- $ [\text{CO}₂] $ is the atmospheric Carbon Dioxide concentration (units ppm), where the subscript **PI** denotes the **P**re-**I**ndustrial concentration.
-- $ a $ is a constant that determines the strength of the CO₂ greenhouse effect.
-
-
-Note: the factor of 1/4 is the ratio of Earth's cross-sectional area $πR^{2}$– the disk of radius $R$ that intercepts the solar beam– to a sphere's surface area $4πR^{2}$.
+In this lecture, we make a simple modification to our **zero-dimensional energy balance model** from Lecture 1 that will allow us to explore the processes behind these sudden glaciations.
 """
 
-# ╔═╡ acdc0180-0dc3-11eb-1c73-bb12aed2e66b
-md"""
-Note: The "thermal cooling to space" term represents the combined effects of negative feedbacks that dampen warming, like **blackbody radiation** (which goes like $\sim \sigma T^{4}$), and positive feedbacks that amplify warming, like the **water vapor feedback** (which goes like $\sim - \exp(T)$). The net effect of all of these feedbacks is the the thermal cooling to space is *approximately linear* across a wide range of parameters, which conveniently makes our linear model $A + BT$ above fairly accurate.
+# ╔═╡ 9c118f9a-1df0-11eb-22dd-b14428994076
+html"""
+<img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Ice_albedo_feedback.jpg" height=370>
 """
 
 # ╔═╡ 38346e6a-0d98-11eb-280b-f79787a3c788
 md"""
-
-### The non-linear ice-albedo feedback
-
-For this section, we will ignore the influence of humans thus the CO₂ concentrations remain equal to their pre-industrial values and thus the term vanishes.
-
-The *ice-albedo feedback* refers to the fact that the reflectively (or *albedo*) of the planet depends strongly on whether it is mostly covered in liquid water (which is a very absorbent dark blue) or solid ice (which is a very reflective white). We can approximate this behavior globally by specifying the following step-function for the albedo's dependence on temperature:
+We can represent the ice-albedo feedback crudely in our energy balance model by allowing the albedo to depend on temperature:
 
 $\alpha(T) = \begin{cases}
-\alpha_{o} &\mbox{if } T > 0\text{°C  (water in liquid phase)}\\
-\alpha_{o} + \alpha_{i} & \mbox{if } T \leq 0\text{°C  (water in solid phase)}
+\alpha_{i} & \mbox{if }\;\; T \leq -10\text{°C} &\text{(completely frozen)}\\
+\alpha_{i} + (\alpha_{0}-\alpha_{i})\frac{T + 10}{20} & \mbox{if }\;\; -10\text{°C} \leq T \leq 10\text{°C} &\text{(partially frozen)}\\
+\alpha_{0} &\mbox{if }\;\; T \geq 10\text{°C} &\text{(no ice)}
 \end{cases}$
-
-With this formulation, the energy balance model can be **discretized** in time as
-
-$C \frac{T_{n+1} - T_{n}}{\Delta t} = \frac{\left( 1-\alpha(T_{n}) \right) S}{4} - (A + BT_{n}),$
-
-where $n$ is the present timestep and $n+1$ is the next timestep $\Delta t$ later.
-
-By re-arranging the equation, we can solve for the temperature at the next timestep $n+1$ based on the known temperature at the present timestep $n$:
-
-$T_{n+1} = T_{n} + \Delta t \left[ \frac{1}{C} \left( \frac{ \left( 1-\alpha(T_{n}) \right) S}{4} - (A + BT_{n}) \right) \right]$
 """
 
-# ╔═╡ 9e6a970c-0dc7-11eb-214e-557763664f31
+# ╔═╡ a8dcc0fc-1df8-11eb-21fd-1fdebe5dabfc
 md"""
-#### Implementing the energy balance model data structures
+To implement this into our energy balance model from Lecture 1, all we have to do is overwrite the definition of the `timestep!` method to specify the temperature-dependent albedo at any given time:
 """
 
-# ╔═╡ 6b57e7f8-0d7b-11eb-272e-010167db303b
+# ╔═╡ 13f42334-1e27-11eb-11a0-f51af4574a6b
+md"""### 2) Multiple Equilibria
+**OR: the existence of "alternate Earths"**
+
+Human civilization flourished over the last several thousand years in part because Earth's global climate has been remarkably stable and forgiving. The preindustrial combination of natural greenhouse effect and incoming solar radiation yielded temperatures between the freezing and boiling points of water across most of the planet, allowing ecoystems based on liquid water to thrive.
+
+The climate system, however, is rife with non-linear effects like the **ice-albedo effect**, which reveal just how fragile our habitable planet is and just how unique our stable pre-industrial climate was.
+
+We know from Lecture 1 that in response to temperature fluctuations, *negative feedbacks* act to restore Earth's temperature back towards a single equilibrium state in which absorbed solar radiation is balanced by outgoing thermal radiation.
+"""
+
+# ╔═╡ 67f43076-1fa5-11eb-093f-75e406d054c6
 md"""
-We begin by creating a data structure to store the present temperature and timestep.
+##### 2.1) Radiative stability analysis
+
+We can understand why our model has two stable equilibria and one unstable equilibrium by applying concepts from dynamical systems theory.
+
+Recall that, with fixed CO₂ concentrations, our energy balance model differential equation can be expressed as:
+
+$C\frac{d\,T}{d\,t} = \text{ASR}(T) - \text{OTR}(T),$
+
+where now the Absorbed Solar Radiation (ASR) is also temperature dependent because the albedo $α(T)$ is.
+
+In particular, by plotting right-hand-side tendency terms (proportional to $\dot{T} \equiv \frac{d\, T}{d \, t}$) as a function of the state variable $T$ we can plot a stability diagram for our system. 
 """
 
-# ╔═╡ a3d177b4-0d67-11eb-3578-d1f2d94f10b2
-begin
-	mutable struct EBM
-		T::Float64
-		t::Float64
-	end
-	EBM(T) = EBM(T, 0.)
+# ╔═╡ 58e9b802-1e11-11eb-3479-0f7eb69b2c3a
+md"
+##### 3.2) Turning up the Sun
+
+Over the entire history of the Earth, the Sun is thought to have brightened by about 40%."
+
+# ╔═╡ 846618ea-1f7e-11eb-15e8-6176acb9278b
+html"""
+<img src="https://rainbow.ldeo.columbia.edu/courses/s4021/ec98/fys.gif" alt="Plot showing increasing solar luminosity over time" height=300>
+"""
+
+# ╔═╡ 873befc2-1f7e-11eb-16af-fba7f1e52eeb
+md"In the Neoproterozoic, the Sun was 93% as bright as it is today, such that the incoming solar radiation was $S =$ 1272 W/m², Earth's average temperature plunged to $T = -50$°C, and Earth's ice-covered surface had a high albedo (reflectivity) of $α_{i} = 0.6$.
+
+##### 3.3) Did the increasing brightness of the Sun melt the Snowball?
+If we increase solar insolation to today's value of $S =$ 1368 W/m², can we warm the planet up to the pre-industrial temperature of $T=14$°C?
+"
+
+# ╔═╡ d423b466-1e2a-11eb-3bb0-77f8151cdeea
+md"""*Extend upper-limit of insolation* $(@bind extend_S CheckBox(default=false))"""
+
+# ╔═╡ e2e08386-1e22-11eb-1e02-059ce290e80f
+if extend_S
+	md"""
+	*"Cold" branch* $(@bind show_cold CheckBox(default=false))    |   
+	*"Warm" branch* $(@bind show_warm CheckBox(default=false))    |   
+	*Unstable branch* $(@bind show_unstable CheckBox(default=false))
+	"""
+else
+	show_cold = true;
+	nothing
 end
 
-# ╔═╡ 7e151456-0d7b-11eb-3981-39f1dc096a49
-md"""Then, we set the values of the various parameters"""
-
-# ╔═╡ 47fce926-0d66-11eb-1659-a1d6e88b3251
-
-begin
-	dt = 1.;
+# ╔═╡ 9474f8e4-1f80-11eb-3c9e-c54e662cc29c
+if extend_S
+	md"""
+	##### Abrupt climate transitions
 	
-	C = 40.
-	αo = 0.30
-	αi = 0.20
-	S0 = 1365.
-	
-	T0 = 14.
-	B = 1.13
-	A = (1. - αo) * S0/4 - B*T0
-end;
+	In this model, temperature variations are fairly smooth unless temperatures rise above -10°C or fall below 10°C, in which case the *ice-albedo positive feedback* kicks in and causes an **abrupt climate transition**. While this is just a simple hypothetical model, these kinds of abrupt climate transitions show up all the time in the paleoclimate record and in more realistic climate model simulations.
 
-# ╔═╡ a20699f2-0d7b-11eb-3e35-3923eb70affe
-md"Next, we specify the function that determines the albedo for a given temperature"
+	This simulation teaches us that we should not take the stability of our climate for granted and that pushing our present climate outside of its historical regime of stability could trigger catastrophic abrupt climate transitions.
+	"""
+end
 
-# ╔═╡ 9dcae4ba-0d7b-11eb-296e-9745d3f5d70d
-α(T) = αi*(T < 0.) + αo;
-
-# ╔═╡ c1b32e68-0dc7-11eb-3899-a32f36699605
+# ╔═╡ 6eca000c-1f81-11eb-068e-01d06c1beeb9
 md"""
-#### Implementing a simple timestepping algorithm
+##### 3.4) If not the Sun, how did Snowball Earth melt?
+
+The leading theory is that a slow but steady outgassing of CO₂ from volcanoes eventually caused a strong enough greenhouse gas effect to offset the cooling effect of the frozen surface's high albedo and raise temperatures above the melting point $-10$°C.
 """
 
-# ╔═╡ bdc26c98-0d7b-11eb-039c-59253d5f766d
-md"And finally we define our `timestep!` method, which is what we use to solve the energy balance model."
+# ╔═╡ c0c26cf0-1fa4-11eb-2a1b-77a9d03b9c25
+html"""
+<img src="https://hartm242.files.wordpress.com/2011/03/snowball-earth.jpg" width=680>
+"""
 
-# ╔═╡ 283abb98-0d66-11eb-14a0-f9673b11f38d
-function timestep!(ebm::EBM; S=S0)
-	ebm.T += dt * (1. /C) * ( (1 - α(ebm.T))*S/4 - (A + B*ebm.T))
-	ebm.t += dt
-end
-
-# ╔═╡ fdabcf98-0d7b-11eb-0ca8-39787e1eedd9
-md"As a shortcut, we'll also define a `run!` method that will run our energy balance model for a specified amount of time."
-
-# ╔═╡ dc68c934-0d68-11eb-02cc-5d181cfaaae3
-function run!(ebm; nt=1000, S=S0)
-	for i=1.:nt
-		timestep!(ebm, S=S)
-	end
-end
-
-# ╔═╡ 29f90d22-0d7c-11eb-3a04-87ccea95d4f1
+# ╔═╡ bda79af4-1fa4-11eb-17da-21b452f43d92
 md"""
-#### Exploring Earth's Multiple Equilibria
+In **Homework 9**, you will extend the above model to include the effect of CO₂ and determine how much CO2 would need to be added to the snowball for it to melt.
+"""
 
-About 700 million years ago, the Earth underwent several dramatic climate changes and rapidly plunged from a warm, wet climate into a "snowball"-like state wherein the ocean froze all the way from the poles to the tropics.
+# ╔═╡ da4df78a-1e2c-11eb-1d4c-69b86e196526
+md"""##### 3.5) Towards realistic climate modelling
 
-How could this have happened?
+In this simple model, the preindustrial climate of $T=14$°C is so warm that there is no ice anywhere on the planet. Indeed, the only two valid stable climates are one with *no ice* or one with *ice everywhere*. 
+
+So how did Earth's preindustrial climate, which was relatively stable for thousands of years, have substantial ice caps at the poles?
 
 """
 
-# ╔═╡ 7765f834-0db0-11eb-2c46-ef65f4a1fd1d
-begin
-	traj_ebm = EBM(-50.)
-	
-	ntraj = 20
-	Ttraj = repeat([NaN], ntraj)
-	Straj = repeat([NaN], ntraj)
-end;
+# ╔═╡ 908b50a2-1f76-11eb-0eb5-11318be6896b
+md"""
+**The "Aquaplanet", a simple three-dimensional ocean-world climate model**
 
-# ╔═╡ b5849000-0d68-11eb-3beb-c575e8d0ce8e
-begin
-	ebm = EBM(-100.)
-	
-	Svec = 1200.:1.:1850.
-	Svec = vcat(Svec, reverse(Svec))
-	Tvec = zeros(size(Svec))
-	
-	for (i, S)=enumerate(Svec)
-		run!(ebm, S=S)
-		Tvec[i] = copy(ebm.T)
+An "Aquaplanet" is a three-dimensional global climate simulation of a hypothetical planet covered entirely by a single global Ocean. While this is of course very different from Earth, where 27% of the planet is covered in land, the "Aquaplanet" exhibits many of the same characteristics as Earth and is much more realistic than our zero-dimensional climate model above.
+
+The video below shows that the Aquaplanet simulation exhibits a third equilibrium state, with a *mostly-liquid ocean but ice caps at the poles*, in addition to the two we found in our zero-dimensional model.
+
+In **Homework 10**, you will build a simple two-dimensional version of the aqua-planet and explore its stability.
+"""
+
+# ╔═╡ 507342e0-1f76-11eb-098a-0973155652e2
+html"""
+<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/lYm_IyBHMUs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+"""
+
+# ╔═╡ d6a7e652-1f7d-11eb-2a5f-13ff13b9850c
+md"""
+## Appendix
+"""
+
+# ╔═╡ d2f4d882-1e2c-11eb-206b-b9ef5031a1bb
+md"#### Pluto Magic"
+
+# ╔═╡ 1dc709e2-1de8-11eb-28da-fd7469ec50c2
+function ingredients(path::String)
+	# this is from the Julia source code (evalfile in base/loading.jl)
+	# but with the modification that it returns the module instead of the last object
+	name = Symbol(basename(path))
+	m = Module(name)
+	Core.eval(m,
+        Expr(:toplevel,
+             :(eval(x) = $(Expr(:core, :eval))($name, x)),
+             :(include(x) = $(Expr(:top, :include))($name, x)),
+             :(include(mapexpr::Function, x) = $(Expr(:top, :include))(mapexpr, $name, x)),
+             :(include($path))))
+	m
+end
+
+# ╔═╡ 96ed2f9a-1e29-11eb-09f4-23df52152b2f
+Model = ingredients("1_energy_balance_model.jl"); # see ingredients function below
+
+# ╔═╡ 016c1074-1df4-11eb-2da8-578e25d9456b
+md"""##### 1.1) The ice-albedo feedback
+
+In Lecture 1, we used a **constant** value $α =$ $(Model.hist.α) for Earth's planetary albedo, which is a reasonable thing to do for small climate variations relative to the present (such as the difference between the present-day and preindustrial climates). In the case of large variations, however, this approximation is not very reliable.
+
+While oceans are dark and absorbant, $α_{ocean} \approx 0.05$, ice and snow are bright and reflective: $\alpha_{ice,\,snow} \approx 0.5$ to $0.9$. Thus, if much of the ocean's surface freezes over, we expect Earth's albedo to rise dramatically, causing more sunlight to be reflected to space, which in turn causes even more cooling and more of the ocean to freeze, etc. This *non-linear positive feedback effect* is referred to as the **ice-albedo feedback** (see illustration below).
+"""
+
+# ╔═╡ 262fc3c6-1df2-11eb-332d-c1c9561b3710
+function α(T; α0=Model.α, αi=0.5, ΔT=10.)
+	if T < -ΔT
+		return αi
+	elseif -ΔT <= T < ΔT
+		return αi + (α0-αi)*(T+ΔT)/(2ΔT)
+	elseif T >= ΔT
+		return α0
 	end
+end
+
+# ╔═╡ f7761e40-1e23-11eb-2741-cfebfaf434ec
+begin
+	T_example = -20.:1.:20.
+	plot(size=(500, 230), ylims=(0.2, 0.6))
+	plot!([-20, -10], [0.2, 0.2], fillrange=[0.6, 0.6], color=:lightblue, alpha=0.2, label=nothing)
+	plot!([10, 20], [0.2, 0.2], fillrange=[0.6, 0.6], color=:red, alpha=0.12, label=nothing)
+	plot!(T_example, α.(T_example), lw=3., label="α(T)", color=:black)
+	plot!(ylabel="albedo α\n(planetary reflectivity)", xlabel="Temperature [°C]")
+	annotate!(-15.5, 0.252, text("completely\nfrozen", 10, :darkblue))
+	annotate!(15.5, 0.252, text("no ice", 10, :darkred))
+	annotate!(-0.3, 0.252, text("partially frozen", 10, :darkgrey))
+end
+
+# ╔═╡ 872c8f2a-1df1-11eb-3cfc-3dd568926442
+function Model.timestep!(ebm)
+	ebm.α = α(ebm.T[end]) # Added this line
+	append!(ebm.T, ebm.T[end] + ebm.Δt*Model.tendency(ebm));
+	append!(ebm.t, ebm.t[end] + ebm.Δt);
+end
+
+# ╔═╡ 94852946-1e25-11eb-3425-210be17c23cd
+begin	
+	p_equil = plot(xlabel="year", ylabel="temperature [°C]", legend=:bottomright, xlims=(0,205), ylims=(-60, 30.))
+	
+	plot!([0, 200], [-60, -60], fillrange=[-10., -10.], fillalpha=0.3, c=:lightblue, label=nothing)
+	annotate!(120, -20, text("completely frozen", 10, :darkblue))
+	
+	plot!([0, 200], [10, 10], fillrange=[30., 30.], fillalpha=0.09, c=:red, lw=0., label=nothing)
+	annotate!(120, 25, text("no ice", 10, :darkred))
+	for T0_sample in (-60.:5.:30.)
+		ebm = Model.EBM(T0_sample, 0., 1., Model.CO2_const)
+		Model.run!(ebm, 200)
+		
+		plot!(p_equil, ebm.t, ebm.T, label=nothing)
+	end
+	
+	T_un = 7.5472
+	for δT in 1.e-2*[-2, -1., 0., 1., 2.]
+		ebm_un = Model.EBM(T_un+δT, 0., 1., Model.CO2_const)
+		Model.run!(ebm_un, 200)
+
+		plot!(p_equil, ebm_un.t, ebm_un.T, label=nothing, linestyle=:dash)
+	end
+	
+	plot!(p_equil, [200], [Model.T0], marker=:., label="Our pre-industrial climate (stable ''warm'' branch)", color=:orange, markersize=8)
+	plot!(p_equil, [200], [-38.3], marker=:., label="Alternate universe pre-industrial climate (stable ''cold'' branch)", color=:aqua, markersize=8)
+	plot!(p_equil, [200], [T_un], marker=:d, label="Impossible alternate climate (unstable branch)", color=:lightgrey, markersize=8, markerstrokecolor=:white, alpha=1., markerstrokestyle=:dash)
+	p_equil
+end
+
+# ╔═╡ 83819644-1fa5-11eb-0152-a9fab2f1730c
+begin
+	T_samples = -60.:1.:30.
+	OTR = Model.outgoing_thermal_radiation.(T_samples)
+	ASR = [Model.absorbed_solar_radiation.(α=α(T_sample)) for T_sample in T_samples]
+	imbalance = ASR .- OTR
 end;
 
-# ╔═╡ e224e96e-0dab-11eb-2499-19cc36f931f1
+# ╔═╡ e7b5ea16-1fa5-11eb-192e-8d50120c805b
+begin
+	p1_stability = plot(legend=:topleft, ylabel="energy flux [W/m²]", xlabel="temperature [°C]")
+	plot!(p1_stability, T_samples, OTR, label="Outgoing Thermal Radiation", color=:orange, lw=2.)
+	plot!(p1_stability, T_samples, ASR, label="Absorbed Solar Radiation", color=:blue, lw=2.)
+	
+	p2_stability = plot(ylims=(-50, 45), ylabel="energy flux [W/m²]", xlabel="temperature [°C]")
+	plot!([-60., 30.], [-100, -100], fillrange=[0, 0], color=:blue, alpha=0.1, label=nothing)
+	plot!([-60., 30.], [100, 100], fillrange=[0, 0], color=:red, alpha=0.1, label=nothing)
+	annotate!(-58, -40, text("cooling", :left, :darkblue))
+	annotate!(-58, 38, text("warming", :left, :darkred))
+	plot!(p2_stability, T_samples, imbalance, label="Radiative Imbalance\n(ASR - OTR)", color=:black, lw=2.)
+	plot!([7.542], [0], marker=:d, markersize=6, color=:lightgrey, markerstrokecolor=:darkgrey, label=nothing)
+	plot!([Model.T0], [0], marker=:., markersize=6, color=:orange, markerstrokecolor=:black, label=nothing)
+	plot!([-38.3], [0], marker=:., markersize=6, color=:aqua, markerstrokecolor=:black, label=nothing)
+	
+	p_stability = plot(p1_stability, p2_stability, layout=(1,2), size=(680, 300))
+end
+
+# ╔═╡ a212680c-1fa2-11eb-1fb9-f910081c562a
+as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
+
+# ╔═╡ 8e28ef88-1f88-11eb-2d5d-bff2f59ea998
+md"""
+#### Bifurcation diagram helper functions
+"""
+
+# ╔═╡ 61fc91ec-1df8-11eb-13c1-098c113b46ec
+function restart_ebm!(ebm)
+	ebm.T = [ebm.T[end]]
+	ebm.t = [ebm.t[1]]
+end
+
+# ╔═╡ 9b39df12-1df9-11eb-2eb0-f138980be597
 function plot_trajectory!(p, x, y; lw=8)
 	n = size(x,1)
-
 	plot!(x, y, color="black", alpha=collect(1/n:1/n:1.), linewidth=collect(0.:lw/n:lw), label=nothing)
 	plot!((x[end], y[end]), color="black", marker=:c, markersize=lw/2*1.2, label=nothing, markerstrokecolor=nothing, markerstrokewidth=0.)
 	return p
 end;
 
+# ╔═╡ b5849000-0d68-11eb-3beb-c575e8d0ce8e
+begin
+	Smin = 1200
+	Smax = 1800
+	Smax_limited = 1650
+	Svec = Smin:1.:Smax
+	Svec = vcat(Svec, reverse(Svec))
+	Tvec = zeros(size(Svec))
+
+	local T_restart = -100.
+	for (i, S) = enumerate(Svec)
+		ebm = Model.EBM(T_restart, 0., 5., Model.CO2_const);
+		ebm.S = S
+		Model.run!(ebm, 400.)
+		T_restart = ebm.T[end]
+		Tvec[i] = deepcopy(T_restart)
+	end
+	
+	md"**Data structures for storing warm & cool branch climates**"
+end
+
+# ╔═╡ 364e1d2a-1f78-11eb-177b-9dcec4b6da38
+md"""
+For insolations $S$ between $(Smin) W/m² and $(Smax_limited) W/m², temperatures always remain below -10°C and the planet remains completely frozen. What if we extend the upper limit on insolation so that the Sun becomes bright enough to start melting ice?
+"""
+
+# ╔═╡ b4357da4-1f9e-11eb-2925-55cd6f37be22
+begin
+	T_unstable_branch(S, A, B, αi, α0) = (
+		(A/B-S/(4B)*(1-0.5(αi+α0))) /
+		(1+S*(αi-α0)/(80B))
+	)
+	S_unstable = Smin:2:Smax
+	T_unstable = T_unstable_branch.(S_unstable, Model.A, Model.B, 0.5, 0.3)
+	T_unstable[.~(0.3 .< α.(T_unstable) .< 0.5)] .= NaN
+	md"**Unstable branch solution**"
+end
+
 # ╔═╡ 90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
 begin
-		Sneo = 1270.
-		Tneo = -57
-end;
+	Sneo = Model.S*0.93
+	Tneo = -48.
+	md"**Initial conditions**"
+end
+
+# ╔═╡ 5ca7ac14-1df9-11eb-13f3-e5c86333ef83
+begin
+	if extend_S
+		solarSlider = @bind S Slider(Smin:2.:Smax, default=Sneo);
+		md""" $(Smin) W/m² $(solarSlider) $(Smax) W/m²"""
+	else
+		solarSlider = @bind S Slider(Smin:2.:Smax_limited, default=Sneo);
+		md""" $(Smin) W/m² $(solarSlider) $(Smax_limited) W/m²"""
+	end
+end
 
 # ╔═╡ 0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
 begin
-	solarSlider = @bind S Slider(1200:2.:1850, default=Sneo)
 	md"""
-	
-	Solar insolation \$S = \$ $(S) [W/m²]     $(solarSlider)
+	*Move the slider below to change the brightness of the Sun (solar insolation):* S = $(S) [W/m²]
 	"""
 end
 
-# ╔═╡ 477732c4-0daf-11eb-1422-cf0f55cd835b
+# ╔═╡ 7765f834-0db0-11eb-2c46-ef65f4a1fd1d
 begin
-	run!(ebm, S=S)
-
-	insert!(Straj, 1, copy(S))
-	pop!(Straj)
-
-	insert!(Ttraj, 1, copy(ebm.T))
-	pop!(Ttraj)
-end;
+	ebm = Model.EBM(Tneo, 0., 5., Model.CO2_const)
+	ebm.S = Sneo
+	
+	ntraj = 10
+	Ttraj = repeat([NaN], ntraj)
+	Straj = repeat([NaN], ntraj)
+	
+	md"**Data structures for storing trajectories of recent climates**"
+end
 
 # ╔═╡ 0f222836-0d6c-11eb-2ee8-45545da73cfd
 begin
 	S
 	warming_mask = (1:size(Svec)[1]) .< size(Svec)./2
-	p = plot(Svec[warming_mask], Tvec[warming_mask], color="blue",lw=3., alpha=0.5, label="cool branch")
-	plot!(Svec[.!warming_mask], Tvec[.!warming_mask], color="red", lw=3., alpha=0.5, label="warm branch")
+	p = plot(xlims=(Smin, Smax_limited), ylims=(-55, 75), title="Earth's solar insolation bifurcation diagram")
+	plot!([Model.S, Model.S], [-55, 75], color=:yellow, alpha=0.3, lw=8, label="Pre-industrial / present insolation")
+	if extend_S
+		plot!(p, xlims=(Smin, Smax))
+		if show_cold
+			plot!(Svec[warming_mask], Tvec[warming_mask], color=:blue,lw=3., alpha=0.5, label="cool branch")
+		end
+		if show_warm
+			plot!(Svec[.!warming_mask], Tvec[.!warming_mask], color="red", lw=3., alpha=0.5, label="warm branch")
+		end
+		if show_unstable
+			plot!(S_unstable, T_unstable, color=:darkgray, lw=3., alpha=0.4, ls=:dash, label="unstable branch")
+		end
+	end
 	plot!(legend=:topleft)
 	plot!(xlabel="solar insolation S [W/m²]", ylabel="Global temperature T [°C]")
-	plot!([S0], [T0], marker=:c, label="present day", color="orange", markersize=8)
-	plot!([Sneo], [Tneo], marker=:c, label="neoproterozoic", color="lightblue", markersize=8)
+	plot!([Model.S], [Model.T0], marker=:., label="Our preindustrial climate", color=:orange, markersize=8)
+	plot!([Model.S], [-38.3], marker=:., label="Alternate preindustrial climate", color=:aqua, markersize=8)
+	plot!([Sneo], [Tneo], marker=:., label="neoproterozoic (700 Mya)", color=:lightblue, markersize=8)
 	plot_trajectory!(p, reverse(Straj), reverse(Ttraj), lw=9)
-end
+	
+	plot!([Smin, Smax], [-60, -60], fillrange=[-10., -10.], fillalpha=0.3, c=:lightblue, label=nothing)
+	annotate!(Smin+12, -19, text("completely\nfrozen", 10, :darkblue, :left))
+	
+	plot!([Smin, Smax], [10, 10], fillrange=[80., 80.], fillalpha=0.09, c=:red, lw=0., label=nothing)
+	annotate!(Smin+12, 15, text("no ice", 10, :darkred, :left))
+end |> as_svg
 
-# ╔═╡ 5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
-md"""
-### (Possible) Homework Exercises:
-1. What happens if we instead assume the albedo varies continusouly from -10°C to 10°C? Repeat the above analysis with
+# ╔═╡ 477732c4-0daf-11eb-1422-cf0f55cd835b
+begin
+	S
+	restart_ebm!(ebm)
+	ebm.S = S
+	Model.run!(ebm, 500)
 
-$\alpha(T) = \begin{cases}
-\alpha_{o} & \mbox{if } T < -10°\text{C}\\
-\alpha_{o} + \alpha_{i} \frac{(T+10)}{20} & \mbox{if } -10°\text{C}<T<10°\text{C} \\
-\alpha_{o} + \alpha_{i} & \mbox{if } T > 10°\text{C}\\
-\end{cases}$
+	insert!(Straj, 1, copy(S))
+	pop!(Straj)
 
-2. What happens if we add CO2 to the neoprotorezoic atmosphere? How much CO2 would we need to add (relevant to a modern background of 280 ppm) to un-freeze the snowball?
-"""
+	insert!(Ttraj, 1, copy(ebm.T[end]))
+	pop!(Ttraj)
+end;
 
 # ╔═╡ Cell order:
-# ╟─fbf1ba3e-0d65-11eb-20a7-55402d46d4ed
-# ╟─acdc0180-0dc3-11eb-1c73-bb12aed2e66b
+# ╟─05031b60-1df4-11eb-2b61-956e526b3d4a
+# ╟─a05bd3ce-1e06-11eb-1af2-65886cab38ef
+# ╟─4f5f3038-1e06-11eb-16a2-b11035701fb8
+# ╟─016c1074-1df4-11eb-2da8-578e25d9456b
+# ╟─9c118f9a-1df0-11eb-22dd-b14428994076
 # ╟─38346e6a-0d98-11eb-280b-f79787a3c788
-# ╟─9e6a970c-0dc7-11eb-214e-557763664f31
-# ╟─6b57e7f8-0d7b-11eb-272e-010167db303b
-# ╠═a3d177b4-0d67-11eb-3578-d1f2d94f10b2
-# ╟─7e151456-0d7b-11eb-3981-39f1dc096a49
-# ╠═47fce926-0d66-11eb-1659-a1d6e88b3251
-# ╟─a20699f2-0d7b-11eb-3e35-3923eb70affe
-# ╠═9dcae4ba-0d7b-11eb-296e-9745d3f5d70d
-# ╟─c1b32e68-0dc7-11eb-3899-a32f36699605
-# ╠═bdc26c98-0d7b-11eb-039c-59253d5f766d
-# ╠═283abb98-0d66-11eb-14a0-f9673b11f38d
-# ╟─fdabcf98-0d7b-11eb-0ca8-39787e1eedd9
-# ╠═dc68c934-0d68-11eb-02cc-5d181cfaaae3
-# ╟─29f90d22-0d7c-11eb-3a04-87ccea95d4f1
+# ╠═262fc3c6-1df2-11eb-332d-c1c9561b3710
+# ╟─f7761e40-1e23-11eb-2741-cfebfaf434ec
+# ╟─a8dcc0fc-1df8-11eb-21fd-1fdebe5dabfc
+# ╠═96ed2f9a-1e29-11eb-09f4-23df52152b2f
+# ╠═872c8f2a-1df1-11eb-3cfc-3dd568926442
+# ╟─13f42334-1e27-11eb-11a0-f51af4574a6b
+# ╟─94852946-1e25-11eb-3425-210be17c23cd
+# ╟─67f43076-1fa5-11eb-093f-75e406d054c6
+# ╠═83819644-1fa5-11eb-0152-a9fab2f1730c
+# ╟─e7b5ea16-1fa5-11eb-192e-8d50120c805b
+# ╟─58e9b802-1e11-11eb-3479-0f7eb69b2c3a
+# ╟─846618ea-1f7e-11eb-15e8-6176acb9278b
+# ╟─873befc2-1f7e-11eb-16af-fba7f1e52eeb
+# ╟─0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
+# ╟─5ca7ac14-1df9-11eb-13f3-e5c86333ef83
+# ╟─0f222836-0d6c-11eb-2ee8-45545da73cfd
+# ╟─364e1d2a-1f78-11eb-177b-9dcec4b6da38
+# ╟─d423b466-1e2a-11eb-3bb0-77f8151cdeea
+# ╟─e2e08386-1e22-11eb-1e02-059ce290e80f
+# ╟─9474f8e4-1f80-11eb-3c9e-c54e662cc29c
+# ╟─6eca000c-1f81-11eb-068e-01d06c1beeb9
+# ╟─c0c26cf0-1fa4-11eb-2a1b-77a9d03b9c25
+# ╟─bda79af4-1fa4-11eb-17da-21b452f43d92
+# ╟─da4df78a-1e2c-11eb-1d4c-69b86e196526
+# ╟─908b50a2-1f76-11eb-0eb5-11318be6896b
+# ╟─507342e0-1f76-11eb-098a-0973155652e2
+# ╟─d6a7e652-1f7d-11eb-2a5f-13ff13b9850c
+# ╟─d2f4d882-1e2c-11eb-206b-b9ef5031a1bb
+# ╟─1dc709e2-1de8-11eb-28da-fd7469ec50c2
+# ╟─a212680c-1fa2-11eb-1fb9-f910081c562a
+# ╟─8e28ef88-1f88-11eb-2d5d-bff2f59ea998
+# ╠═61fc91ec-1df8-11eb-13c1-098c113b46ec
 # ╠═7765f834-0db0-11eb-2c46-ef65f4a1fd1d
 # ╠═477732c4-0daf-11eb-1422-cf0f55cd835b
+# ╠═9b39df12-1df9-11eb-2eb0-f138980be597
 # ╠═b5849000-0d68-11eb-3beb-c575e8d0ce8e
-# ╟─e224e96e-0dab-11eb-2499-19cc36f931f1
-# ╠═0bbcdf5a-0dba-11eb-3e81-2b075d4f67ea
-# ╠═0f222836-0d6c-11eb-2ee8-45545da73cfd
-# ╟─90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
-# ╟─5cf4ccdc-0d7e-11eb-2683-fd9a72e763f2
+# ╠═b4357da4-1f9e-11eb-2925-55cd6f37be22
+# ╠═90ae18dc-0db8-11eb-0d73-c3b7efaef9b0
 # ╠═e9ad66b0-0d6b-11eb-26c0-27413c19dd32
