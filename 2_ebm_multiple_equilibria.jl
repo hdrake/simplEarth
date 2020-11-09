@@ -17,9 +17,11 @@ end
 begin
 	import Pkg
 	Pkg.activate(mktempdir())
-	Pkg.add("Plots")
-	Pkg.add("PlutoUI")
-	Pkg.add("LaTeXStrings")
+	Pkg.add([
+		"Plots",
+		"PlutoUI",
+		"LaTeXStrings",
+	])
 	using LaTeXStrings
 	using Plots
 	using PlutoUI
