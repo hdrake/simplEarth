@@ -37,6 +37,17 @@ md"""
 # ╔═╡ b01a3292-209a-11eb-2515-27f4a0227242
 md"## Module 4: Climate Modelling
 
+**Guest instructor: Henri Drake (PhD student in MIT Course 12 – EAPS)**
+
+#### Outline
+
+- Lecture 20: Introduction to climate science by building a simple climate model
+- Lecture 21: Non-linear feedbacks and climate dynamics in a simple climate model
+- Lecture 22: Introduction to advection and diffusion
+- Lecture 23: Advection and diffusion of heat by ocean currents
+- Lecture 24: Navier-Stokes, geophysical turbulence, and chaos
+- Lecture 25: State-of-the-art climate modelling: the software engineering landscape
+
 **Learning goals:**
 - Applied mathematics
   - Dynamical systems theory: stability, hysteresis, and chaos
@@ -72,7 +83,7 @@ where each of these is interpreted as an average over the entire globe (hence "z
 """
 
 # ╔═╡ ef62c780-13a1-11eb-3895-ff3abe0fdf5d
-PlutoUI.LocalResource("figures/earth_planetary_energy_balance.png")
+html"""<img src="https://raw.githubusercontent.com/hdrake/hdrake.github.io/master/figures/planetary_energy_balance.png" height=225>"""
 
 # ╔═╡ c30dd85a-177f-11eb-3bbf-2bde4399ebbe
 md"To make this simple conceptual model quantitative, we need a mathematical formulation for each of these four processes."
@@ -169,7 +180,7 @@ A = S*(1. - α)/4 + B*T0; # [W/m^2].
 md"""
 ##### 1.3) Human-caused greenhouse effect
 
-Empirically, the greenhouse effect is known to be a logarithmic function of CO2 concentrations
+Empirically, the greenhouse effect is known to be a logarithmic function of gaseous carbon dioxide (CO₂) concentrations
 
 $\color{grey}{\text{human-caused greenhouse effect}\; = a \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PI}}} \right),}$
 """
@@ -185,6 +196,18 @@ a = 5.0; # CO2 forcing coefficient [W/m^2]
 
 # ╔═╡ 91b1ff3a-179c-11eb-3fc1-2d991840a4a1
 CO2_PI = 280.; # preindustrial CO2 concentration [parts per million; ppm];
+
+# ╔═╡ 6cd7db88-2293-11eb-20a2-69fc5c87b82f
+begin
+	CO2_present = 420.
+	CO2_range = 280*(2 .^(range(-1, stop=3,length=100)))
+	plot(CO2_range, greenhouse_effect.(CO2_range), lw=2.5, label=nothing, color=:black)
+	plot!([CO2_PI], [greenhouse_effect(CO2_PI)], marker=:., ms=6, linecolor=:white,
+		color=:blue, lw=0, label="pre-industrial (PI)")
+	plot!([CO2_present], [greenhouse_effect(CO2_present)], marker=:., ms=6, color=:red, linecolor=:white, lw=0, label="present day (2020)")
+	plot!(xticks=[280, 280*2, 280*4, 280*8], legend=:bottomright, size=(400, 250))
+	plot!(ylabel="Radiative forcing [W/m²]", xlabel="CO₂ concentration [ppm]")
+end
 
 # ╔═╡ d42ff276-177f-11eb-32e5-b5ce2c4cd42f
 md"""
@@ -228,9 +251,11 @@ md"""
 
 The energy balance model equation above can be **discretized** in time as
 
-$C \frac{T_{n+1} - T_{n}}{\Delta t} = \frac{\left( 1-\alpha \right) S}{4} - (A - BT_{n}) + a \ln \left( \frac{[\text{CO}₂]_{n}}{[\text{CO}₂]_{\text{PI}}} \right),$
+$C \frac{T(t+Δt) - T(t)}{\Delta t} = \frac{\left( 1-\alpha \right) S}{4} - (A - BT(t)) + a \ln \left( \frac{[\text{CO}₂](t)}{[\text{CO}₂]_{\text{PI}}} \right).$
 
-where the subscript $n$ denotes the present timestep and $n+1$ is the next timestep $\Delta t$ later.
+Our **finite difference equation**, which results from a first-order truncation of the Taylor series expansion, approximates the exact **ordinary differential equation** above in the limit that $\Delta t \rightarrow 0$. In practice, we can keep decreasing $\Delta t$ until the solution converges within a tolerable error.
+
+Hereafter, we use the subscript $n$ to denote the $n$-th timestep, where $T_{n+1} \equiv T(t_{n+1})$ denotes the temperature at the next timestep $t_{n+1} = t_{n} + \Delta t$.
 
 By re-arranging the equation, we can solve for the temperature at the next timestep $n+1$ based on the known temperature at the present timestep $n$:
 
@@ -318,6 +343,24 @@ begin
 	end;
 	
 	run!(ebm) = run!(ebm, 200.) # run for 200 years by default
+end
+
+# ╔═╡ eba4ba20-22b2-11eb-3989-dde4f9c26702
+md"For example, let us consider the case where CO₂ emissions increase by 1% year-over-year from the preindustrial value [CO₂ ] = $(CO2_PI) ppm, starting at T=T₀=14°C in year t=0 and with a timestep Δt = 1 year."
+
+# ╔═╡ effbbd1c-22b2-11eb-2fe2-5df555bf5f2c
+begin
+	CO2_test(t) = CO2_PI .* (1 + 1/100).^t
+	ebm_test = EBM(T0, 0., 1., CO2_test)
+end
+
+# ╔═╡ 073d8ba6-22b4-11eb-329f-c5d0c2a28562
+md"*Run the cell below to see how the array of temperatures is appended with the temperature of the next timestep:*"
+
+# ╔═╡ 84d10370-22b3-11eb-0acd-07e5b454c481
+begin
+	timestep!(ebm_test)
+	ebm_test.T
 end
 
 # ╔═╡ 38346e6a-0d98-11eb-280b-f79787a3c788
@@ -588,6 +631,7 @@ md"#### Package dependencies"
 # ╟─14c4c8ac-179e-11eb-3c26-e51c3191532d
 # ╠═1be33ebe-1787-11eb-02f5-43802a30be01
 # ╠═91b1ff3a-179c-11eb-3fc1-2d991840a4a1
+# ╟─6cd7db88-2293-11eb-20a2-69fc5c87b82f
 # ╟─d42ff276-177f-11eb-32e5-b5ce2c4cd42f
 # ╠═125df9ba-1787-11eb-1953-13449970b9f9
 # ╟─fe1844d2-1787-11eb-067f-e9664c17df27
@@ -600,6 +644,10 @@ md"#### Package dependencies"
 # ╠═d0bf9b06-179c-11eb-0f1c-2fd535cb0e57
 # ╟─e81fc2f8-17b0-11eb-20f8-2f4e890dc867
 # ╠═e5902d52-17b0-11eb-1ba3-4be6c2bbc90f
+# ╟─eba4ba20-22b2-11eb-3989-dde4f9c26702
+# ╠═effbbd1c-22b2-11eb-2fe2-5df555bf5f2c
+# ╟─073d8ba6-22b4-11eb-329f-c5d0c2a28562
+# ╠═84d10370-22b3-11eb-0acd-07e5b454c481
 # ╟─38346e6a-0d98-11eb-280b-f79787a3c788
 # ╠═e5b20bda-17a0-11eb-38de-6d4d72b4e56d
 # ╟─d85f2a90-17b0-11eb-007b-d39c79660dca
