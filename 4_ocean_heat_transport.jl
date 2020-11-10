@@ -17,13 +17,15 @@ end
 begin
 	import Pkg
 	Pkg.activate(mktempdir())
-	Pkg.add("Plots")
-	Pkg.add("PlutoUI")
-	Pkg.add("Images")
-	Pkg.add("FileIO")
-	Pkg.add("ImageMagick")
-	Pkg.add("ImageIO")
-	Pkg.add(url="https://github.com/JuliaArrays/OffsetArrays.jl")
+	Pkg.add([
+		"Plots",
+		"PlutoUI",
+		"Images",
+		"FileIO",
+		"ImageMagick",
+		"ImageIO",
+		"OffsetArrays"
+	])
 	using Plots
 	using PlutoUI
 	using Images

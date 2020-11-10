@@ -7,6 +7,7 @@ using InteractiveUtils
 # ╔═╡ 0bb3e89a-0d82-11eb-0d51-e7e8c38cedbb
 begin
 	using Pkg
+	Pkg.activate(mktempdir())
 	Pkg.add("Plots")
 	using Plots
 end
