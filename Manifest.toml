@@ -694,10 +694,12 @@ uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.8.1"
 
 [[Pluto]]
-deps = ["Base64", "Dates", "Distributed", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "UUIDs"]
-git-tree-sha1 = "872651e9642e78c2d90b0cb13e5d9fec676ad297"
+deps = ["Base64", "Dates", "Distributed", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "Tables", "UUIDs"]
+git-tree-sha1 = "575588e8371045d3717dc8f782e04d4ccb13a363"
+repo-rev = "acf9895"
+repo-url = "https://github.com/fonsp/Pluto.jl.git"
 uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-version = "0.12.7"
+version = "0.12.9"
 
 [[PlutoUI]]
 deps = ["Base64", "Dates", "Logging", "Markdown", "Random", "Suppressor"]
