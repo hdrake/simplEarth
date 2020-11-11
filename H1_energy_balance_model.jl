@@ -4,6 +4,15 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        el
+    end
+end
+
 # ╔═╡ 1e06178a-1fbf-11eb-32b3-61769a79b7c0
 begin
 	import Pkg
@@ -189,6 +198,18 @@ end
 
 end
 
+# ╔═╡ fa7e6f7e-2434-11eb-1e61-1b1858bb0988
+@bind B_slider Slider(-2.5:.001:0; show_value=true)
+
+# ╔═╡ f4f183d0-2434-11eb-3236-ef445d76360b
+let
+	ebm = Model.EBM(14., 0., 1., Model.CO2_const, B=B_slider);
+	Model.run!(ebm, 500)
+	plot(ebm.t, ebm.T, 
+		ylim=(5,maximum(ebm.T)>20 ? 40 : 20),
+		size=(300, 250), ylabel="temperature [°C]", xlabel="year", label=nothing)
+end
+
 # ╔═╡ 736ed1b6-1fc2-11eb-359e-a1be0a188670
 begin
 	B̅ = -1.3; σ = 0.4
@@ -202,20 +223,30 @@ end;
 ECS(; B=B̅, a=Model.a) = -a*log(2.)./B;
 
 # ╔═╡ 25f92dec-1fc4-11eb-055d-f34deea81d0e
-begin
+let
 	double_CO2(t) = 2*Model.CO2_PI
+	
 	ebm_ECS = Model.EBM(14., 0., 1., double_CO2, B=B̅);
 	Model.run!(ebm_ECS, 300)
-	plot(size=(500,250), legend=:bottomright, title="Transient response to instant doubling of CO₂", ylabel="temperature [°C]", xlabel="years after doubling")
-	plot!([0, 300], ECS() .* [1,1], ls=:dash, color=:darkred, label="ECS")
-	plot!(ebm_ECS.t, ebm_ECS.T .- ebm_ECS.T[1], label="ΔT(t) = T(t) - T₀")
+	
+	p = plot(
+		size=(500,250), legend=:bottomright, 
+		title="Transient response to instant doubling of CO₂", 
+		ylabel="temperature [°C]", xlabel="years after doubling"
+	)
+	
+	plot!(p, [0, 300], ECS() .* [1,1], 
+		ls=:dash, color=:darkred, label="ECS")
+	
+	plot!(p, ebm_ECS.t, ebm_ECS.T .- ebm_ECS.T[1], 
+		label="ΔT(t) = T(t) - T₀")
 end
 
 # ╔═╡ 49cb5174-1fc3-11eb-3670-c3868c9b0255
 histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabel="samples")
 
 # ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
-md"**Question:** What happens if the climate feedback parameter $B$ is less than or equal to zero? How often does this scenario occur?"
+md"**Question:** What happens if the climate feedback parameter $B$ is greater than or equal to zero? How often does this scenario occur?"
 
 # ╔═╡ 82f8fe38-1fc3-11eb-3a89-ffe737246a28
 begin
@@ -231,7 +262,7 @@ md"""**Answer:** endless warming!!! ahhhhh
 """
 
 # ╔═╡ f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
-md"""##### Problem 2. (b) Non-linear uncertainty propagation in climate
+md"""##### Problem 1. (b) Non-linear uncertainty propagation in climate
 
 **Question:** Use Monte Carlo simulation to generate a probability distribution for the ECS based on the probability distribution function for $B$ above.
 """
@@ -318,8 +349,10 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╠═25f92dec-1fc4-11eb-055d-f34deea81d0e
 # ╟─16348b6a-1fc2-11eb-0b9c-65df528db2a1
 # ╟─930d7154-1fbf-11eb-1c3a-b1970d291811
+# ╠═fa7e6f7e-2434-11eb-1e61-1b1858bb0988
+# ╠═f4f183d0-2434-11eb-3236-ef445d76360b
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
-# ╟─49cb5174-1fc3-11eb-3670-c3868c9b0255
+# ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
 # ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
 # ╠═82f8fe38-1fc3-11eb-3a89-ffe737246a28
 # ╠═6392bf28-210f-11eb-0793-835be433c454
