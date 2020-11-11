@@ -24,6 +24,44 @@ begin
 	md"##### Package dependencies"
 end
 
+# ╔═╡ 169727be-2433-11eb-07ae-ab7976b5be90
+md"_homework 9, version 0_"
+
+# ╔═╡ 21524c08-2433-11eb-0c55-47b1bdc9e459
+md"""
+
+# **Homework 9**: _Climate modeling I_
+`18.S191`, fall 2020
+
+This notebook contains _built-in, live answer checks_! In some exercises you will see a coloured box, which runs a test case on your code, and provides feedback based on the result. Simply edit the code, run it, and the check runs again.
+
+_For MIT students:_ there will also be some additional (secret) test cases that will be run as part of the grading process, and we will look at your notebook and write comments.
+
+Feel free to ask questions!
+"""
+
+# ╔═╡ 23335418-2433-11eb-05e4-2b35dc6cca0e
+# edit the code below to set your name and kerberos ID (i.e. email without @mit.edu)
+
+student = (name = "Jazzy Doe", kerberos_id = "jazz")
+
+# you might need to wait until all other cells in this notebook have completed running. 
+# scroll around the page to see what's up
+
+# ╔═╡ 18be4f7c-2433-11eb-33cb-8d90ca6f124c
+md"""
+
+Submission by: **_$(student.name)_** ($(student.kerberos_id)@mit.edu)
+"""
+
+# ╔═╡ 253f4da0-2433-11eb-1e48-4906059607d3
+md"_Let's create a package environment:_"
+
+# ╔═╡ 87e68a4a-2433-11eb-3e9d-21675850ed71
+html"""
+<iframe width="100%" height="300" src="https://www.youtube.com/embed/Gi4ZZVS2GLA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+"""
+
 # ╔═╡ 1312525c-1fc0-11eb-2756-5bc3101d2260
 md"""## Problem 1: policy goals under uncertainty
 A recent ground-breaking review paper produced the most comprehensive and up-to-date estimate of the *climate feedback parameter*, which they find to be
@@ -229,10 +267,51 @@ md"""
 
 """
 
-# ╔═╡ 616a0bda-1fbf-11eb-3263-216d5853f8a5
-md"""## Pluto magic"""
+# ╔═╡ 36e2dfea-2433-11eb-1c90-bb93ab25b33c
+if student.name == "Jazzy Doe" || student.kerberos_id == "jazz"
+	md"""
+	!!! danger "Before you submit"
+	    Remember to fill in your **name** and **Kerberos ID** at the top of this notebook.
+	"""
+end
+
+# ╔═╡ 36ea4410-2433-11eb-1d98-ab4016245d95
+md"## Function library
+
+Just some helper functions used in the notebook."
+
+# ╔═╡ 36f8c1e8-2433-11eb-1f6e-69dc552a4a07
+hint(text) = Markdown.MD(Markdown.Admonition("hint", "Hint", [text]))
+
+# ╔═╡ 37061f1e-2433-11eb-3879-2d31dc70a771
+almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
+
+# ╔═╡ 371352ec-2433-11eb-153d-379afa8ed15e
+still_missing(text=md"Replace `missing` with your answer.") = Markdown.MD(Markdown.Admonition("warning", "Here we go!", [text]))
+
+# ╔═╡ 372002e4-2433-11eb-0b25-39ce1b1dd3d1
+keep_working(text=md"The answer is not quite right.") = Markdown.MD(Markdown.Admonition("danger", "Keep working on it!", [text]))
+
+# ╔═╡ 372c1480-2433-11eb-3c4e-95a37d51835f
+yays = [md"Fantastic!", md"Splendid!", md"Great!", md"Yay ❤", md"Great! 🎉", md"Well done!", md"Keep it up!", md"Good job!", md"Awesome!", md"You got the right answer!", md"Let's move on to the next section."]
+
+# ╔═╡ 3737be8e-2433-11eb-2049-2d6d8a5e4753
+correct(text=rand(yays)) = Markdown.MD(Markdown.Admonition("correct", "Got it!", [text]))
+
+# ╔═╡ 374522c4-2433-11eb-3da3-17419949defc
+not_defined(variable_name) = Markdown.MD(Markdown.Admonition("danger", "Oopsie!", [md"Make sure that you define a variable called **$(Markdown.Code(string(variable_name)))**"]))
+
+# ╔═╡ 37552044-2433-11eb-1984-d16e355a7c10
+TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-weight: 900;'>TODO</span>"
 
 # ╔═╡ Cell order:
+# ╟─169727be-2433-11eb-07ae-ab7976b5be90
+# ╟─18be4f7c-2433-11eb-33cb-8d90ca6f124c
+# ╟─21524c08-2433-11eb-0c55-47b1bdc9e459
+# ╠═23335418-2433-11eb-05e4-2b35dc6cca0e
+# ╟─253f4da0-2433-11eb-1e48-4906059607d3
+# ╠═1e06178a-1fbf-11eb-32b3-61769a79b7c0
+# ╟─87e68a4a-2433-11eb-3e9d-21675850ed71
 # ╟─1312525c-1fc0-11eb-2756-5bc3101d2260
 # ╠═c4398f9c-1fc4-11eb-0bbb-37f066c6027d
 # ╟─7f961bc0-1fc5-11eb-1f18-612aeff0d8df
@@ -251,5 +330,13 @@ md"""## Pluto magic"""
 # ╟─cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
 # ╟─9c32db5c-1fc9-11eb-029a-d5d554de1067
 # ╟─1ea81214-1fca-11eb-2442-7b0b448b49d6
-# ╟─616a0bda-1fbf-11eb-3263-216d5853f8a5
-# ╠═1e06178a-1fbf-11eb-32b3-61769a79b7c0
+# ╟─36e2dfea-2433-11eb-1c90-bb93ab25b33c
+# ╟─36ea4410-2433-11eb-1d98-ab4016245d95
+# ╟─36f8c1e8-2433-11eb-1f6e-69dc552a4a07
+# ╟─37061f1e-2433-11eb-3879-2d31dc70a771
+# ╟─371352ec-2433-11eb-153d-379afa8ed15e
+# ╟─372002e4-2433-11eb-0b25-39ce1b1dd3d1
+# ╟─372c1480-2433-11eb-3c4e-95a37d51835f
+# ╟─3737be8e-2433-11eb-2049-2d6d8a5e4753
+# ╟─374522c4-2433-11eb-3da3-17419949defc
+# ╟─37552044-2433-11eb-1984-d16e355a7c10
