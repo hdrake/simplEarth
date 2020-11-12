@@ -22,4 +22,4 @@
     
   - Dec 3 (Henri and James) – Overview of the the current state of Climate Modelling (powerpoint slides)
 
-- **Homework 10 due Dec 3rd** – Putting it all together: building a simple atmosphere-ocean climate model [[Climate Homework 2](https://github.com/hdrake/simplEarth/blob/main/H2_ocean_climate_feedbacks.jl)]
+- **Homework 10 due Dec 3rd** – Putting it all together: 1) using libraries to solve differential equations and 2) coupling two climate models together [[Climate Homework 2](https://github.com/hdrake/simplEarth/blob/main/H2_ocean_climate_feedbacks.jl)]
