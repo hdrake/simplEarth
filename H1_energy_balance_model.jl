@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.7
+# v0.12.9
 
 using Markdown
 using InteractiveUtils
@@ -8,11 +8,13 @@ using InteractiveUtils
 begin
 	import Pkg
 	Pkg.activate(mktempdir())
-	Pkg.add("Plots")
-	Pkg.add("PlutoUI")
-	Pkg.add("LaTeXStrings")
-	Pkg.add("Distributions")
-	Pkg.add("Random")
+	Pkg.add([
+			"Plots",
+			"PlutoUI",
+			"LaTeXStrings",
+			"Distributions",
+			"Random",
+	])
 	using LaTeXStrings
 	using Plots
 	using PlutoUI
@@ -56,6 +58,99 @@ md"""
 ##### Problem 1. (a) Develop understanding for feedbacks and climate sensitivity
 """
 
+# ╔═╡ 930d7154-1fbf-11eb-1c3a-b1970d291811
+module Model
+
+const S = 1368; # solar insolation [W/m^2]  (energy per unit time per unit area)
+const α = 0.3; # albedo, or planetary reflectivity [unitless]
+const B = -1.3; # climate feedback parameter [W/m^2/°C],
+const T0 = 14.; # preindustrial temperature [°C]
+
+absorbed_solar_radiation(; α=α, S=S) = S*(1 - α)/4; # [W/m^2]
+outgoing_thermal_radiation(T; A=A, B=B) = A - B*T;
+
+const A = S*(1. - α)/4 + B*T0; # [W/m^2].
+
+greenhouse_effect(CO2; a=a, CO2_PI=CO2_PI) = a*log(CO2/CO2_PI);
+
+const a = 5.0; # CO2 forcing coefficient [W/m^2]
+const CO2_PI = 280.; # preindustrial CO2 concentration [parts per million; ppm];
+CO2_const(t) = CO2_PI; # constant CO2 concentrations
+
+const C = 51.; # atmosphere and upper-ocean heat capacity [J/m^2/°C]
+
+function timestep!(ebm)
+	append!(ebm.T, ebm.T[end] + ebm.Δt*tendency(ebm));
+	append!(ebm.t, ebm.t[end] + ebm.Δt);
+end;
+
+tendency(ebm) = (1. /ebm.C) * (
+	+ absorbed_solar_radiation(α=ebm.α, S=ebm.S)
+	- outgoing_thermal_radiation(ebm.T[end], A=ebm.A, B=ebm.B)
+	+ greenhouse_effect(ebm.CO2(ebm.t[end]), a=ebm.a, CO2_PI=ebm.CO2_PI)
+);
+
+begin
+	mutable struct EBM
+		T::Array{Float64, 1}
+	
+		t::Array{Float64, 1}
+		Δt::Float64
+	
+		CO2::Function
+	
+		C::Float64
+		a::Float64
+		A::Float64
+		B::Float64
+		CO2_PI::Float64
+	
+		α::Float64
+		S::Float64
+	end;
+	
+	# Make constant parameters optional kwargs
+	EBM(T::Array{Float64, 1}, t::Array{Float64, 1}, Δt::Float64, CO2::Function;
+		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S) = (
+		EBM(T, t, Δt, CO2, C, a, A, B, CO2_PI, α, S)
+	);
+	
+	# Construct from float inputs for convenience
+	EBM(T0::Float64, t0::Float64, Δt::Float64, CO2::Function;
+		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S) = (
+		EBM([T0], [t0], Δt, CO2;
+			C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S);
+	);
+end;
+
+begin
+	function run!(ebm::EBM, end_year::Real)
+		while ebm.t[end] < end_year
+			timestep!(ebm)
+		end
+	end;
+	
+	run!(ebm) = run!(ebm, 200.) # run for 200 years by default
+end
+
+
+
+
+CO2_hist(t) = CO2_PI * (1 .+ fractional_increase(t));
+fractional_increase(t) = ((t .- 1850.)/220).^3;
+
+begin
+	CO2_RCP26(t) = CO2_PI * (1 .+ fractional_increase(t) .* min.(1., exp.(-((t .-1850.).-170)/100))) ;
+	RCP26 = EBM(T0, 1850., 1., CO2_RCP26)
+	run!(RCP26, 2100.)
+	
+	CO2_RCP85(t) = CO2_PI * (1 .+ fractional_increase(t) .* max.(1., exp.(((t .-1850.).-170)/100)));
+	RCP85 = EBM(T0, 1850., 1., CO2_RCP85)
+	run!(RCP85, 2100.)
+end
+
+end
+
 # ╔═╡ 736ed1b6-1fc2-11eb-359e-a1be0a188670
 begin
 	B̅ = -1.3; σ = 0.4
@@ -65,11 +160,31 @@ begin
 	B_samples = rand(d, Nsamples)
 end;
 
+# ╔═╡ c4398f9c-1fc4-11eb-0bbb-37f066c6027d
+ECS(; B=B̅, a=Model.a) = -a*log(2.)./B;
+
+# ╔═╡ 25f92dec-1fc4-11eb-055d-f34deea81d0e
+begin
+	double_CO2(t) = 2*Model.CO2_PI
+	ebm_ECS = Model.EBM(14., 0., 1., double_CO2, B=B̅);
+	Model.run!(ebm_ECS, 300)
+	plot(size=(500,250), legend=:bottomright, title="Transient response to instant doubling of CO₂", ylabel="temperature [°C]", xlabel="years after doubling")
+	plot!([0, 300], ECS() .* [1,1], ls=:dash, color=:darkred, label="ECS")
+	plot!(ebm_ECS.t, ebm_ECS.T .- ebm_ECS.T[1], label="ΔT(t) = T(t) - T₀")
+end
+
 # ╔═╡ 49cb5174-1fc3-11eb-3670-c3868c9b0255
 histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabel="samples")
 
 # ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
 md"**Question:** What happens if the climate feedback parameter $B$ is less than or equal to zero? How often does this scenario occur?"
+
+# ╔═╡ 82f8fe38-1fc3-11eb-3a89-ffe737246a28
+begin
+	ebm = Model.EBM(14., 0., 1., Model.CO2_const, B=0.);
+	Model.run!(ebm, 500)
+	plot(ebm.t, ebm.T, size=(300, 250), ylabel="temperature [°C]", xlabel="year", label=nothing)
+end
 
 # ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
 md"""**Answer:** endless warming!!! ahhhhh
@@ -85,6 +200,15 @@ md"""##### Problem 2. (b) Non-linear uncertainty propagation in climate
 
 # ╔═╡ b6d7a362-1fc8-11eb-03bc-89464b55c6fc
 md"**Answer:**"
+
+# ╔═╡ 1f148d9a-1fc8-11eb-158e-9d784e390b24
+begin
+	ECS_samples = ECS.(B=B_samples);
+	histogram(ECS_samples, xlims=(0, 8), size=(500, 240))
+end
+
+# ╔═╡ 6392bf28-210f-11eb-0793-835be433c454
+scatter(B_samples, ECS_samples, ylims=[0, 20])
 
 # ╔═╡ cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
 md"**Question:** Compare the ECS distribution to the $\text{ECS}(\overline{B})$ that corresponds to the mean value of the climate feedback parameter $\overline{B}$.
@@ -108,64 +232,17 @@ md"""
 # ╔═╡ 616a0bda-1fbf-11eb-3263-216d5853f8a5
 md"""## Pluto magic"""
 
-# ╔═╡ 3ebd3ab2-1fbf-11eb-0a7f-05c82b8013c4
-function ingredients(path::String)
-	# this is from the Julia source code (evalfile in base/loading.jl)
-	# but with the modification that it returns the module instead of the last object
-	name = Symbol(basename(path))
-	m = Module(name)
-	Core.eval(m,
-        Expr(:toplevel,
-             :(eval(x) = $(Expr(:core, :eval))($name, x)),
-             :(include(x) = $(Expr(:top, :include))($name, x)),
-             :(include(mapexpr::Function, x) = $(Expr(:top, :include))(mapexpr, $name, x)),
-             :(include($path))))
-	m
-end
-
-# ╔═╡ 930d7154-1fbf-11eb-1c3a-b1970d291811
-Model = ingredients("1_energy_balance_model.jl");
-
-# ╔═╡ c4398f9c-1fc4-11eb-0bbb-37f066c6027d
-ECS(; B=B̅, a=Model.a) = -a*log(2.)./B;
-
-# ╔═╡ 1f148d9a-1fc8-11eb-158e-9d784e390b24
-begin
-	ECS_samples = ECS.(B=B_samples);
-	histogram(ECS_samples, xlims=(0, 8), size=(500, 240))
-end
-
-# ╔═╡ 6392bf28-210f-11eb-0793-835be433c454
-scatter(B_samples, ECS_samples, ylims=[0, 20])
-
-# ╔═╡ 25f92dec-1fc4-11eb-055d-f34deea81d0e
-begin
-	double_CO2(t) = 2*Model.CO2_PI
-	ebm_ECS = Model.EBM(14., 0., 1., double_CO2, B=B̅);
-	Model.run!(ebm_ECS, 300)
-	plot(size=(500,250), legend=:bottomright, title="Transient response to instant doubling of CO₂", ylabel="temperature [°C]", xlabel="years after doubling")
-	plot!([0, 300], ECS() .* [1,1], ls=:dash, color=:darkred, label="ECS")
-	plot!(ebm_ECS.t, ebm_ECS.T .- ebm_ECS.T[1], label="ΔT(t) = T(t) - T₀")
-end
-
-# ╔═╡ 82f8fe38-1fc3-11eb-3a89-ffe737246a28
-begin
-	ebm = Model.EBM(14., 0., 1., Model.CO2_const, B=0.);
-	Model.run!(ebm, 500)
-	plot(ebm.t, ebm.T, size=(300, 250), ylabel="temperature [°C]", xlabel="year", label=nothing)
-end
-
 # ╔═╡ Cell order:
 # ╟─1312525c-1fc0-11eb-2756-5bc3101d2260
 # ╠═c4398f9c-1fc4-11eb-0bbb-37f066c6027d
 # ╟─7f961bc0-1fc5-11eb-1f18-612aeff0d8df
 # ╠═25f92dec-1fc4-11eb-055d-f34deea81d0e
 # ╟─16348b6a-1fc2-11eb-0b9c-65df528db2a1
-# ╠═930d7154-1fbf-11eb-1c3a-b1970d291811
+# ╟─930d7154-1fbf-11eb-1c3a-b1970d291811
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╟─49cb5174-1fc3-11eb-3670-c3868c9b0255
 # ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
-# ╟─82f8fe38-1fc3-11eb-3a89-ffe737246a28
+# ╠═82f8fe38-1fc3-11eb-3a89-ffe737246a28
 # ╠═6392bf28-210f-11eb-0793-835be433c454
 # ╟─7d815988-1fc7-11eb-322a-4509e7128ce3
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
@@ -175,5 +252,4 @@ end
 # ╟─9c32db5c-1fc9-11eb-029a-d5d554de1067
 # ╟─1ea81214-1fca-11eb-2442-7b0b448b49d6
 # ╟─616a0bda-1fbf-11eb-3263-216d5853f8a5
-# ╟─3ebd3ab2-1fbf-11eb-0a7f-05c82b8013c4
 # ╠═1e06178a-1fbf-11eb-32b3-61769a79b7c0
