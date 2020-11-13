@@ -71,25 +71,13 @@ html"""
 <iframe width="100%" height="300" src="https://www.youtube.com/embed/Gi4ZZVS2GLA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
-# ╔═╡ c94bb724-2532-11eb-3d3d-f9294e9cd2af
-sudden change of B at T=0
-
-which is a natural/manmade event like:
-- the amount of water vapour in the atmosphere changes
-
-
-σT⁴ is a strong negative contribution to B, other feedbacks make it more positive
-
-# ╔═╡ 543cb51a-252e-11eb-25a6-9d5ae9705328
-same thing but with T-T0 
-
 # ╔═╡ 1312525c-1fc0-11eb-2756-5bc3101d2260
-md"""## Problem 1: policy goals under uncertainty
+md"""## **Exercise 1** - _policy goals under uncertainty_
 A recent ground-breaking [review paper](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019RG000678) produced the most comprehensive and up-to-date estimate of the *climate feedback parameter*, which they find to be
 
 $B \approx \mathcal{N}(-1.3, 0.4),$
 
-i.e. is normally distributed with a mean value $\overline{B} = -1.3$ W/m²/K and a standard deviation $\sigma = 0.4$ W/m²/K. These values are not very intuitive, so let us convert them into more policy-relevant numbers.
+i.e. our knowledge of the real value is normally distributed with a mean value $\overline{B} = -1.3$ W/m²/K and a standard deviation $\sigma = 0.4$ W/m²/K. These values are not very intuitive, so let us convert them into more policy-relevant numbers.
 
 **Definition:** *Equilibrium climate sensitivity (ECS)* is defined as the amount of warming $\Delta T$ caused by a doubling of CO₂ (e.g. from the pre-industrial value 280 ppm to 560 ppm), at equilibrium.
 
@@ -111,56 +99,6 @@ md"""The plot below provides an example of an "abrupt 2xCO₂" experiment, a cla
 
 The simulation begins at the preindustrial equilibrium, i.e. a temperature $T_{0} = 14$°C is in balance with the pre-industrial CO₂ concentration of 280 ppm until CO₂ is abruptly doubled from 280 ppm to 560 ppm. The climate responds by rapidly warming, and after a few hundred years approaches the equilibrium climate sensitivity value, by definition.
 """
-
-# ╔═╡ fa7e6f7e-2434-11eb-1e61-1b1858bb0988
-md"""
-``B = `` $(@bind B_slider Slider(-2.5:.001:0; show_value=true, default=-1.3))
-"""
-
-# ╔═╡ 16348b6a-1fc2-11eb-0b9c-65df528db2a1
-md"""
-##### Problem 1. (a) Develop understanding for feedbacks and climate sensitivity
-"""
-
-# ╔═╡ e296c6e8-259c-11eb-1385-53f757f4d585
-md"""
-👉 Change the value of $B$ using the slider above. What does it mean for a climate system to have a more negative value of $B$? Explain why we call $B$ the _climate feedback parameter_.
-"""
-
-# ╔═╡ a86f13de-259d-11eb-3f46-1f6fb40020ce
-observations_from_changing_B = md"""
-Hello world!
-"""
-
-# ╔═╡ 3d66bd30-259d-11eb-2694-471fb3a4a7be
-md"""
-👉 What happens when $B$ is greater than or equal to zero?
-"""
-
-# ╔═╡ 5f82dec8-259e-11eb-2f4f-4d661f44ef41
-observations_from_positive_B = md"""
-Hello world!
-"""
-
-# ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
-md"""
-
-**Answer:** endless warming!!! ahhhhh B ≥ 0 means endless warming _when CO2 increases_
-
-**If answered correctly:** This is known as the "runaway greenhouse effect", where warming self-amplifies so strongly through *positive feedbacks* that the warming continues forever (or until the oceans boil away and there is no longer a reservoir or water to support a *water vapor feedback*. This is thought to explain Venus' extremely hot and hostile climate, but as you can see is extremely unlikely to occur on present-day Earth.
-"""
-
-# ╔═╡ 2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
-md"""
-👉 In what year are we expected to have doubled the CO₂ concentration, under policy scenario RCP8.5 (a "worst-case" high-emissions scenario)?
-"""
-
-# ╔═╡ 50ea30ba-25a1-11eb-05d8-b3d579f85652
-expected_double_CO2_year = let
-	
-	
-	missing
-end
 
 # ╔═╡ 930d7154-1fbf-11eb-1c3a-b1970d291811
 module Model
@@ -255,14 +193,76 @@ end
 
 end
 
-# ╔═╡ 736ed1b6-1fc2-11eb-359e-a1be0a188670
-begin
-	B̅ = -1.3; σ = 0.4
-	d = Normal(B̅, σ)
-	Nsamples = 5000
+# ╔═╡ fa7e6f7e-2434-11eb-1e61-1b1858bb0988
+md"""
+``B = `` $(@bind B_slider Slider(-2.5:.001:0; show_value=true, default=-1.3))
+"""
+
+# ╔═╡ 16348b6a-1fc2-11eb-0b9c-65df528db2a1
+md"""
+##### Exercise 1.1 - _Develop understanding for feedbacks and climate sensitivity_
+"""
+
+# ╔═╡ e296c6e8-259c-11eb-1385-53f757f4d585
+md"""
+👉 Change the value of $B$ using the slider above. What does it mean for a climate system to have a more negative value of $B$? Explain why we call $B$ the _climate feedback parameter_.
+"""
+
+# ╔═╡ a86f13de-259d-11eb-3f46-1f6fb40020ce
+observations_from_changing_B = md"""
+Hello world!
+"""
+
+# ╔═╡ 3d66bd30-259d-11eb-2694-471fb3a4a7be
+md"""
+👉 What happens when $B$ is greater than or equal to zero?
+"""
+
+# ╔═╡ 5f82dec8-259e-11eb-2f4f-4d661f44ef41
+observations_from_nonnegative_B = md"""
+Hello world!
+"""
+
+# ╔═╡ 56b68356-2601-11eb-39a9-5f4b8e580b87
+md"Reveal answer: $(@bind reveal_nonnegative_B_answer CheckBox())"
+
+# ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
+if reveal_nonnegative_B_answer
+	md"""
+This is known as the "runaway greenhouse effect", where warming self-amplifies so strongly through *positive feedbacks* that the warming continues forever (or until the oceans boil away and there is no longer a reservoir or water to support a *water vapor feedback*. This is thought to explain Venus' extremely hot and hostile climate, but as you can see is extremely unlikely to occur on present-day Earth.
+"""
+end
+
+# ╔═╡ 269200ec-259f-11eb-353b-0b73523ef71a
+md"""
+#### Exercise 1.2 - _Doubling CO₂_
+
+To compute ECS, we doubled the CO₂ in our atmosphere. This factor 2 is not entirely arbitrary: without substantial effort to reduce CO₂ emissions, we are expected to **at least** double the CO₂ in our atmosphere by 2100. 
+
+Right now, our CO₂ concentration is 415 ppm -- $(round(415 / 280, digits=3)) times the pre-industrial value of 280 ppm from 1850. 
+
+The CO₂ concentrations in the _future_ depend on human action. There are several models for future emissions, which are formed by assuming different _policy scenarios_. A baseline model is RCP8.5 - a "worst-case" high-emissions scenario. In our notebook, this model is given as a function of ``t``.
+"""
+
+# ╔═╡ 2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
+md"""
+👉 In what year are we expected to have doubled the CO₂ concentration, under policy scenario RCP8.5?
+"""
+
+# ╔═╡ 50ea30ba-25a1-11eb-05d8-b3d579f85652
+expected_double_CO2_year = let
 	
-	B_samples = rand(d, Nsamples)
-end;
+	
+	missing
+end
+
+# ╔═╡ bade1372-25a1-11eb-35f4-4b43d4e8d156
+md"""
+The climate feedback parameter B is not something that we can control– it is an emergent property of the global climate system. Unfortunately, B is also difficult to quantify empirically (the relevant processes are difficult or impossible to observe directly), so there remains uncertainty as to its exact value.
+"""
+
+# ╔═╡ 02232964-2603-11eb-2c4c-c7b7e5fed7d1
+B̅ = -1.3; σ = 0.4
 
 # ╔═╡ c4398f9c-1fc4-11eb-0bbb-37f066c6027d
 ECS(; B=B̅, a=Model.a) = -a*log(2.)./B;
@@ -297,11 +297,19 @@ let
 		label="ΔT(t) = T(t) - T₀")
 end |> as_svg
 
+# ╔═╡ 736ed1b6-1fc2-11eb-359e-a1be0a188670
+B_samples = let
+	B_distribution = Normal(B̅, σ)
+	Nsamples = 5000
+	
+	rand(B_distribution, Nsamples)
+end
+
 # ╔═╡ 49cb5174-1fc3-11eb-3670-c3868c9b0255
 histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabel="samples")
 
 # ╔═╡ f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
-md"""##### Problem 1. (b) Non-linear uncertainty propagation in climate
+md"""##### Exercise 1.4 - _Non-linear uncertainty propagation in climate_
 
 **Question:** Use Monte Carlo simulation to generate a probability distribution for the ECS based on the probability distribution function for $B$ above.
 """
@@ -349,7 +357,7 @@ Hello world!
 """
 
 # ╔═╡ 9c32db5c-1fc9-11eb-029a-d5d554de1067
-md"""##### Problem 1. (c) Application to policy relevant questions
+md"""#### Exercise 1.5 - _Application to policy relevant questions_
 
 We talked about two _emissions scenarios_: RCP2.6 (strong mitigation - controlled CO2 concentrations) and RCP8.5 (no mitigation - high CO2 concentrations). These are given by the following functions:
 """
@@ -367,27 +375,16 @@ plot(t, Model.CO2_RCP85.(t),
 # ╔═╡ 19957754-252d-11eb-1e0a-930b5208f5ac
 Model.CO2_RCP26(t_scenario_test), Model.CO2_RCP85(t_scenario_test)
 
-# ╔═╡ 61300a76-252c-11eb-2d79-2d63e67aafcd
-# let
-# 	p = plot(ylabel="CO2 concentrations [ppm]")
-# 	plot!(p, t, Model.CO2_RCP26.(t), label="RCP2.6")
-# 	plot!(p, t, Model.CO2_RCP85.(t), label="RCP8.5")
-# 	p
-# end
-	
-
 # ╔═╡ 06c5139e-252d-11eb-2645-8b324b24c405
 md"""
 We are interested in how the **uncertainty in our input** $B$ (the climate feedback paramter) *propagates* through our model to determine the **uncertainty in our output** $T(t)$, for a given emissions scenario. The goal of this exercise is to answer the following by using *Monte Carlo Simulation* for *uncertainty propagation*:
 
-> **Question:** What is the probability that we see more than 2°C of warming by 2100 under the low-emissions scenario RCP2.6? What about under the high-emissions scenario RCP8.5?
+> 👉 What is the probability that we see more than 2°C of warming by 2100 under the low-emissions scenario RCP2.6? What about under the high-emissions scenario RCP8.5?
 
 """
 
-# ╔═╡ 181601fe-252e-11eb-0940-4fa990b3249b
-md"""
+# ╔═╡ f2e55166-25ff-11eb-0297-796e97c62b07
 
-"""
 
 # ╔═╡ 101cda5e-252e-11eb-2555-e3e8852f470f
 md"""
@@ -397,15 +394,9 @@ md"""
 
 # ╔═╡ 1ea81214-1fca-11eb-2442-7b0b448b49d6
 md"""
-## Problem 2. How did Snowball Earth melt?
-
-"""
-
-# ╔═╡ 30f99584-25ea-11eb-26f5-09123e5ebb2f
-md"""
+## **Exercise 2** - _How did Snowball Earth melt?_
 
 In lecture 21 (see below), we discovered that increases in the brightness of the Sun are not sufficient to explain how Snowball Earth eventually melted.
-
 """
 
 # ╔═╡ a0ef04b0-25e9-11eb-1110-cde93601f712
@@ -415,9 +406,11 @@ html"""
 
 # ╔═╡ 3e310cf8-25ec-11eb-07da-cb4a2c71ae34
 md"""
-We hypothesized that a large increase in CO2 could caused a strong enough greenhouse effect to melt the Snowball. If we imagine that the CO2 then decreased (e.g. by getting sequestered by the now liquid ocean), we might be able to explain how we transitioned from a hostile Snowball Earth to today's habitable "Waterball" Earth.
+We talked about a second theory -- a large increase in CO₂ (by volcanoes) could have caused a strong enough greenhouse effect to melt the Snowball. If we imagine that the CO₂ then decreased (e.g. by getting sequestered by the now liquid ocean), we might be able to explain how we transitioned from a hostile Snowball Earth to today's habitable "Waterball" Earth.
 
-In this exercise, you will estimate how much CO₂ would be needed to melt the Snowball and visualize a possible trajectory for Earth's climate over the past 700 million years by making an interactive *bifurcation diagram* (as in the lecture).
+In this exercise, you will estimate how much CO₂ would be needed to melt the Snowball and visualize a possible trajectory for Earth's climate over the past 700 million years by making an interactive *bifurcation diagram*.
+
+In the lecture notebook, we have a bifurcation diagram of $S$ (solar insolation) vs $T$ (temperature). We increased $S$, watched our point move right in the diagram until we found the tipping point. This time we will do the same, but we vary the CO₂ concentration, and keep $S$ fixed at its present day value.
 """
 
 # ╔═╡ 0f52e312-2537-11eb-289e-17dc04710c2d
@@ -477,29 +470,6 @@ end
 
 # ╔═╡ 35f87c2e-253d-11eb-0d79-61d89c1d9b5e
 CO2 = 10^log_CO2
-
-# ╔═╡ ad8846a0-2530-11eb-339a-1d0ee3b9b5dc
-md"""*Extend upper-limit of insolation* $(@bind extend_S CheckBox(default=false))"""
-
-# ╔═╡ ad8c489a-2530-11eb-3f23-5141a0a6548f
-if extend_S
-	md"""
-	*"Cold" branch* $(@bind show_cold CheckBox(default=false))    |   
-	*"Warm" branch* $(@bind show_warm CheckBox(default=false))    |   
-	*Unstable branch* $(@bind show_unstable CheckBox(default=false))
-	"""
-else
-	show_cold = true;
-	nothing
-end
-
-# ╔═╡ 09b4f1e4-2531-11eb-23d2-13a4002ff88b
-# begin
-# 	CO2
-# 	restart_ebm!(ebm)
-# 	ebm.CO2 = t -> CO2
-# 	Model.run!(ebm, 500)
-# end;
 
 # ╔═╡ aa1a3562-2537-11eb-0010-abde7b40090a
 function restart_ebm!(ebm)
@@ -657,29 +627,9 @@ not_defined(variable_name) = Markdown.MD(Markdown.Admonition("danger", "Oopsie!"
 # ╔═╡ 37552044-2433-11eb-1984-d16e355a7c10
 TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-weight: 900;'>TODO</span>"
 
-# ╔═╡ bade1372-25a1-11eb-35f4-4b43d4e8d156
-md"""
-$TODO
-
-Say that B is not something that changes naturally, or something that we control -- it is a property of the climate system that we don't have a precise value of.
-
-The climate feedback parameter B is not something that we can control– it is an emergent property of the global climate system. Unfortunately, B is also difficult to quantify empirically (the relevant processes are difficult or impossible to observe directly), so there remains uncertainty as to its exact value.
-"""
-
-# ╔═╡ 269200ec-259f-11eb-353b-0b73523ef71a
-md"""
-#### Doubling CO2
-
-To compute ECS, we doubled the CO₂ in our atmosphere. This factor 2 is not entirely arbitrary: without substantial effort to reduce CO₂ emissions, we are expected to **at least** double the CO₂ in our atmosphere by 2100. 
-
-Right now, our CO₂ concentration is 415 ppm -- $(round(415 / 280, digits=3)) times the pre-industrial value of 280 ppm from 1850. 
-
-$TODO RCP
-"""
-
 # ╔═╡ 291326e8-25a2-11eb-1a00-3de0f60e5f0f
 md"""
-### Uncertainty in B
+#### Exercise 1.3 - _Uncertainty in B_
 
 $TODO
 
@@ -691,7 +641,7 @@ The point of this exercise is:
 """
 
 # ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
-md"""**Question:** What happens if the climate feedback parameter $B$ is greater than or equal to zero? How likely is this scenario?
+md"""In Exercise 1 we talked about the meaning of ``B \geq 0``. How likely is this scenario?
 
 $TODO does the original paper say anything about this B>0 tail of the distribution? They might not have intended to assign a probability to B>0
 
@@ -727,11 +677,10 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╟─253f4da0-2433-11eb-1e48-4906059607d3
 # ╠═1e06178a-1fbf-11eb-32b3-61769a79b7c0
 # ╟─87e68a4a-2433-11eb-3e9d-21675850ed71
-# ╠═c94bb724-2532-11eb-3d3d-f9294e9cd2af
-# ╠═543cb51a-252e-11eb-25a6-9d5ae9705328
 # ╟─1312525c-1fc0-11eb-2756-5bc3101d2260
 # ╠═c4398f9c-1fc4-11eb-0bbb-37f066c6027d
-# ╠═7f961bc0-1fc5-11eb-1f18-612aeff0d8df
+# ╟─7f961bc0-1fc5-11eb-1f18-612aeff0d8df
+# ╟─930d7154-1fbf-11eb-1c3a-b1970d291811
 # ╟─25f92dec-1fc4-11eb-055d-f34deea81d0e
 # ╟─fa7e6f7e-2434-11eb-1e61-1b1858bb0988
 # ╟─16348b6a-1fc2-11eb-0b9c-65df528db2a1
@@ -739,18 +688,19 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╠═a86f13de-259d-11eb-3f46-1f6fb40020ce
 # ╟─3d66bd30-259d-11eb-2694-471fb3a4a7be
 # ╠═5f82dec8-259e-11eb-2f4f-4d661f44ef41
-# ╠═7d815988-1fc7-11eb-322a-4509e7128ce3
-# ╠═bade1372-25a1-11eb-35f4-4b43d4e8d156
-# ╠═269200ec-259f-11eb-353b-0b73523ef71a
+# ╟─56b68356-2601-11eb-39a9-5f4b8e580b87
+# ╟─7d815988-1fc7-11eb-322a-4509e7128ce3
+# ╟─269200ec-259f-11eb-353b-0b73523ef71a
 # ╠═e10a9b70-25a0-11eb-2aed-17ed8221c208
 # ╟─2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
 # ╠═50ea30ba-25a1-11eb-05d8-b3d579f85652
 # ╟─51e2e742-25a1-11eb-2511-ab3434eacc3e
-# ╟─930d7154-1fbf-11eb-1c3a-b1970d291811
-# ╠═291326e8-25a2-11eb-1a00-3de0f60e5f0f
+# ╟─291326e8-25a2-11eb-1a00-3de0f60e5f0f
+# ╟─bade1372-25a1-11eb-35f4-4b43d4e8d156
+# ╠═02232964-2603-11eb-2c4c-c7b7e5fed7d1
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
-# ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
+# ╠═a2aff256-1fc6-11eb-3671-b7801bce27fc
 # ╠═6392bf28-210f-11eb-0793-835be433c454
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc
@@ -766,12 +716,10 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╠═19957754-252d-11eb-1e0a-930b5208f5ac
 # ╠═40f1e7d8-252d-11eb-0549-49ca4e806e16
 # ╟─ee1be5dc-252b-11eb-0865-291aa823b9e9
-# ╠═61300a76-252c-11eb-2d79-2d63e67aafcd
-# ╠═06c5139e-252d-11eb-2645-8b324b24c405
-# ╠═181601fe-252e-11eb-0940-4fa990b3249b
+# ╟─06c5139e-252d-11eb-2645-8b324b24c405
+# ╠═f2e55166-25ff-11eb-0297-796e97c62b07
 # ╠═101cda5e-252e-11eb-2555-e3e8852f470f
 # ╟─1ea81214-1fca-11eb-2442-7b0b448b49d6
-# ╟─30f99584-25ea-11eb-26f5-09123e5ebb2f
 # ╟─a0ef04b0-25e9-11eb-1110-cde93601f712
 # ╟─3e310cf8-25ec-11eb-07da-cb4a2c71ae34
 # ╠═d6d1b312-2543-11eb-1cb2-e5b801686ffb
@@ -785,10 +733,7 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╠═35f87c2e-253d-11eb-0d79-61d89c1d9b5e
 # ╠═e411a3bc-2538-11eb-3492-bfdd42b1445d
 # ╠═378aed18-252b-11eb-0b37-a3b511af2cb5
-# ╠═ad8846a0-2530-11eb-339a-1d0ee3b9b5dc
-# ╠═ad8c489a-2530-11eb-3f23-5141a0a6548f
 # ╠═06d28052-2531-11eb-39e2-e9613ab0401c
-# ╠═09b4f1e4-2531-11eb-23d2-13a4002ff88b
 # ╠═aa1a3562-2537-11eb-0010-abde7b40090a
 # ╠═d7801e88-2530-11eb-0b93-6f1c78d00eea
 # ╠═607058ec-253c-11eb-0fb6-add8cfb73a4f
