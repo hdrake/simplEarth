@@ -71,9 +71,6 @@ html"""
 <iframe width="100%" height="300" src="https://www.youtube.com/embed/Gi4ZZVS2GLA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
-# ╔═╡ fa7e6f7e-2434-11eb-1e61-1b1858bb0988
-@bind B_slider Slider(-2.5:.001:0; show_value=true, default=-1.3)
-
 # ╔═╡ c94bb724-2532-11eb-3d3d-f9294e9cd2af
 sudden change of B at T=0
 
@@ -109,36 +106,53 @@ The result of this subtraction, after rearranging, is our definition of $\text{E
 $\text{ECS} \equiv T_{eq} - T_{0} = -\frac{a\ln(2)}{B}$
 """
 
-# ╔═╡ 676a6640-252a-11eb-13c5-f1cfdea02091
-420 / 280
-
-# ╔═╡ 746608b6-252a-11eb-12f9-953aa7161a5b
-md"""
-And business-as-usual would mean double CO2 in ...
-"""
-
-# ╔═╡ 996c3754-252a-11eb-2ba6-ef922a68fde7
-md"""
-But mostly meant to quantify the sensitivity of the climate system to CO2 emissions
-
-What does low ECS mean? What does high ECS mean?
-
-Is B the main source of uncertainty? What about a?
-"""
-
-# ╔═╡ e4a7986c-252a-11eb-3b4f-3b34e907bdb7
-
-
 # ╔═╡ 7f961bc0-1fc5-11eb-1f18-612aeff0d8df
 md"""The plot below provides an example of an "abrupt 2xCO₂" experiment, a classic experimental treatment method in climate modelling which is used in practice to estimate ECS for a particular model (Note: in complicated climate models the values of the parameters $a$ and $B$ are not specified *a priori*, but emerge as outputs for the simulation).
 
 The simulation begins at the preindustrial equilibrium, i.e. a temperature $T_{0} = 14$°C is in balance with the pre-industrial CO₂ concentration of 280 ppm until CO₂ is abruptly doubled from 280 ppm to 560 ppm. The climate responds by rapidly warming, and after a few hundred years approaches the equilibrium climate sensitivity value, by definition.
 """
 
+# ╔═╡ fa7e6f7e-2434-11eb-1e61-1b1858bb0988
+md"""
+``B = `` $(@bind B_slider Slider(-2.5:.001:0; show_value=true, default=-1.3))
+"""
+
 # ╔═╡ 16348b6a-1fc2-11eb-0b9c-65df528db2a1
 md"""
 ##### Problem 1. (a) Develop understanding for feedbacks and climate sensitivity
 """
+
+# ╔═╡ e296c6e8-259c-11eb-1385-53f757f4d585
+md"""
+👉 Change the value of $B$ using the slider above. What does it mean for a climate system to have a more negative value of $B$? Explain why we call $B$ the _climate feedback parameter_.
+"""
+
+# ╔═╡ a86f13de-259d-11eb-3f46-1f6fb40020ce
+observations_from_changing_B = md"""
+Hello world!
+"""
+
+# ╔═╡ 3d66bd30-259d-11eb-2694-471fb3a4a7be
+md"""
+👉 What happens when $B$ is greater than or equal to zero?
+"""
+
+# ╔═╡ 5f82dec8-259e-11eb-2f4f-4d661f44ef41
+observations_from_positive_B = md"""
+Hello world!
+"""
+
+# ╔═╡ 2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
+md"""
+👉 In what year are we expected to have doubled the CO₂ concentration, under policy scenario RCP8.5?
+"""
+
+# ╔═╡ 50ea30ba-25a1-11eb-05d8-b3d579f85652
+expected_double_CO2_year = let
+	
+	
+	missing
+end
 
 # ╔═╡ 930d7154-1fbf-11eb-1c3a-b1970d291811
 module Model
@@ -233,14 +247,10 @@ end
 
 end
 
-# ╔═╡ f4f183d0-2434-11eb-3236-ef445d76360b
-let
-	ebm = Model.EBM(14., 0., 1., Model.CO2_const, B=B_slider);
-	Model.run!(ebm, 500)
-	plot(ebm.t, ebm.T .- ebm.T[1], 
-		# ylim=(5,maximum(ebm.T)>20 ? 40 : 20),
-		size=(300, 250), ylabel="temperature [°C]", xlabel="year", label=nothing)
-end
+# ╔═╡ 291326e8-25a2-11eb-1a00-3de0f60e5f0f
+md"""
+### Uncertainty in B
+"""
 
 # ╔═╡ 736ed1b6-1fc2-11eb-359e-a1be0a188670
 begin
@@ -256,39 +266,39 @@ ECS(; B=B̅, a=Model.a) = -a*log(2.)./B;
 
 # ╔═╡ 25f92dec-1fc4-11eb-055d-f34deea81d0e
 let
-	double_CO2(t) = 2*Model.CO2_PI
+	double_CO2(t) = if t >= 0
+		2*Model.CO2_PI
+	else
+		Model.CO2_PI
+	end
 	
-	ebm_ECS = Model.EBM(14., 0., 1., double_CO2, B=B̅);
+	# the definition of A depends on B, so we recalculate:
+	A = Model.S*(1. - Model.α)/4 + B_slider*Model.T0
+	# create the model
+	ebm_ECS = Model.EBM(14., -100., 1., double_CO2, A=A, B=B_slider);
 	Model.run!(ebm_ECS, 300)
+	
+	ecs = ECS(B=B_slider)
 	
 	p = plot(
 		size=(500,250), legend=:bottomright, 
 		title="Transient response to instant doubling of CO₂", 
-		ylabel="temperature [°C]", xlabel="years after doubling"
+		ylabel="temperature change [°C]", xlabel="years after doubling",
+		ylim=(-.5, (isfinite(ecs) && ecs < 4) ? 4 : 10),
 	)
 	
-	plot!(p, [0, 300], ECS() .* [1,1], 
+	plot!(p, [ebm_ECS.t[1], ebm_ECS.t[end]], ecs .* [1,1], 
 		ls=:dash, color=:darkred, label="ECS")
 	
 	plot!(p, ebm_ECS.t, ebm_ECS.T .- ebm_ECS.T[1], 
 		label="ΔT(t) = T(t) - T₀")
-end
+end |> as_svg
 
 # ╔═╡ 49cb5174-1fc3-11eb-3670-c3868c9b0255
 histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabel="samples")
 
 # ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
 md"**Question:** What happens if the climate feedback parameter $B$ is greater than or equal to zero? How often does this scenario occur?"
-
-# ╔═╡ 82f8fe38-1fc3-11eb-3a89-ffe737246a28
-let
-	ebm = Model.EBM(14., 0., 1., Model.CO2_const, B=0.);
-	Model.run!(ebm, 500)
-	plot(ebm.t, ebm.T, size=(300, 250), ylabel="temperature [°C]", xlabel="year", label=nothing)
-end
-
-# ╔═╡ 68f476b0-2532-11eb-31cd-df531895d1e6
-B = 0 
 
 # ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
 md"""**Answer:** endless warming!!! ahhhhh
@@ -343,6 +353,10 @@ We talked about two _emissions scenarios_: RCP2.6 (strong mitigation - controlle
 
 # ╔═╡ ee1be5dc-252b-11eb-0865-291aa823b9e9
 t = 1850:2100
+
+# ╔═╡ e10a9b70-25a0-11eb-2aed-17ed8221c208
+plot(t, Model.CO2_RCP85.(t), 
+	ylim=(0,1200), ylabel="CO2 concentration [ppm]")
 
 # ╔═╡ 40f1e7d8-252d-11eb-0549-49ca4e806e16
 @bind t_scenario_test Slider(t; show_value=true)
@@ -543,8 +557,8 @@ let
 	end
 	plot!(legend=:topleft)
 	plot!(xlabel="CO2 concentration [ppm]", ylabel="Global temperature T [°C]")
-	plot!([Model.CO2_PI], [Model.T0], marker=:., label="Our preindustrial climate", color=:orange, markersize=8)
-	plot!([Model.CO2_PI], [-38.3], marker="circle", label="Alternate preindustrial climate", color=:aqua, markersize=8)
+	plot!([Model.CO2_PI], [Model.T0], shape=:circle, label="Our preindustrial climate", color=:orange, markersize=8)
+	plot!([Model.CO2_PI], [-38.3], shape=:circle, label="Alternate preindustrial climate", color=:aqua, markersize=8)
 	# plot!([Sneo], [Tneo], marker=:., label="neoproterozoic (700 Mya)", color=:lightblue, markersize=8)
 	z = [ebm.CO2(123), ebm.T[end]]
 	# plot!(plot!(), z, color="black", marker=:c, markersize=8/2*1.2, label=nothing, markerstrokecolor=nothing, markerstrokewidth=0.)
@@ -591,6 +605,9 @@ Just some helper functions used in the notebook."
 # ╔═╡ 36f8c1e8-2433-11eb-1f6e-69dc552a4a07
 hint(text) = Markdown.MD(Markdown.Admonition("hint", "Hint", [text]))
 
+# ╔═╡ 51e2e742-25a1-11eb-2511-ab3434eacc3e
+hint(md"The function `findfirst` might be helpful.")
+
 # ╔═╡ 37061f1e-2433-11eb-3879-2d31dc70a771
 almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
 
@@ -612,21 +629,29 @@ not_defined(variable_name) = Markdown.MD(Markdown.Admonition("danger", "Oopsie!"
 # ╔═╡ 37552044-2433-11eb-1984-d16e355a7c10
 TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-weight: 900;'>TODO</span>"
 
-# ╔═╡ 447df990-2529-11eb-3bbe-2520814fe288
+# ╔═╡ bade1372-25a1-11eb-35f4-4b43d4e8d156
 md"""
-## Problem 0: _recap_
+$TODO
 
-$TODO lets delete this and go straight to ECS to introduce the effect of B
+Say that B is not something that changes naturally, or something that we control -- it is a property of the climate system that we don't have a precise value of.
 """
 
-# ╔═╡ 582d5f02-252a-11eb-1004-5f45b9724c91
+# ╔═╡ 269200ec-259f-11eb-353b-0b73523ef71a
 md"""
-$TODO talk about doubling CO2: right now we are at
+#### Doubling CO2
+
+To compute ECS, we doubled the CO₂ in our atmosphere. This factor 2 is not entirely arbitrary: without intervention, we are expected to double the CO₂ in our atmosphere in the near future. 
+
+Right now, our CO₂ concentration is 415 ppm -- an increase from 280 ppm with factor $(round(415 / 280, digits=3)). 
+
+$TODO RCP
 """
 
 # ╔═╡ ae2e3838-2543-11eb-369d-3bd6f8b23560
 md"""
 $TODO we probably want to change this: A depends on B, so with constant CO2, we should be at temperature equilibrium by definition of A.
+
+B=0 means endless warming _when CO2 increases_
 """
 
 # ╔═╡ d6d1b312-2543-11eb-1cb2-e5b801686ffb
@@ -660,29 +685,31 @@ write it as a function of S? maybe as a function of B?
 # ╟─253f4da0-2433-11eb-1e48-4906059607d3
 # ╠═1e06178a-1fbf-11eb-32b3-61769a79b7c0
 # ╟─87e68a4a-2433-11eb-3e9d-21675850ed71
-# ╠═447df990-2529-11eb-3bbe-2520814fe288
-# ╠═fa7e6f7e-2434-11eb-1e61-1b1858bb0988
-# ╠═f4f183d0-2434-11eb-3236-ef445d76360b
 # ╠═c94bb724-2532-11eb-3d3d-f9294e9cd2af
 # ╠═543cb51a-252e-11eb-25a6-9d5ae9705328
 # ╟─1312525c-1fc0-11eb-2756-5bc3101d2260
 # ╠═c4398f9c-1fc4-11eb-0bbb-37f066c6027d
-# ╟─582d5f02-252a-11eb-1004-5f45b9724c91
-# ╠═676a6640-252a-11eb-13c5-f1cfdea02091
-# ╟─746608b6-252a-11eb-12f9-953aa7161a5b
-# ╠═996c3754-252a-11eb-2ba6-ef922a68fde7
-# ╠═e4a7986c-252a-11eb-3b4f-3b34e907bdb7
-# ╟─7f961bc0-1fc5-11eb-1f18-612aeff0d8df
-# ╠═25f92dec-1fc4-11eb-055d-f34deea81d0e
+# ╠═7f961bc0-1fc5-11eb-1f18-612aeff0d8df
+# ╟─25f92dec-1fc4-11eb-055d-f34deea81d0e
+# ╟─fa7e6f7e-2434-11eb-1e61-1b1858bb0988
 # ╟─16348b6a-1fc2-11eb-0b9c-65df528db2a1
-# ╠═930d7154-1fbf-11eb-1c3a-b1970d291811
+# ╟─e296c6e8-259c-11eb-1385-53f757f4d585
+# ╠═a86f13de-259d-11eb-3f46-1f6fb40020ce
+# ╟─3d66bd30-259d-11eb-2694-471fb3a4a7be
+# ╠═5f82dec8-259e-11eb-2f4f-4d661f44ef41
+# ╠═bade1372-25a1-11eb-35f4-4b43d4e8d156
+# ╠═269200ec-259f-11eb-353b-0b73523ef71a
+# ╠═e10a9b70-25a0-11eb-2aed-17ed8221c208
+# ╟─2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
+# ╠═50ea30ba-25a1-11eb-05d8-b3d579f85652
+# ╟─51e2e742-25a1-11eb-2511-ab3434eacc3e
+# ╟─930d7154-1fbf-11eb-1c3a-b1970d291811
+# ╠═291326e8-25a2-11eb-1a00-3de0f60e5f0f
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
 # ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
 # ╠═ae2e3838-2543-11eb-369d-3bd6f8b23560
-# ╠═82f8fe38-1fc3-11eb-3a89-ffe737246a28
-# ╠═68f476b0-2532-11eb-31cd-df531895d1e6
-# ╟─7d815988-1fc7-11eb-322a-4509e7128ce3
+# ╠═7d815988-1fc7-11eb-322a-4509e7128ce3
 # ╠═6392bf28-210f-11eb-0793-835be433c454
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc
