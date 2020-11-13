@@ -142,6 +142,14 @@ observations_from_positive_B = md"""
 Hello world!
 """
 
+# ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
+md"""
+
+**Answer:** endless warming!!! ahhhhh B=0 means endless warming _when CO2 increases_
+
+**If answered correctly:** This is known as the "runaway greenhouse effect", where warming self-amplifies so strongly through *positive feedbacks* that the warming continues forever (or until the oceans boil away and there is no longer a reservoir or water to support a *water vapor feedback*. This is thought to explain Venus' extremely hot and hostile climate, but as you can see is extremely unlikely to occur on present-day Earth.
+"""
+
 # ╔═╡ 2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
 md"""
 👉 In what year are we expected to have doubled the CO₂ concentration, under policy scenario RCP8.5?
@@ -247,11 +255,6 @@ end
 
 end
 
-# ╔═╡ 291326e8-25a2-11eb-1a00-3de0f60e5f0f
-md"""
-### Uncertainty in B
-"""
-
 # ╔═╡ 736ed1b6-1fc2-11eb-359e-a1be0a188670
 begin
 	B̅ = -1.3; σ = 0.4
@@ -296,15 +299,6 @@ end |> as_svg
 
 # ╔═╡ 49cb5174-1fc3-11eb-3670-c3868c9b0255
 histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabel="samples")
-
-# ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
-md"**Question:** What happens if the climate feedback parameter $B$ is greater than or equal to zero? How often does this scenario occur?"
-
-# ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
-md"""**Answer:** endless warming!!! ahhhhh
-
-**If answered correctly:** This is known as the "runaway greenhouse effect", where warming self-amplifies so strongly through *positive feedbacks* that the warming continues forever (or until the oceans boil away and there is no longer a reservoir or water to support a *water vapor feedback*. This is thought to explain Venus' extremely hot and hostile climate, but as you can see is extremely unlikely to occur on present-day Earth.
-"""
 
 # ╔═╡ f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
 md"""##### Problem 1. (b) Non-linear uncertainty propagation in climate
@@ -647,12 +641,22 @@ Right now, our CO₂ concentration is 415 ppm -- an increase from 280 ppm with f
 $TODO RCP
 """
 
-# ╔═╡ ae2e3838-2543-11eb-369d-3bd6f8b23560
+# ╔═╡ 291326e8-25a2-11eb-1a00-3de0f60e5f0f
 md"""
-$TODO we probably want to change this: A depends on B, so with constant CO2, we should be at temperature equilibrium by definition of A.
+### Uncertainty in B
 
-B=0 means endless warming _when CO2 increases_
+$TODO the point of this exercise is:
+
+1. there is a small chance that B is close to zero
+1. but B close to zero has dramatic effects
+1. 👉 nonlinearity on distributions
 """
+
+# ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
+md"**Question:** What happens if the climate feedback parameter $B$ is greater than or equal to zero? How likely is this scenario?
+
+$TODO does the original paper say anything about this B>0 tail of the distribution? They might not have intended to assign a probability to B>0
+"
 
 # ╔═╡ d6d1b312-2543-11eb-1cb2-e5b801686ffb
 md"""
@@ -697,6 +701,7 @@ write it as a function of S? maybe as a function of B?
 # ╠═a86f13de-259d-11eb-3f46-1f6fb40020ce
 # ╟─3d66bd30-259d-11eb-2694-471fb3a4a7be
 # ╠═5f82dec8-259e-11eb-2f4f-4d661f44ef41
+# ╠═7d815988-1fc7-11eb-322a-4509e7128ce3
 # ╠═bade1372-25a1-11eb-35f4-4b43d4e8d156
 # ╠═269200ec-259f-11eb-353b-0b73523ef71a
 # ╠═e10a9b70-25a0-11eb-2aed-17ed8221c208
@@ -707,9 +712,7 @@ write it as a function of S? maybe as a function of B?
 # ╠═291326e8-25a2-11eb-1a00-3de0f60e5f0f
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
-# ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
-# ╠═ae2e3838-2543-11eb-369d-3bd6f8b23560
-# ╠═7d815988-1fc7-11eb-322a-4509e7128ce3
+# ╠═a2aff256-1fc6-11eb-3671-b7801bce27fc
 # ╠═6392bf28-210f-11eb-0793-835be433c454
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc
