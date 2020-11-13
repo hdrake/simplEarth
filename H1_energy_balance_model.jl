@@ -384,9 +384,6 @@ md"""
 
 """
 
-# ╔═╡ f43890de-2533-11eb-379d-6d312cfdd2e9
-replace S with CO2
-
 # ╔═╡ 0f52e312-2537-11eb-289e-17dc04710c2d
 let
 	ebm = Model.EBM(-40.0, 0., 5., t -> 280)
@@ -556,6 +553,12 @@ let
 	add_cold_hot_areas!(plot!())
 end |> as_svg
 
+# ╔═╡ 232b9bec-2544-11eb-0401-97a60bb172fc
+
+
+# ╔═╡ 1dcce868-2544-11eb-14af-4f7811b7f2a8
+
+
 # ╔═╡ 3a35598a-2527-11eb-37e5-3b3e4c63c4f7
 md"""
 ## **Exercise XX:** _Lecture transcript_
@@ -613,12 +616,40 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 md"""
 ## Problem 0: _recap_
 
-$TODO does this interaction make sense? With constant CO2, A should be chosen such that T is constant.
+$TODO lets delete this and go straight to ECS to introduce the effect of B
 """
 
 # ╔═╡ 582d5f02-252a-11eb-1004-5f45b9724c91
 md"""
 $TODO talk about doubling CO2: right now we are at
+"""
+
+# ╔═╡ ae2e3838-2543-11eb-369d-3bd6f8b23560
+md"""
+$TODO we probably want to change this: A depends on B, so with constant CO2, we should be at temperature equilibrium by definition of A.
+"""
+
+# ╔═╡ d6d1b312-2543-11eb-1cb2-e5b801686ffb
+md"""
+$TODO
+
+the exercise here will be that you start out with an "empty" CO2 plot, and you add the ebm with CO2 slider.
+"""
+
+# ╔═╡ f81da5ee-2543-11eb-0f34-93b47dbf4c34
+md"""
+$TODO
+
+exercise: add the trail to this viz using push! and pop! (or using a circular buffer)
+"""
+
+# ╔═╡ 11096250-2544-11eb-057b-d7112f20b05c
+md"""
+$TODO
+
+find the equilibrium temperature programatically - binary search?
+
+write it as a function of S? maybe as a function of B?
 """
 
 # ╔═╡ Cell order:
@@ -648,6 +679,7 @@ $TODO talk about doubling CO2: right now we are at
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
 # ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
+# ╠═ae2e3838-2543-11eb-369d-3bd6f8b23560
 # ╠═82f8fe38-1fc3-11eb-3a89-ffe737246a28
 # ╠═68f476b0-2532-11eb-31cd-df531895d1e6
 # ╟─7d815988-1fc7-11eb-322a-4509e7128ce3
@@ -669,7 +701,7 @@ $TODO talk about doubling CO2: right now we are at
 # ╠═181601fe-252e-11eb-0940-4fa990b3249b
 # ╠═101cda5e-252e-11eb-2555-e3e8852f470f
 # ╟─1ea81214-1fca-11eb-2442-7b0b448b49d6
-# ╠═f43890de-2533-11eb-379d-6d312cfdd2e9
+# ╠═d6d1b312-2543-11eb-1cb2-e5b801686ffb
 # ╠═0f52e312-2537-11eb-289e-17dc04710c2d
 # ╠═fc94977a-253b-11eb-1143-912bb5ef055f
 # ╠═f984e274-2536-11eb-0092-27bb91984530
@@ -688,6 +720,10 @@ $TODO talk about doubling CO2: right now we are at
 # ╠═d7801e88-2530-11eb-0b93-6f1c78d00eea
 # ╠═607058ec-253c-11eb-0fb6-add8cfb73a4f
 # ╠═cdc54b98-2530-11eb-3d5e-71c4b53256fb
+# ╠═f81da5ee-2543-11eb-0f34-93b47dbf4c34
+# ╠═11096250-2544-11eb-057b-d7112f20b05c
+# ╠═232b9bec-2544-11eb-0401-97a60bb172fc
+# ╠═1dcce868-2544-11eb-14af-4f7811b7f2a8
 # ╟─3a35598a-2527-11eb-37e5-3b3e4c63c4f7
 # ╠═5041cdee-2527-11eb-154f-0b0c68e11fe3
 # ╟─36e2dfea-2433-11eb-1c90-bb93ab25b33c
