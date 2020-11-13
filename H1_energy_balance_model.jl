@@ -89,7 +89,7 @@ A recent ground-breaking [review paper](https://agupubs.onlinelibrary.wiley.com/
 
 $B \approx \mathcal{N}(-1.3, 0.4),$
 
-i.e. is normally distributed with a mean value $\overline{B} = -1.3$ W/m²/K and a standard deviation $\sigma = 0.4$ W/m²/K. These value are not very intuitive, so let us convert them into more policy-relevant numbers.
+i.e. is normally distributed with a mean value $\overline{B} = -1.3$ W/m²/K and a standard deviation $\sigma = 0.4$ W/m²/K. These values are not very intuitive, so let us convert them into more policy-relevant numbers.
 
 **Definition:** *Equilibrium climate sensitivity (ECS)* is defined as the amount of warming $\Delta T$ caused by a doubling of CO₂ (e.g. from the pre-industrial value 280 ppm to 560 ppm), at equilibrium.
 
@@ -107,7 +107,7 @@ $\text{ECS} \equiv T_{eq} - T_{0} = -\frac{a\ln(2)}{B}$
 """
 
 # ╔═╡ 7f961bc0-1fc5-11eb-1f18-612aeff0d8df
-md"""The plot below provides an example of an "abrupt 2xCO₂" experiment, a classic experimental treatment method in climate modelling which is used in practice to estimate ECS for a particular model (Note: in complicated climate models the values of the parameters $a$ and $B$ are not specified *a priori*, but emerge as outputs for the simulation).
+md"""The plot below provides an example of an "abrupt 2xCO₂" experiment, a classic experimental treatment method in climate modelling which is used in practice to estimate ECS for a particular model (Note: in complicated climate models the values of the parameters $a$ and $B$ are not specified *a priori*, but *emerge* as outputs of the simulation).
 
 The simulation begins at the preindustrial equilibrium, i.e. a temperature $T_{0} = 14$°C is in balance with the pre-industrial CO₂ concentration of 280 ppm until CO₂ is abruptly doubled from 280 ppm to 560 ppm. The climate responds by rapidly warming, and after a few hundred years approaches the equilibrium climate sensitivity value, by definition.
 """
@@ -145,14 +145,14 @@ Hello world!
 # ╔═╡ 7d815988-1fc7-11eb-322a-4509e7128ce3
 md"""
 
-**Answer:** endless warming!!! ahhhhh B=0 means endless warming _when CO2 increases_
+**Answer:** endless warming!!! ahhhhh B ≥ 0 means endless warming _when CO2 increases_
 
 **If answered correctly:** This is known as the "runaway greenhouse effect", where warming self-amplifies so strongly through *positive feedbacks* that the warming continues forever (or until the oceans boil away and there is no longer a reservoir or water to support a *water vapor feedback*. This is thought to explain Venus' extremely hot and hostile climate, but as you can see is extremely unlikely to occur on present-day Earth.
 """
 
 # ╔═╡ 2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
 md"""
-👉 In what year are we expected to have doubled the CO₂ concentration, under policy scenario RCP8.5?
+👉 In what year are we expected to have doubled the CO₂ concentration, under policy scenario RCP8.5 (a "worst-case" high-emissions scenario)?
 """
 
 # ╔═╡ 50ea30ba-25a1-11eb-05d8-b3d579f85652
@@ -319,9 +319,10 @@ end
 scatter(B_samples, ECS_samples, ylims=[0, 20])
 
 # ╔═╡ cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
-md"**Question:** Compare the ECS distribution to the $\text{ECS}(\overline{B})$ that corresponds to the mean value of the climate feedback parameter $\overline{B}$.
+md"Compare the ECS distribution to the $\text{ECS}(\overline{B})$ that corresponds to the mean value of the climate feedback parameter $\overline{B}$.
 
-How does $\overline{\text{ECS}(B)}$ compare to $\text{ECS}(\overline{B})$? What is the probability that $\text{ECS}(B)$ lies above $\text{ECS}(\overline{B})$?"
+👉 How does $\overline{\text{ECS}(B)}$ compare to $\text{ECS}(\overline{B})$? What is the probability that $\text{ECS}(B)$ lies above $\text{ECS}(\overline{B})$?
+"
 
 # ╔═╡ d44daea2-252f-11eb-364f-377ae504dc04
 ecs_of_mean = ECS(B=mean(B_samples))
@@ -339,6 +340,14 @@ sum(ECS_samples) do e
 	e > mean_of_ecs
 end / length(ECS_samples)
 
+# ╔═╡ 440271b6-25e8-11eb-26ce-1b80aa176aca
+md"👉 Does accounting for uncertainty in feedbacks make our expectation of global warming better (less implied warming) or worse (more implied warming)?"
+
+# ╔═╡ cf276892-25e7-11eb-38f0-03f75c90dd9e
+observations_from_the_order_of_averaging = md"""
+Hello world!
+"""
+
 # ╔═╡ 9c32db5c-1fc9-11eb-029a-d5d554de1067
 md"""##### Problem 1. (c) Application to policy relevant questions
 
@@ -353,7 +362,7 @@ plot(t, Model.CO2_RCP85.(t),
 	ylim=(0,1200), ylabel="CO2 concentration [ppm]")
 
 # ╔═╡ 40f1e7d8-252d-11eb-0549-49ca4e806e16
-@bind t_scenario_test Slider(t; show_value=true)
+@bind t_scenario_test Slider(t; show_value=true, default=1850)
 
 # ╔═╡ 19957754-252d-11eb-1e0a-930b5208f5ac
 Model.CO2_RCP26(t_scenario_test), Model.CO2_RCP85(t_scenario_test)
@@ -369,7 +378,7 @@ Model.CO2_RCP26(t_scenario_test), Model.CO2_RCP85(t_scenario_test)
 
 # ╔═╡ 06c5139e-252d-11eb-2645-8b324b24c405
 md"""
-We are interested in the effect of a climate feedback parameter $B$, for a given emissions scenario. The goal of this exercise is to answer the following:
+We are interested in how the **uncertainty in our input** $B$ (the climate feedback paramter) *propagates* through our model to determine the **uncertainty in our output** $T(t)$, for a given emissions scenario. The goal of this exercise is to answer the following by using *Monte Carlo Simulation* for *uncertainty propagation*:
 
 > **Question:** What is the probability that we see more than 2°C of warming by 2100 under the low-emissions scenario RCP2.6? What about under the high-emissions scenario RCP8.5?
 
@@ -390,6 +399,25 @@ md"""
 md"""
 ## Problem 2. How did Snowball Earth melt?
 
+"""
+
+# ╔═╡ 30f99584-25ea-11eb-26f5-09123e5ebb2f
+md"""
+
+In lecture 21 (see below), we discovered that increases in the brightness of the Sun are not sufficient to explain how Snowball Earth eventually melted.
+
+"""
+
+# ╔═╡ a0ef04b0-25e9-11eb-1110-cde93601f712
+html"""
+<iframe width="100%" height="300" src="https://www.youtube-nocookie.com/embed/Y68tnH0FIzc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+"""
+
+# ╔═╡ 3e310cf8-25ec-11eb-07da-cb4a2c71ae34
+md"""
+We hypothesized that a large increase in CO2 could caused a strong enough greenhouse effect to melt the Snowball. If we imagine that the CO2 then decreased (e.g. by getting sequestered by the now liquid ocean), we might be able to explain how we transitioned from a hostile Snowball Earth to today's habitable "Waterball" Earth.
+
+In this exercise, you will estimate how much CO₂ would be needed to melt the Snowball and visualize a possible trajectory for Earth's climate over the past 700 million years by making an interactive *bifurcation diagram* (as in the lecture).
 """
 
 # ╔═╡ 0f52e312-2537-11eb-289e-17dc04710c2d
@@ -536,7 +564,7 @@ let
 		xaxis=:log,
 		title="Earth's CO2 concentration bifurcation diagram"
 	)
-	plot!([Model.CO2_PI, Model.CO2_PI], [-55, 75], color=:yellow, alpha=0.3, lw=8, label="Pre-industrial / present insolation")
+	plot!([Model.CO2_PI, Model.CO2_PI], [-55, 75], color=:grey, alpha=0.3, lw=8, label="Pre-industrial CO2")
 	if false
 		plot!(p, xlims=(CO2min, CO2max))
 		# if show_cold
@@ -561,8 +589,14 @@ let
 	add_cold_hot_areas!(plot!())
 end |> as_svg
 
-# ╔═╡ 232b9bec-2544-11eb-0401-97a60bb172fc
+# ╔═╡ 2f39805a-25ed-11eb-0594-89755c16ad15
+CO2vec_hires = CO2min:0.1:CO2max
 
+# ╔═╡ cb15cd88-25ed-11eb-2be4-f31500a726c8
+md"Hint: Use a condition on the albedo or temperature to check whether the Snowball has melted."
+
+# ╔═╡ 232b9bec-2544-11eb-0401-97a60bb172fc
+md"Hint: Start by writing a function `equilibrate(CO2)` which starts at the Snowball Earth temperature T = $(Tneo) and returns the equilibrium temperature for a given CO2 level."
 
 # ╔═╡ 1dcce868-2544-11eb-14af-4f7811b7f2a8
 
@@ -628,15 +662,17 @@ md"""
 $TODO
 
 Say that B is not something that changes naturally, or something that we control -- it is a property of the climate system that we don't have a precise value of.
+
+The climate feedback parameter B is not something that we can control– it is an emergent property of the global climate system. Unfortunately, B is also difficult to quantify empirically (the relevant processes are difficult or impossible to observe directly), so there remains uncertainty as to its exact value.
 """
 
 # ╔═╡ 269200ec-259f-11eb-353b-0b73523ef71a
 md"""
 #### Doubling CO2
 
-To compute ECS, we doubled the CO₂ in our atmosphere. This factor 2 is not entirely arbitrary: without intervention, we are expected to double the CO₂ in our atmosphere in the near future. 
+To compute ECS, we doubled the CO₂ in our atmosphere. This factor 2 is not entirely arbitrary: without substantial effort to reduce CO₂ emissions, we are expected to **at least** double the CO₂ in our atmosphere by 2100. 
 
-Right now, our CO₂ concentration is 415 ppm -- an increase from 280 ppm with factor $(round(415 / 280, digits=3)). 
+Right now, our CO₂ concentration is 415 ppm -- $(round(415 / 280, digits=3)) times the pre-industrial value of 280 ppm from 1850. 
 
 $TODO RCP
 """
@@ -645,7 +681,9 @@ $TODO RCP
 md"""
 ### Uncertainty in B
 
-$TODO the point of this exercise is:
+$TODO
+
+The point of this exercise is:
 
 1. there is a small chance that B is close to zero
 1. but B close to zero has dramatic effects
@@ -653,10 +691,12 @@ $TODO the point of this exercise is:
 """
 
 # ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
-md"**Question:** What happens if the climate feedback parameter $B$ is greater than or equal to zero? How likely is this scenario?
+md"""**Question:** What happens if the climate feedback parameter $B$ is greater than or equal to zero? How likely is this scenario?
 
 $TODO does the original paper say anything about this B>0 tail of the distribution? They might not have intended to assign a probability to B>0
-"
+
+No, they always clip it at zero but they'd explain why. I think it's still worth talking about it because it brings up the concept of a "runaway feedback". I think we should still include this in the problem set but we can clarify that the tails of the climate sensivity distribution are less well constrained than the center– i.e. it's possible that the actual distribution is non-Gaussian.
+"""
 
 # ╔═╡ d6d1b312-2543-11eb-1cb2-e5b801686ffb
 md"""
@@ -676,9 +716,7 @@ exercise: add the trail to this viz using push! and pop! (or using a circular bu
 md"""
 $TODO
 
-find the equilibrium temperature programatically - binary search?
-
-write it as a function of S? maybe as a function of B?
+Find the **lowest CO₂ concentration** necessary to melt the Snowball, programatically, by performing a *binary search* on `CO2vec_hires`?
 """
 
 # ╔═╡ Cell order:
@@ -712,25 +750,30 @@ write it as a function of S? maybe as a function of B?
 # ╠═291326e8-25a2-11eb-1a00-3de0f60e5f0f
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
-# ╠═a2aff256-1fc6-11eb-3671-b7801bce27fc
+# ╟─a2aff256-1fc6-11eb-3671-b7801bce27fc
 # ╠═6392bf28-210f-11eb-0793-835be433c454
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc
 # ╠═1f148d9a-1fc8-11eb-158e-9d784e390b24
-# ╟─cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
+# ╠═cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
 # ╠═d44daea2-252f-11eb-364f-377ae504dc04
 # ╠═e27b2cd4-252f-11eb-20ef-0354db6220c2
 # ╠═f94e635e-252f-11eb-1a52-310b628bd9b2
 # ╠═23e24d88-2530-11eb-26ef-c5e4e8b4f276
+# ╟─440271b6-25e8-11eb-26ce-1b80aa176aca
+# ╠═cf276892-25e7-11eb-38f0-03f75c90dd9e
 # ╟─9c32db5c-1fc9-11eb-029a-d5d554de1067
 # ╠═19957754-252d-11eb-1e0a-930b5208f5ac
 # ╠═40f1e7d8-252d-11eb-0549-49ca4e806e16
 # ╟─ee1be5dc-252b-11eb-0865-291aa823b9e9
 # ╠═61300a76-252c-11eb-2d79-2d63e67aafcd
-# ╟─06c5139e-252d-11eb-2645-8b324b24c405
+# ╠═06c5139e-252d-11eb-2645-8b324b24c405
 # ╠═181601fe-252e-11eb-0940-4fa990b3249b
 # ╠═101cda5e-252e-11eb-2555-e3e8852f470f
 # ╟─1ea81214-1fca-11eb-2442-7b0b448b49d6
+# ╟─30f99584-25ea-11eb-26f5-09123e5ebb2f
+# ╟─a0ef04b0-25e9-11eb-1110-cde93601f712
+# ╟─3e310cf8-25ec-11eb-07da-cb4a2c71ae34
 # ╠═d6d1b312-2543-11eb-1cb2-e5b801686ffb
 # ╠═0f52e312-2537-11eb-289e-17dc04710c2d
 # ╠═fc94977a-253b-11eb-1143-912bb5ef055f
@@ -752,6 +795,8 @@ write it as a function of S? maybe as a function of B?
 # ╠═cdc54b98-2530-11eb-3d5e-71c4b53256fb
 # ╠═f81da5ee-2543-11eb-0f34-93b47dbf4c34
 # ╠═11096250-2544-11eb-057b-d7112f20b05c
+# ╠═2f39805a-25ed-11eb-0594-89755c16ad15
+# ╟─cb15cd88-25ed-11eb-2be4-f31500a726c8
 # ╠═232b9bec-2544-11eb-0401-97a60bb172fc
 # ╠═1dcce868-2544-11eb-14af-4f7811b7f2a8
 # ╟─3a35598a-2527-11eb-37e5-3b3e4c63c4f7
