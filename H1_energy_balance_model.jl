@@ -71,33 +71,9 @@ html"""
 <iframe width="100%" height="300" src="https://www.youtube.com/embed/Gi4ZZVS2GLA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
-# ╔═╡ 1312525c-1fc0-11eb-2756-5bc3101d2260
-md"""## **Exercise 1** - _policy goals under uncertainty_
-A recent ground-breaking [review paper](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019RG000678) produced the most comprehensive and up-to-date estimate of the *climate feedback parameter*, which they find to be
-
-$B \approx \mathcal{N}(-1.3, 0.4),$
-
-i.e. our knowledge of the real value is normally distributed with a mean value $\overline{B} = -1.3$ W/m²/K and a standard deviation $\sigma = 0.4$ W/m²/K. These values are not very intuitive, so let us convert them into more policy-relevant numbers.
-
-**Definition:** *Equilibrium climate sensitivity (ECS)* is defined as the amount of warming $\Delta T$ caused by a doubling of CO₂ (e.g. from the pre-industrial value 280 ppm to 560 ppm), at equilibrium.
-
-At equilibrium, the energy balance model equation is:
-
-$0 = \frac{S(1 - α)}{4} - (A - BT_{eq}) + a \ln\left( \frac{2\;\text{CO}₂_{\text{PI}}}{\text{CO}₂_{\text{PI}}} \right)$
-
-From this, we subtract the preindustrial energy balance, which is given by:
-
-$0 = \frac{S(1-α)}{4} - (A - BT_{0}),$
-
-The result of this subtraction, after rearranging, is our definition of $\text{ECS}$:
-
-$\text{ECS} \equiv T_{eq} - T_{0} = -\frac{a\ln(2)}{B}$
-"""
-
-# ╔═╡ 7f961bc0-1fc5-11eb-1f18-612aeff0d8df
-md"""The plot below provides an example of an "abrupt 2xCO₂" experiment, a classic experimental treatment method in climate modelling which is used in practice to estimate ECS for a particular model (Note: in complicated climate models the values of the parameters $a$ and $B$ are not specified *a priori*, but *emerge* as outputs of the simulation).
-
-The simulation begins at the preindustrial equilibrium, i.e. a temperature $T_{0} = 14$°C is in balance with the pre-industrial CO₂ concentration of 280 ppm until CO₂ is abruptly doubled from 280 ppm to 560 ppm. The climate responds by rapidly warming, and after a few hundred years approaches the equilibrium climate sensitivity value, by definition.
+# ╔═╡ fe3304f8-2668-11eb-066d-fdacadce5a19
+md"""
+_Before working on the homework, make sure that you have watched the first lecture on climate modeling 👆. We have included the important functions from this lecture notebook in the next cell. Feel free to have a look!_
 """
 
 # ╔═╡ 930d7154-1fbf-11eb-1c3a-b1970d291811
@@ -152,15 +128,15 @@ begin
 	end;
 	
 	# Make constant parameters optional kwargs
-	EBM(T::Array{Float64, 1}, t::Array{Float64, 1}, Δt::Float64, CO2::Function;
+	EBM(T::Array{Float64, 1}, t::Array{Float64, 1}, Δt::Real, CO2::Function;
 		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S) = (
 		EBM(T, t, Δt, CO2, C, a, A, B, CO2_PI, α, S)
 	);
 	
 	# Construct from float inputs for convenience
-	EBM(T0::Float64, t0::Float64, Δt::Float64, CO2::Function;
+	EBM(T0::Real, t0::Real, Δt::Real, CO2::Function;
 		C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S) = (
-		EBM([T0], [t0], Δt, CO2;
+		EBM(Float64[T0], Float64[t0], Δt, CO2;
 			C=C, a=a, A=A, B=B, CO2_PI=CO2_PI, α=α, S=S);
 	);
 end;
@@ -192,6 +168,35 @@ begin
 end
 
 end
+
+# ╔═╡ 1312525c-1fc0-11eb-2756-5bc3101d2260
+md"""## **Exercise 1** - _policy goals under uncertainty_
+A recent ground-breaking [review paper](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019RG000678) produced the most comprehensive and up-to-date estimate of the *climate feedback parameter*, which they find to be
+
+$B \approx \mathcal{N}(-1.3, 0.4),$
+
+i.e. our knowledge of the real value is normally distributed with a mean value $\overline{B} = -1.3$ W/m²/K and a standard deviation $\sigma = 0.4$ W/m²/K. These values are not very intuitive, so let us convert them into more policy-relevant numbers.
+
+**Definition:** *Equilibrium climate sensitivity (ECS)* is defined as the amount of warming $\Delta T$ caused by a doubling of CO₂ (e.g. from the pre-industrial value 280 ppm to 560 ppm), at equilibrium.
+
+At equilibrium, the energy balance model equation is:
+
+$0 = \frac{S(1 - α)}{4} - (A - BT_{eq}) + a \ln\left( \frac{2\;\text{CO}₂_{\text{PI}}}{\text{CO}₂_{\text{PI}}} \right)$
+
+From this, we subtract the preindustrial energy balance, which is given by:
+
+$0 = \frac{S(1-α)}{4} - (A - BT_{0}),$
+
+The result of this subtraction, after rearranging, is our definition of $\text{ECS}$:
+
+$\text{ECS} \equiv T_{eq} - T_{0} = -\frac{a\ln(2)}{B}$
+"""
+
+# ╔═╡ 7f961bc0-1fc5-11eb-1f18-612aeff0d8df
+md"""The plot below provides an example of an "abrupt 2xCO₂" experiment, a classic experimental treatment method in climate modelling which is used in practice to estimate ECS for a particular model. (Note: in complicated climate models the values of the parameters $a$ and $B$ are not specified *a priori*, but *emerge* as outputs of the simulation.)
+
+The simulation begins at the preindustrial equilibrium, i.e. a temperature $T_{0} = 14$°C is in balance with the pre-industrial CO₂ concentration of 280 ppm until CO₂ is abruptly doubled from 280 ppm to 560 ppm. The climate responds by rapidly warming, and after a few hundred years approaches the equilibrium climate sensitivity value, by definition.
+"""
 
 # ╔═╡ fa7e6f7e-2434-11eb-1e61-1b1858bb0988
 md"""
@@ -233,6 +238,14 @@ This is known as the "runaway greenhouse effect", where warming self-amplifies s
 """
 end
 
+# ╔═╡ aed8f00e-266b-11eb-156d-8bb09de0dc2b
+md"""
+👉 Create a graph to visualize ECS as a function of B. 
+"""
+
+# ╔═╡ b9f882d8-266b-11eb-2998-75d6539088c7
+
+
 # ╔═╡ 269200ec-259f-11eb-353b-0b73523ef71a
 md"""
 #### Exercise 1.2 - _Doubling CO₂_
@@ -241,7 +254,7 @@ To compute ECS, we doubled the CO₂ in our atmosphere. This factor 2 is not ent
 
 Right now, our CO₂ concentration is 415 ppm -- $(round(415 / 280, digits=3)) times the pre-industrial value of 280 ppm from 1850. 
 
-The CO₂ concentrations in the _future_ depend on human action. There are several models for future emissions, which are formed by assuming different _policy scenarios_. A baseline model is RCP8.5 - a "worst-case" high-emissions scenario. In our notebook, this model is given as a function of ``t``.
+The CO₂ concentrations in the _future_ depend on human action. There are several models for future concentrations, which are formed by assuming different _policy scenarios_. A baseline model is RCP8.5 - a "worst-case" high-emissions scenario. In our notebook, this model is given as a function of ``t``.
 """
 
 # ╔═╡ 2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
@@ -258,7 +271,9 @@ end
 
 # ╔═╡ bade1372-25a1-11eb-35f4-4b43d4e8d156
 md"""
-The climate feedback parameter B is not something that we can control– it is an emergent property of the global climate system. Unfortunately, B is also difficult to quantify empirically (the relevant processes are difficult or impossible to observe directly), so there remains uncertainty as to its exact value.
+The climate feedback parameter ``B`` is not something that we can control– it is an emergent property of the global climate system. Unfortunately, ``B`` is also difficult to quantify empirically (the relevant processes are difficult or impossible to observe directly), so there remains uncertainty as to its exact value.
+
+A value of ``B`` close to zero means that an increase in CO₂ concentrations will have a larger impact on global warming, and that more action is needed to stay below a maximum temperature. In answering such policy-related question, we need to take the uncertainty in ``B`` into account. In this exercise, we will do so using a Monte Carlo simulation: we generate a sample of values for ``B``, and use these values in our analysis.
 """
 
 # ╔═╡ 02232964-2603-11eb-2c4c-c7b7e5fed7d1
@@ -309,7 +324,7 @@ end
 histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabel="samples")
 
 # ╔═╡ f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
-md"""##### Exercise 1.4 - _Non-linear uncertainty propagation in climate_
+md"""#### Exercise 1.4 - _Non-linear uncertainty propagation in climate_
 
 **Question:** Use Monte Carlo simulation to generate a probability distribution for the ECS based on the probability distribution function for $B$ above.
 """
@@ -322,9 +337,6 @@ begin
 	ECS_samples = ECS.(B=B_samples);
 	histogram(ECS_samples, xlims=(0, 8), size=(500, 240))
 end
-
-# ╔═╡ 6392bf28-210f-11eb-0793-835be433c454
-scatter(B_samples, ECS_samples, ylims=[0, 20])
 
 # ╔═╡ cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
 md"Compare the ECS distribution to the $\text{ECS}(\overline{B})$ that corresponds to the mean value of the climate feedback parameter $\overline{B}$.
@@ -356,8 +368,130 @@ observations_from_the_order_of_averaging = md"""
 Hello world!
 """
 
+# ╔═╡ 5b5f25f0-266c-11eb-25d4-17e411c850c9
+md"""
+#### Exercise 1.5 - _Running the model_
+
+In the lecture notebook we introduced a _mutable struct_ `EBM` (_energy balance model_), which contains:
+- the parameters of our climate simulation (`C`, `a`, `A`, `B`, `CO2_PI`, `α`, `S`, see details below)
+- a function `CO2`, which maps a time `t` to the concentrations at that year. For example, we use the function `t -> 280` to simulate our model with constant concentrations.
+
+`EBM` also contains the simulation results, in two arrays:
+- `T` is the array of tempartures (°C, `Float64`).
+- `t` is the array of timestamps (years, `Float64`), of the same size as `T`.
+"""
+
+# ╔═╡ 3f823490-266d-11eb-1ba4-d5a23975c335
+html"""
+<style>
+.hello td {
+	font-family: sans-serif; font-size: .8em;
+	max-width: 300px
+}
+
+soft {
+	opacity: .5;
+}
+</style>
+
+
+<p>Properties of an <code>EBM</code> obect:</p>
+<table class="hello">
+<thead>
+
+<tr><th>Name</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><th><code>A</code></th><td>Linearized outgoing thermal radiation: offset <soft>[W/m²]</soft></td></tr>
+<tr><th><code>B</code></th><td>Linearized outgoing thermal radiation: slope. <em>or: </em><b>climate feedback parameter</b> <soft>[W/m²/°C]</soft></td></tr>
+<tr><th><code>α</code></th><td>Planet albedo, 0.0-1.0 <soft>[unitless]</soft></td></tr>
+<tr><th><code>S</code></th><td>Solar insulation <soft>[W/m²]</soft></td></tr>
+<tr><th><code>C</code></th><td>Atmosphere and upper-ocean heat capacity <soft>[J/m²/°C]</soft></td></tr>
+<tr><th><code>a</code></th><td>CO₂ forcing effect <soft>[W/m²]</soft></td></tr>
+<tr><th><code>CO2_PI</code></th><td>Pre-industrial CO₂ concentration <soft>[ppm]</soft></td></tr>
+</tbody>
+</table>
+
+"""
+
+# ╔═╡ 971f401e-266c-11eb-3104-171ae299ef70
+md"""
+
+You can set up an instance of `EBM` like so:
+"""
+
+# ╔═╡ 746aa5bc-266c-11eb-14c9-63ccc313f5de
+empty_ebm = Model.EBM(
+	14.0, # initial temperature
+	1850, # initial year
+	1, # Δt
+	t -> 280.0, # CO2 function
+)
+
+# ╔═╡ a919d584-2670-11eb-1cf9-2327c8135d6d
+md"""
+Have look inside this object. We see that `T` and `t` are initialized to a 1-element array.
+
+Let's run our model:
+"""
+
+# ╔═╡ bfb07a0a-2670-11eb-3938-772499c637b1
+simulated_model = let
+	ebm = Model.EBM(14.0, 1850, 1, t -> 280.0)
+	Model.run!(ebm, 2020)
+	ebm
+end
+
+# ╔═╡ 12cbbab0-2671-11eb-2b1f-038c206e84ce
+md"""
+Again, look inside `simulated_model`, and notice that `T` and `t` have accumulated the simulation results.
+
+In this simulation, we used `T0 = 14` and `CO2 = t -> 280`, which is why `T` is constant during our simulation. These parameters are the default, pre-industrial values, and our model is based on this equilibrium.
+
+👉 Run a simulation with policy scenario RCP8.5, and plot the computed temperature graph. What is the global temperature at 2100?
+"""
+
+# ╔═╡ 9596c2dc-2671-11eb-36b9-c1af7e5f1089
+simulated_rcp85_model = let
+	
+	missing
+end
+
+# ╔═╡ f94a1d56-2671-11eb-2cdc-810a9c7a8a5f
+
+
+# ╔═╡ 4b091fac-2672-11eb-0db8-75457788d85e
+md"""
+Additional parameters can be set using keyword arguments. For example:
+
+```julia
+Model.EBM(14, 1850, 1, t -> 280.0; B=-2.0)
+```
+Creates the same model as before, but with `B = -2.0`.
+"""
+
+# ╔═╡ 9cdc5f84-2671-11eb-3c78-e3495bc64d33
+md"""
+👉 Write a function `temperature_response` that takes a function `CO2` and an optional value `B` as parameters, and returns the temperature at 2100 according to our model.
+"""
+
+# ╔═╡ f688f9f2-2671-11eb-1d71-a57c9817433f
+function temperature_response(CO2::Function, B::Float64=-1.3)
+	
+	return missing
+end
+
+# ╔═╡ 049a866e-2672-11eb-29f7-bfea7ad8f572
+temperature_response(t -> 280)
+
+# ╔═╡ 09901de6-2672-11eb-3d50-05b176b729e7
+temperature_response(Model.CO2_RCP85)
+
+# ╔═╡ aea0d0b4-2672-11eb-231e-395c863827d3
+temperature_response(Model.CO2_RCP85, -1.0)
+
 # ╔═╡ 9c32db5c-1fc9-11eb-029a-d5d554de1067
-md"""#### Exercise 1.5 - _Application to policy relevant questions_
+md"""#### Exercise 1.6 - _Application to policy relevant questions_
 
 We talked about two _emissions scenarios_: RCP2.6 (strong mitigation - controlled CO2 concentrations) and RCP8.5 (no mitigation - high CO2 concentrations). These are given by the following functions:
 """
@@ -677,10 +811,11 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╟─253f4da0-2433-11eb-1e48-4906059607d3
 # ╠═1e06178a-1fbf-11eb-32b3-61769a79b7c0
 # ╟─87e68a4a-2433-11eb-3e9d-21675850ed71
+# ╟─fe3304f8-2668-11eb-066d-fdacadce5a19
+# ╠═930d7154-1fbf-11eb-1c3a-b1970d291811
 # ╟─1312525c-1fc0-11eb-2756-5bc3101d2260
 # ╠═c4398f9c-1fc4-11eb-0bbb-37f066c6027d
 # ╟─7f961bc0-1fc5-11eb-1f18-612aeff0d8df
-# ╟─930d7154-1fbf-11eb-1c3a-b1970d291811
 # ╟─25f92dec-1fc4-11eb-055d-f34deea81d0e
 # ╟─fa7e6f7e-2434-11eb-1e61-1b1858bb0988
 # ╟─16348b6a-1fc2-11eb-0b9c-65df528db2a1
@@ -690,6 +825,8 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╠═5f82dec8-259e-11eb-2f4f-4d661f44ef41
 # ╟─56b68356-2601-11eb-39a9-5f4b8e580b87
 # ╟─7d815988-1fc7-11eb-322a-4509e7128ce3
+# ╟─aed8f00e-266b-11eb-156d-8bb09de0dc2b
+# ╠═b9f882d8-266b-11eb-2998-75d6539088c7
 # ╟─269200ec-259f-11eb-353b-0b73523ef71a
 # ╠═e10a9b70-25a0-11eb-2aed-17ed8221c208
 # ╟─2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
@@ -701,7 +838,6 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
 # ╠═a2aff256-1fc6-11eb-3671-b7801bce27fc
-# ╠═6392bf28-210f-11eb-0793-835be433c454
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc
 # ╠═1f148d9a-1fc8-11eb-158e-9d784e390b24
@@ -712,6 +848,21 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╠═23e24d88-2530-11eb-26ef-c5e4e8b4f276
 # ╟─440271b6-25e8-11eb-26ce-1b80aa176aca
 # ╠═cf276892-25e7-11eb-38f0-03f75c90dd9e
+# ╟─5b5f25f0-266c-11eb-25d4-17e411c850c9
+# ╟─3f823490-266d-11eb-1ba4-d5a23975c335
+# ╟─971f401e-266c-11eb-3104-171ae299ef70
+# ╠═746aa5bc-266c-11eb-14c9-63ccc313f5de
+# ╟─a919d584-2670-11eb-1cf9-2327c8135d6d
+# ╠═bfb07a0a-2670-11eb-3938-772499c637b1
+# ╟─12cbbab0-2671-11eb-2b1f-038c206e84ce
+# ╠═9596c2dc-2671-11eb-36b9-c1af7e5f1089
+# ╠═f94a1d56-2671-11eb-2cdc-810a9c7a8a5f
+# ╟─4b091fac-2672-11eb-0db8-75457788d85e
+# ╟─9cdc5f84-2671-11eb-3c78-e3495bc64d33
+# ╠═f688f9f2-2671-11eb-1d71-a57c9817433f
+# ╠═049a866e-2672-11eb-29f7-bfea7ad8f572
+# ╠═09901de6-2672-11eb-3d50-05b176b729e7
+# ╠═aea0d0b4-2672-11eb-231e-395c863827d3
 # ╟─9c32db5c-1fc9-11eb-029a-d5d554de1067
 # ╠═19957754-252d-11eb-1e0a-930b5208f5ac
 # ╠═40f1e7d8-252d-11eb-0549-49ca4e806e16
