@@ -41,12 +41,6 @@ md"""
 
 # **Homework 9**: _Climate modeling I_
 `18.S191`, fall 2020
-
-This notebook contains _built-in, live answer checks_! In some exercises you will see a coloured box, which runs a test case on your code, and provides feedback based on the result. Simply edit the code, run it, and the check runs again.
-
-_For MIT students:_ there will also be some additional (secret) test cases that will be run as part of the grading process, and we will look at your notebook and write comments.
-
-Feel free to ask questions!
 """
 
 # ╔═╡ 23335418-2433-11eb-05e4-2b35dc6cca0e
@@ -195,7 +189,7 @@ $\text{ECS} \equiv T_{eq} - T_{0} = -\frac{a\ln(2)}{B}$
 # ╔═╡ 7f961bc0-1fc5-11eb-1f18-612aeff0d8df
 md"""The plot below provides an example of an "abrupt 2xCO₂" experiment, a classic experimental treatment method in climate modelling which is used in practice to estimate ECS for a particular model. (Note: in complicated climate models the values of the parameters $a$ and $B$ are not specified *a priori*, but *emerge* as outputs of the simulation.)
 
-The simulation begins at the preindustrial equilibrium, i.e. a temperature $T_{0} = 14$°C is in balance with the pre-industrial CO₂ concentration of 280 ppm until CO₂ is abruptly doubled from 280 ppm to 560 ppm. The climate responds by rapidly warming, and after a few hundred years approaches the equilibrium climate sensitivity value, by definition.
+The simulation begins at the preindustrial equilibrium, i.e. a temperature $T_{0} = 14$°C is in balance with the pre-industrial CO₂ concentration of 280 ppm until CO₂ is abruptly doubled from 280 ppm to 560 ppm. The climate responds by warming rapidly, and after a few hundred years approaches the equilibrium climate sensitivity value, by definition.
 """
 
 # ╔═╡ fa7e6f7e-2434-11eb-1e61-1b1858bb0988
@@ -271,6 +265,8 @@ end
 
 # ╔═╡ bade1372-25a1-11eb-35f4-4b43d4e8d156
 md"""
+#### Exercise 1.3 - _Uncertainty in B_
+
 The climate feedback parameter ``B`` is not something that we can control– it is an emergent property of the global climate system. Unfortunately, ``B`` is also difficult to quantify empirically (the relevant processes are difficult or impossible to observe directly), so there remains uncertainty as to its exact value.
 
 A value of ``B`` close to zero means that an increase in CO₂ concentrations will have a larger impact on global warming, and that more action is needed to stay below a maximum temperature. In answering such policy-related question, we need to take the uncertainty in ``B`` into account. In this exercise, we will do so using a Monte Carlo simulation: we generate a sample of values for ``B``, and use these values in our analysis.
@@ -317,29 +313,33 @@ B_samples = let
 	B_distribution = Normal(B̅, σ)
 	Nsamples = 5000
 	
-	rand(B_distribution, Nsamples)
+	samples = rand(B_distribution, Nsamples)
+	# we only sample negative values of B
+	filter(x -> x < 0, samples)
 end
 
 # ╔═╡ 49cb5174-1fc3-11eb-3670-c3868c9b0255
 histogram(B_samples, size=(600, 250), label=nothing, xlabel="B [W/m²/K]", ylabel="samples")
 
 # ╔═╡ f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
-md"""#### Exercise 1.4 - _Non-linear uncertainty propagation in climate_
-
-**Question:** Use Monte Carlo simulation to generate a probability distribution for the ECS based on the probability distribution function for $B$ above.
+md"""
+👉 Generate a probability distribution for the ECS based on the probability distribution function for $B$ above. Plot a histogram.
 """
+
+# ╔═╡ 1843dae6-2689-11eb-2aaf-036eb2f9341d
+ECS_samples = ECS.(B=B_samples)
+
+# ╔═╡ 3d72ab3a-2689-11eb-360d-9b3d829b78a9
+# ECS_samples = missing
 
 # ╔═╡ b6d7a362-1fc8-11eb-03bc-89464b55c6fc
 md"**Answer:**"
 
 # ╔═╡ 1f148d9a-1fc8-11eb-158e-9d784e390b24
-begin
-	ECS_samples = ECS.(B=B_samples);
-	histogram(ECS_samples, xlims=(0, 8), size=(500, 240))
-end
+histogram(ECS_samples, xlims=(0, 8), size=(500, 240))
 
 # ╔═╡ cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
-md"Compare the ECS distribution to the $\text{ECS}(\overline{B})$ that corresponds to the mean value of the climate feedback parameter $\overline{B}$.
+md"It looks like the ECS distribution is **not normally distributed**, even though $B$ is. 
 
 👉 How does $\overline{\text{ECS}(B)}$ compare to $\text{ECS}(\overline{B})$? What is the probability that $\text{ECS}(B)$ lies above $\text{ECS}(\overline{B})$?
 "
@@ -374,7 +374,7 @@ md"""
 
 In the lecture notebook we introduced a _mutable struct_ `EBM` (_energy balance model_), which contains:
 - the parameters of our climate simulation (`C`, `a`, `A`, `B`, `CO2_PI`, `α`, `S`, see details below)
-- a function `CO2`, which maps a time `t` to the concentrations at that year. For example, we use the function `t -> 280` to simulate our model with constant concentrations.
+- a function `CO2`, which maps a time `t` to the concentrations at that year. For example, we use the function `t -> 280` to simulate a model with concentrations fixed at 280 ppm.
 
 `EBM` also contains the simulation results, in two arrays:
 - `T` is the array of tempartures (°C, `Float64`).
@@ -444,7 +444,7 @@ end
 
 # ╔═╡ 12cbbab0-2671-11eb-2b1f-038c206e84ce
 md"""
-Again, look inside `simulated_model`, and notice that `T` and `t` have accumulated the simulation results.
+Again, look inside `simulated_model` and notice that `T` and `t` have accumulated the simulation results.
 
 In this simulation, we used `T0 = 14` and `CO2 = t -> 280`, which is why `T` is constant during our simulation. These parameters are the default, pre-industrial values, and our model is based on this equilibrium.
 
@@ -520,12 +520,6 @@ We are interested in how the **uncertainty in our input** $B$ (the climate feedb
 # ╔═╡ f2e55166-25ff-11eb-0297-796e97c62b07
 
 
-# ╔═╡ 101cda5e-252e-11eb-2555-e3e8852f470f
-md"""
-
-**If Correct Answer:** shows a plot of the ''cone of uncertainty'' using `plot(t, T_low, fillrange=T_high)`
-"""
-
 # ╔═╡ 1ea81214-1fca-11eb-2442-7b0b448b49d6
 md"""
 ## **Exercise 2** - _How did Snowball Earth melt?_
@@ -544,83 +538,157 @@ We talked about a second theory -- a large increase in CO₂ (by volcanoes) coul
 
 In this exercise, you will estimate how much CO₂ would be needed to melt the Snowball and visualize a possible trajectory for Earth's climate over the past 700 million years by making an interactive *bifurcation diagram*.
 
-In the lecture notebook, we have a bifurcation diagram of $S$ (solar insolation) vs $T$ (temperature). We increased $S$, watched our point move right in the diagram until we found the tipping point. This time we will do the same, but we vary the CO₂ concentration, and keep $S$ fixed at its present day value.
+#### Exercise 2.1
+
+In the [lecture notebook](https://github.com/hdrake/simplEarth/blob/master/2_ebm_multiple_equilibria.jl) (video above), we had a bifurcation diagram of $S$ (solar insolation) vs $T$ (temperature). We increased $S$, watched our point move right in the diagram until we found the tipping point. This time we will do the same, but we vary the CO₂ concentration, and keep $S$ fixed at its default (present day) value.
 """
 
-# ╔═╡ 0f52e312-2537-11eb-289e-17dc04710c2d
-let
-	ebm = Model.EBM(-40.0, 0., 5., t -> 280)
-	
-	Model.run!(ebm, 500)
-	
-	ebm.T
-end
+# ╔═╡ d6d1b312-2543-11eb-1cb2-e5b801686ffb
+md"""
+Below we have an empty diagram, which is already set up with a CO₂ vs $T$ diagram, with a logirthmic horizontal axis. Now it's your turn! We have written some pointers below to help you, but feel free to do it your own way.
+"""
 
-# ╔═╡ f984e274-2536-11eb-0092-27bb91984530
-S = Model.S
+# ╔═╡ 3cbc95ba-2685-11eb-3810-3bf38aa33231
+md"""
+We used two helper functions:
+"""
 
 # ╔═╡ 68b2a560-2536-11eb-0cc4-27793b4d6a70
 function add_cold_hot_areas!(p)
 	
 	left, right = xlims(p)
 	
-	plot!([left, right], [-60, -60], fillrange=[-10., -10.], fillalpha=0.3, c=:lightblue, label=nothing)
-	annotate!(left+12, -19, text("completely\nfrozen", 10, :darkblue, :left))
+	plot!(p, 
+		[left, right], [-60, -60], 
+		fillrange=[-10., -10.], fillalpha=0.3, c=:lightblue, label=nothing
+	)
+	annotate!(p, 
+		left+12, -19, 
+		text("completely\nfrozen", 10, :darkblue, :left)
+	)
 	
-	plot!([left, right], [10, 10], fillrange=[80., 80.], fillalpha=0.09, c=:red, lw=0., label=nothing)
-	annotate!(left+12, 15, text("no ice", 10, :darkred, :left))
+	plot!(p, 
+		[left, right], [10, 10], 
+		fillrange=[80., 80.], fillalpha=0.09, c=:red, lw=0., label=nothing
+	)
+	annotate!(p,
+		left+12, 15, 
+		text("no ice", 10, :darkred, :left)
+	)
 end
 
-# ╔═╡ c3e1deca-2530-11eb-0cb7-c3cc3118f1f6
-begin
-	CO2min = 10
-	CO2max = 1_000_000
-	
-	CO2vec = CO2min:1.:CO2max
-	CO2vec = vcat(CO2vec, reverse(CO2vec))
-	Tvec = zeros(size(CO2vec))
-
-	# local T_restart = -100.
-	# for (i, CO2) = enumerate(CO2vec)
-	# 	ebm = Model.EBM(T_restart, 0., 5., (t) -> CO2);
-	# 	# ebm.S = S
-	# 	Model.run!(ebm, 400.)
-	# 	T_restart = ebm.T[end]
-	# 	Tvec[i] = deepcopy(T_restart)
-	# end
-	
-	md"**Data structures for storing warm & cool branch climates**"
+# ╔═╡ 0e19f82e-2685-11eb-2e99-0d094c1aa520
+function add_reference_points!(p)
+	plot!(p, 
+		[Model.CO2_PI, Model.CO2_PI], [-55, 75], 
+		color=:grey, alpha=0.3, lw=8, 
+		label="Pre-industrial CO2"
+	)
+	plot!(p, 
+		[Model.CO2_PI], [Model.T0], 
+		shape=:circle, color=:orange, markersize=8,
+		label="Our preindustrial climate"
+	)
+	plot!(p,
+		[Model.CO2_PI], [-38.3], 
+		shape=:circle, color=:aqua, markersize=8,
+		label="Alternate preindustrial climate"
+	)
 end
 
-# ╔═╡ 9f369200-2530-11eb-114c-6bb0bc2882af
-# let
-# 	ebm
-# 	co2Slider = @bind CO2 Slider(CO2min:2.:CO2max, default=Model.CO2_PI);
-# 	md""" $(CO2min) W/m² $(co2Slider) $(CO2max) W/m²"""
-# end
+# ╔═╡ 1eabe908-268b-11eb-329b-b35160ec951e
+md"""
+👉 Create a slider for `CO2` between `CO2min` and `CO2max`. Just like the horizontal axis of our plot, we want the slider to be _logarithmic_. 
+"""
 
-# ╔═╡ 3c7d33da-253d-11eb-0c5a-9b0d524c42f8
-@bind log_CO2 Slider(log10(CO2min):0.01:log10(CO2max); default=log10(Model.CO2_PI))
-
-# ╔═╡ 35f87c2e-253d-11eb-0d79-61d89c1d9b5e
-CO2 = 10^log_CO2
-
-# ╔═╡ aa1a3562-2537-11eb-0010-abde7b40090a
-function restart_ebm!(ebm)
-	ebm.T = [ebm.T[end]]
-	ebm.t = [ebm.t[1]]
-end
+# ╔═╡ 4c9173ac-2685-11eb-2129-99071821ebeb
+md"""
+👉 Write a function `step_model!` that takes an existing `ebm` and `new_CO2`, which performs a step of our interactive process:
+- Reset the model by setting the `ebm.t` and `ebm.T` arrays to a single element. _Which value?_
+- Assign a new function to `ebm.CO2`. _What function?_
+- Run the model.
+"""
 
 # ╔═╡ e411a3bc-2538-11eb-3492-bfdd42b1445d
-function step_model!(ebm, new_CO2)
-	restart_ebm!(ebm)
-	
+function step_model!(ebm::Model.EBM, new_CO2::Real)
+	ebm.T = [ebm.T[end]]
+	ebm.t = [0]
 	
 	ebm.CO2 = t -> new_CO2
 	Model.run!(ebm, 500)
 	
 	ebm
 end
+
+# ╔═╡ 736515ba-2685-11eb-38cb-65bfcf8d1b8d
+# function step_model!(ebm::Model.EBM, CO2::Real)
+	
+# 	# your code here
+	
+# 	return ebm
+# end
+
+# ╔═╡ 8b06b944-268c-11eb-0bfc-8d4dd21e1f02
+md"""
+👉 Inside the plot cell, call the function `step_model!`.
+"""
+
+# ╔═╡ 09ce27ca-268c-11eb-0cdd-c9801db876f8
+md"""
+##### Parameters
+"""
+
+# ╔═╡ 298deff4-2676-11eb-2595-e7e22f613ea1
+CO2min = 10
+
+# ╔═╡ 2bbf5a70-2676-11eb-1085-7130d4a30443
+CO2max = 1_000_000
+
+# ╔═╡ 3c7d33da-253d-11eb-0c5a-9b0d524c42f8
+begin
+	@bind log_CO2 Slider(log10(CO2min):0.01:log10(CO2max); default=log10(Model.CO2_PI))
+end
+
+# ╔═╡ 35f87c2e-253d-11eb-0d79-61d89c1d9b5e
+CO2 = 10^log_CO2
+
+# ╔═╡ de95efae-2675-11eb-0909-73afcd68fd42
+Tneo = -48
+
+# ╔═╡ 06d28052-2531-11eb-39e2-e9613ab0401c
+ebm = Model.EBM(Tneo, 0., 5., Model.CO2_const)
+
+# ╔═╡ 378aed18-252b-11eb-0b37-a3b511af2cb5
+let
+	p = plot(
+		xlims=(CO2min, CO2max), ylims=(-55, 75), 
+		xaxis=:log,
+		xlabel="CO2 concentration [ppm]", 
+		ylabel="Global temperature T [°C]",
+		title="Earth's CO2 concentration bifurcation diagram",
+		legend=:topleft
+	)
+	
+	add_cold_hot_areas!(p)
+	add_reference_points!(p)
+	
+	# your code here 
+	# TODO:
+	step_model!(ebm, CO2)
+	
+	plot!(p, 
+		[ebm.CO2(ebm.t[end])], [ebm.T[end]],
+		label=nothing,
+		color=:black,
+		shape=:circle,
+	)
+	
+end |> as_svg
+
+# ╔═╡ c78e02b4-268a-11eb-0af7-f7c7620fcc34
+md"""
+The albedo feedback is implemented by the methods below:
+"""
 
 # ╔═╡ d7801e88-2530-11eb-0b93-6f1c78d00eea
 function α(T; α0=Model.α, αi=0.5, ΔT=10.)
@@ -640,70 +708,23 @@ function Model.timestep!(ebm)
 	append!(ebm.t, ebm.t[end] + ebm.Δt);
 end
 
-# ╔═╡ cdc54b98-2530-11eb-3d5e-71c4b53256fb
-begin
-	Sneo = Model.S*0.93
-	Tneo = -48.
-	md"**Initial conditions**"
+# ╔═╡ 9c1f73e0-268a-11eb-2bf1-216a5d869568
+md"""
+If you like, make the visualization more informative! Like in the lecture notebook, you could add a trail behind the black dot, or you could plot the stable and unstable branches. It's up to you! 
+"""
+
+# ╔═╡ 11096250-2544-11eb-057b-d7112f20b05c
+md"""
+#### Exercise 2.2
+
+👉 Find the **lowest CO₂ concentration** necessary to melt the Snowball, programatically.
+"""
+
+# ╔═╡ 9eb07a6e-2687-11eb-0de3-7bc6aa0eefb0
+co2_to_melt_snowball = let
+	
+	missing
 end
-
-# ╔═╡ 06d28052-2531-11eb-39e2-e9613ab0401c
-begin
-	ebm = Model.EBM(Tneo, 0., 5., Model.CO2_const)
-	
-	md"**Data structures for storing trajectories of recent climates**"
-end
-
-# ╔═╡ fc94977a-253b-11eb-1143-912bb5ef055f
-ebm.α
-
-# ╔═╡ 378aed18-252b-11eb-0b37-a3b511af2cb5
-let
-	CO2
-	
-	step_model!(ebm, CO2)
-	
-	p = plot(
-		xlims=(CO2min, CO2max), ylims=(-55, 75), 
-		xaxis=:log,
-		title="Earth's CO2 concentration bifurcation diagram"
-	)
-	plot!([Model.CO2_PI, Model.CO2_PI], [-55, 75], color=:grey, alpha=0.3, lw=8, label="Pre-industrial CO2")
-	if false
-		plot!(p, xlims=(CO2min, CO2max))
-		# if show_cold
-		# 	plot!(CO2vec[warming_mask], Tvec[warming_mask], color=:blue,lw=3., alpha=0.5, label="cool branch")
-		# end
-		# if show_warm
-		# 	plot!(CO2vec[.!warming_mask], Tvec[.!warming_mask], color="red", lw=3., alpha=0.5, label="warm branch")
-		# end
-		# if show_unstable
-		# 	plot!(CO_unstable, T_unstable, color=:darkgray, lw=3., alpha=0.4, ls=:dash, label="unstable branch")
-		# end
-	end
-	plot!(legend=:topleft)
-	plot!(xlabel="CO2 concentration [ppm]", ylabel="Global temperature T [°C]")
-	plot!([Model.CO2_PI], [Model.T0], shape=:circle, label="Our preindustrial climate", color=:orange, markersize=8)
-	plot!([Model.CO2_PI], [-38.3], shape=:circle, label="Alternate preindustrial climate", color=:aqua, markersize=8)
-	# plot!([Sneo], [Tneo], marker=:., label="neoproterozoic (700 Mya)", color=:lightblue, markersize=8)
-	z = [ebm.CO2(123), ebm.T[end]]
-	# plot!(plot!(), z, color="black", marker=:c, markersize=8/2*1.2, label=nothing, markerstrokecolor=nothing, markerstrokewidth=0.)
-	scatter!(z[1:1], z[2:2])
-	
-	add_cold_hot_areas!(plot!())
-end |> as_svg
-
-# ╔═╡ 2f39805a-25ed-11eb-0594-89755c16ad15
-CO2vec_hires = CO2min:0.1:CO2max
-
-# ╔═╡ cb15cd88-25ed-11eb-2be4-f31500a726c8
-md"Hint: Use a condition on the albedo or temperature to check whether the Snowball has melted."
-
-# ╔═╡ 232b9bec-2544-11eb-0401-97a60bb172fc
-md"Hint: Start by writing a function `equilibrate(CO2)` which starts at the Snowball Earth temperature T = $(Tneo) and returns the equilibrium temperature for a given CO2 level."
-
-# ╔═╡ 1dcce868-2544-11eb-14af-4f7811b7f2a8
-
 
 # ╔═╡ 3a35598a-2527-11eb-37e5-3b3e4c63c4f7
 md"""
@@ -740,6 +761,24 @@ hint(text) = Markdown.MD(Markdown.Admonition("hint", "Hint", [text]))
 # ╔═╡ 51e2e742-25a1-11eb-2511-ab3434eacc3e
 hint(md"The function `findfirst` might be helpful.")
 
+# ╔═╡ 53c2eaf6-268b-11eb-0899-b91c03713da4
+hint(md"
+```julia
+@bind log_CO2 Slider(❓)
+```
+
+```julia
+CO2 = 10^log_CO2
+```
+
+")
+
+# ╔═╡ cb15cd88-25ed-11eb-2be4-f31500a726c8
+hint(md"Use a condition on the albedo or temperature to check whether the Snowball has melted.")
+
+# ╔═╡ 232b9bec-2544-11eb-0401-97a60bb172fc
+hint(md"Start by writing a function `equilibrium_temperature(CO2)` which creates a new `EBM` at the Snowball Earth temperature T = $(Tneo) and returns the final temperature for a given CO2 level.")
+
 # ╔═╡ 37061f1e-2433-11eb-3879-2d31dc70a771
 almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
 
@@ -761,48 +800,6 @@ not_defined(variable_name) = Markdown.MD(Markdown.Admonition("danger", "Oopsie!"
 # ╔═╡ 37552044-2433-11eb-1984-d16e355a7c10
 TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-weight: 900;'>TODO</span>"
 
-# ╔═╡ 291326e8-25a2-11eb-1a00-3de0f60e5f0f
-md"""
-#### Exercise 1.3 - _Uncertainty in B_
-
-$TODO
-
-The point of this exercise is:
-
-1. there is a small chance that B is close to zero
-1. but B close to zero has dramatic effects
-1. 👉 nonlinearity on distributions
-"""
-
-# ╔═╡ a2aff256-1fc6-11eb-3671-b7801bce27fc
-md"""In Exercise 1 we talked about the meaning of ``B \geq 0``. How likely is this scenario?
-
-$TODO does the original paper say anything about this B>0 tail of the distribution? They might not have intended to assign a probability to B>0
-
-No, they always clip it at zero but they'd explain why. I think it's still worth talking about it because it brings up the concept of a "runaway feedback". I think we should still include this in the problem set but we can clarify that the tails of the climate sensivity distribution are less well constrained than the center– i.e. it's possible that the actual distribution is non-Gaussian.
-"""
-
-# ╔═╡ d6d1b312-2543-11eb-1cb2-e5b801686ffb
-md"""
-$TODO
-
-the exercise here will be that you start out with an "empty" CO2 plot, and you add the ebm with CO2 slider.
-"""
-
-# ╔═╡ f81da5ee-2543-11eb-0f34-93b47dbf4c34
-md"""
-$TODO
-
-exercise: add the trail to this viz using push! and pop! (or using a circular buffer)
-"""
-
-# ╔═╡ 11096250-2544-11eb-057b-d7112f20b05c
-md"""
-$TODO
-
-Find the **lowest CO₂ concentration** necessary to melt the Snowball, programatically, by performing a *binary search* on `CO2vec_hires`?
-"""
-
 # ╔═╡ Cell order:
 # ╟─169727be-2433-11eb-07ae-ab7976b5be90
 # ╟─18be4f7c-2433-11eb-33cb-8d90ca6f124c
@@ -812,7 +809,7 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╠═1e06178a-1fbf-11eb-32b3-61769a79b7c0
 # ╟─87e68a4a-2433-11eb-3e9d-21675850ed71
 # ╟─fe3304f8-2668-11eb-066d-fdacadce5a19
-# ╠═930d7154-1fbf-11eb-1c3a-b1970d291811
+# ╟─930d7154-1fbf-11eb-1c3a-b1970d291811
 # ╟─1312525c-1fc0-11eb-2756-5bc3101d2260
 # ╠═c4398f9c-1fc4-11eb-0bbb-37f066c6027d
 # ╟─7f961bc0-1fc5-11eb-1f18-612aeff0d8df
@@ -832,16 +829,16 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╟─2dfab366-25a1-11eb-15c9-b3dd9cd6b96c
 # ╠═50ea30ba-25a1-11eb-05d8-b3d579f85652
 # ╟─51e2e742-25a1-11eb-2511-ab3434eacc3e
-# ╟─291326e8-25a2-11eb-1a00-3de0f60e5f0f
 # ╟─bade1372-25a1-11eb-35f4-4b43d4e8d156
 # ╠═02232964-2603-11eb-2c4c-c7b7e5fed7d1
-# ╠═736ed1b6-1fc2-11eb-359e-a1be0a188670
+# ╟─736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
-# ╠═a2aff256-1fc6-11eb-3671-b7801bce27fc
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
+# ╠═1843dae6-2689-11eb-2aaf-036eb2f9341d
+# ╠═3d72ab3a-2689-11eb-360d-9b3d829b78a9
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc
 # ╠═1f148d9a-1fc8-11eb-158e-9d784e390b24
-# ╠═cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
+# ╟─cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
 # ╠═d44daea2-252f-11eb-364f-377ae504dc04
 # ╠═e27b2cd4-252f-11eb-20ef-0354db6220c2
 # ╠═f94e635e-252f-11eb-1a52-310b628bd9b2
@@ -869,32 +866,35 @@ Find the **lowest CO₂ concentration** necessary to melt the Snowball, programa
 # ╟─ee1be5dc-252b-11eb-0865-291aa823b9e9
 # ╟─06c5139e-252d-11eb-2645-8b324b24c405
 # ╠═f2e55166-25ff-11eb-0297-796e97c62b07
-# ╠═101cda5e-252e-11eb-2555-e3e8852f470f
 # ╟─1ea81214-1fca-11eb-2442-7b0b448b49d6
 # ╟─a0ef04b0-25e9-11eb-1110-cde93601f712
 # ╟─3e310cf8-25ec-11eb-07da-cb4a2c71ae34
-# ╠═d6d1b312-2543-11eb-1cb2-e5b801686ffb
-# ╠═0f52e312-2537-11eb-289e-17dc04710c2d
-# ╠═fc94977a-253b-11eb-1143-912bb5ef055f
-# ╠═f984e274-2536-11eb-0092-27bb91984530
-# ╠═68b2a560-2536-11eb-0cc4-27793b4d6a70
-# ╠═c3e1deca-2530-11eb-0cb7-c3cc3118f1f6
-# ╠═9f369200-2530-11eb-114c-6bb0bc2882af
-# ╠═3c7d33da-253d-11eb-0c5a-9b0d524c42f8
-# ╠═35f87c2e-253d-11eb-0d79-61d89c1d9b5e
-# ╠═e411a3bc-2538-11eb-3492-bfdd42b1445d
+# ╟─d6d1b312-2543-11eb-1cb2-e5b801686ffb
 # ╠═378aed18-252b-11eb-0b37-a3b511af2cb5
+# ╟─3cbc95ba-2685-11eb-3810-3bf38aa33231
+# ╟─68b2a560-2536-11eb-0cc4-27793b4d6a70
+# ╟─0e19f82e-2685-11eb-2e99-0d094c1aa520
+# ╟─1eabe908-268b-11eb-329b-b35160ec951e
+# ╠═35f87c2e-253d-11eb-0d79-61d89c1d9b5e
+# ╠═3c7d33da-253d-11eb-0c5a-9b0d524c42f8
+# ╟─53c2eaf6-268b-11eb-0899-b91c03713da4
 # ╠═06d28052-2531-11eb-39e2-e9613ab0401c
-# ╠═aa1a3562-2537-11eb-0010-abde7b40090a
+# ╟─4c9173ac-2685-11eb-2129-99071821ebeb
+# ╠═e411a3bc-2538-11eb-3492-bfdd42b1445d
+# ╠═736515ba-2685-11eb-38cb-65bfcf8d1b8d
+# ╟─8b06b944-268c-11eb-0bfc-8d4dd21e1f02
+# ╟─09ce27ca-268c-11eb-0cdd-c9801db876f8
+# ╟─298deff4-2676-11eb-2595-e7e22f613ea1
+# ╟─2bbf5a70-2676-11eb-1085-7130d4a30443
+# ╟─de95efae-2675-11eb-0909-73afcd68fd42
+# ╟─c78e02b4-268a-11eb-0af7-f7c7620fcc34
 # ╠═d7801e88-2530-11eb-0b93-6f1c78d00eea
 # ╠═607058ec-253c-11eb-0fb6-add8cfb73a4f
-# ╠═cdc54b98-2530-11eb-3d5e-71c4b53256fb
-# ╠═f81da5ee-2543-11eb-0f34-93b47dbf4c34
-# ╠═11096250-2544-11eb-057b-d7112f20b05c
-# ╠═2f39805a-25ed-11eb-0594-89755c16ad15
+# ╟─9c1f73e0-268a-11eb-2bf1-216a5d869568
+# ╟─11096250-2544-11eb-057b-d7112f20b05c
+# ╠═9eb07a6e-2687-11eb-0de3-7bc6aa0eefb0
 # ╟─cb15cd88-25ed-11eb-2be4-f31500a726c8
-# ╠═232b9bec-2544-11eb-0401-97a60bb172fc
-# ╠═1dcce868-2544-11eb-14af-4f7811b7f2a8
+# ╟─232b9bec-2544-11eb-0401-97a60bb172fc
 # ╟─3a35598a-2527-11eb-37e5-3b3e4c63c4f7
 # ╠═5041cdee-2527-11eb-154f-0b0c68e11fe3
 # ╟─36e2dfea-2433-11eb-1c90-bb93ab25b33c
