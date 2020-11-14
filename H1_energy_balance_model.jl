@@ -28,9 +28,6 @@ begin
 	using Plots
 	using PlutoUI
 	using Random, Distributions
-	Random.seed!(123)
-	
-	md"##### Package dependencies"
 end
 
 # ╔═╡ 169727be-2433-11eb-07ae-ab7976b5be90
