@@ -34,7 +34,7 @@ begin
 end
 
 # ╔═╡ 169727be-2433-11eb-07ae-ab7976b5be90
-md"_homework 9, version 0_"
+md"_homework 9, version 1_"
 
 # ╔═╡ 21524c08-2433-11eb-0c55-47b1bdc9e459
 md"""
@@ -326,17 +326,14 @@ md"""
 👉 Generate a probability distribution for the ECS based on the probability distribution function for $B$ above. Plot a histogram.
 """
 
-# ╔═╡ 1843dae6-2689-11eb-2aaf-036eb2f9341d
-ECS_samples = ECS.(B=B_samples)
-
 # ╔═╡ 3d72ab3a-2689-11eb-360d-9b3d829b78a9
-# ECS_samples = missing
+ECS_samples = missing
 
 # ╔═╡ b6d7a362-1fc8-11eb-03bc-89464b55c6fc
 md"**Answer:**"
 
 # ╔═╡ 1f148d9a-1fc8-11eb-158e-9d784e390b24
-histogram(ECS_samples, xlims=(0, 8), size=(500, 240))
+
 
 # ╔═╡ cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
 md"It looks like the ECS distribution is **not normally distributed**, even though $B$ is. 
@@ -344,21 +341,8 @@ md"It looks like the ECS distribution is **not normally distributed**, even thou
 👉 How does $\overline{\text{ECS}(B)}$ compare to $\text{ECS}(\overline{B})$? What is the probability that $\text{ECS}(B)$ lies above $\text{ECS}(\overline{B})$?
 "
 
-# ╔═╡ d44daea2-252f-11eb-364f-377ae504dc04
-ecs_of_mean = ECS(B=mean(B_samples))
+# ╔═╡ 02173c7a-2695-11eb-251c-65efb5b4a45f
 
-# ╔═╡ e27b2cd4-252f-11eb-20ef-0354db6220c2
-mean_of_ecs = mean(ECS.(B=B_samples))
-
-# ╔═╡ f94e635e-252f-11eb-1a52-310b628bd9b2
-sum(ECS_samples) do e
-	e > ecs_of_mean
-end / length(ECS_samples)
-
-# ╔═╡ 23e24d88-2530-11eb-26ef-c5e4e8b4f276
-sum(ECS_samples) do e
-	e > mean_of_ecs
-end / length(ECS_samples)
 
 # ╔═╡ 440271b6-25e8-11eb-26ce-1b80aa176aca
 md"👉 Does accounting for uncertainty in feedbacks make our expectation of global warming better (less implied warming) or worse (more implied warming)?"
@@ -601,6 +585,9 @@ md"""
 👉 Create a slider for `CO2` between `CO2min` and `CO2max`. Just like the horizontal axis of our plot, we want the slider to be _logarithmic_. 
 """
 
+# ╔═╡ 1d388372-2695-11eb-3068-7b28a2ccb9ac
+
+
 # ╔═╡ 4c9173ac-2685-11eb-2129-99071821ebeb
 md"""
 👉 Write a function `step_model!` that takes an existing `ebm` and `new_CO2`, which performs a step of our interactive process:
@@ -609,24 +596,13 @@ md"""
 - Run the model.
 """
 
-# ╔═╡ e411a3bc-2538-11eb-3492-bfdd42b1445d
-function step_model!(ebm::Model.EBM, new_CO2::Real)
-	ebm.T = [ebm.T[end]]
-	ebm.t = [0]
-	
-	ebm.CO2 = t -> new_CO2
-	Model.run!(ebm, 500)
-	
-	ebm
-end
-
 # ╔═╡ 736515ba-2685-11eb-38cb-65bfcf8d1b8d
-# function step_model!(ebm::Model.EBM, CO2::Real)
+function step_model!(ebm::Model.EBM, CO2::Real)
 	
-# 	# your code here
+	# your code here
 	
-# 	return ebm
-# end
+	return ebm
+end
 
 # ╔═╡ 8b06b944-268c-11eb-0bfc-8d4dd21e1f02
 md"""
@@ -643,14 +619,6 @@ CO2min = 10
 
 # ╔═╡ 2bbf5a70-2676-11eb-1085-7130d4a30443
 CO2max = 1_000_000
-
-# ╔═╡ 3c7d33da-253d-11eb-0c5a-9b0d524c42f8
-begin
-	@bind log_CO2 Slider(log10(CO2min):0.01:log10(CO2max); default=log10(Model.CO2_PI))
-end
-
-# ╔═╡ 35f87c2e-253d-11eb-0d79-61d89c1d9b5e
-CO2 = 10^log_CO2
 
 # ╔═╡ de95efae-2675-11eb-0909-73afcd68fd42
 Tneo = -48
@@ -673,8 +641,6 @@ let
 	add_reference_points!(p)
 	
 	# your code here 
-	# TODO:
-	step_model!(ebm, CO2)
 	
 	plot!(p, 
 		[ebm.CO2(ebm.t[end])], [ebm.T[end]],
@@ -801,7 +767,7 @@ not_defined(variable_name) = Markdown.MD(Markdown.Admonition("danger", "Oopsie!"
 TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-weight: 900;'>TODO</span>"
 
 # ╔═╡ Cell order:
-# ╟─169727be-2433-11eb-07ae-ab7976b5be90
+# ╠═169727be-2433-11eb-07ae-ab7976b5be90
 # ╟─18be4f7c-2433-11eb-33cb-8d90ca6f124c
 # ╟─21524c08-2433-11eb-0c55-47b1bdc9e459
 # ╠═23335418-2433-11eb-05e4-2b35dc6cca0e
@@ -834,15 +800,11 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╟─736ed1b6-1fc2-11eb-359e-a1be0a188670
 # ╠═49cb5174-1fc3-11eb-3670-c3868c9b0255
 # ╟─f3abc83c-1fc7-11eb-1aa8-01ce67c8bdde
-# ╠═1843dae6-2689-11eb-2aaf-036eb2f9341d
 # ╠═3d72ab3a-2689-11eb-360d-9b3d829b78a9
 # ╟─b6d7a362-1fc8-11eb-03bc-89464b55c6fc
 # ╠═1f148d9a-1fc8-11eb-158e-9d784e390b24
 # ╟─cf8dca6c-1fc8-11eb-1f89-099e6ba53c22
-# ╠═d44daea2-252f-11eb-364f-377ae504dc04
-# ╠═e27b2cd4-252f-11eb-20ef-0354db6220c2
-# ╠═f94e635e-252f-11eb-1a52-310b628bd9b2
-# ╠═23e24d88-2530-11eb-26ef-c5e4e8b4f276
+# ╠═02173c7a-2695-11eb-251c-65efb5b4a45f
 # ╟─440271b6-25e8-11eb-26ce-1b80aa176aca
 # ╠═cf276892-25e7-11eb-38f0-03f75c90dd9e
 # ╟─5b5f25f0-266c-11eb-25d4-17e411c850c9
@@ -875,12 +837,10 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╟─68b2a560-2536-11eb-0cc4-27793b4d6a70
 # ╟─0e19f82e-2685-11eb-2e99-0d094c1aa520
 # ╟─1eabe908-268b-11eb-329b-b35160ec951e
-# ╠═35f87c2e-253d-11eb-0d79-61d89c1d9b5e
-# ╠═3c7d33da-253d-11eb-0c5a-9b0d524c42f8
+# ╠═1d388372-2695-11eb-3068-7b28a2ccb9ac
 # ╟─53c2eaf6-268b-11eb-0899-b91c03713da4
 # ╠═06d28052-2531-11eb-39e2-e9613ab0401c
 # ╟─4c9173ac-2685-11eb-2129-99071821ebeb
-# ╠═e411a3bc-2538-11eb-3492-bfdd42b1445d
 # ╠═736515ba-2685-11eb-38cb-65bfcf8d1b8d
 # ╟─8b06b944-268c-11eb-0bfc-8d4dd21e1f02
 # ╟─09ce27ca-268c-11eb-0cdd-c9801db876f8
