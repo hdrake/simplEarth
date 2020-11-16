@@ -135,11 +135,11 @@ begin
 	
 	κ = 0.01
 	
-	x = (0. -Δx/2.:Δx:1. +Δx/2.)'
-	y = (-1. -Δy/2.:Δy:1. +Δx/2.)
+	xs = (0. -Δx/2.:Δx:1. +Δx/2.)'
+	ys = (-1. -Δy/2.:Δy:1. +Δx/2.)
 	
-	Nx = size(x, 2)
-	Ny = size(y, 1)
+	Nx = length(xs)
+	Ny = length(ys)
 end;
 
 # ╔═╡ 9036dc6a-204e-11eb-305d-45e760e62bef
@@ -192,7 +192,9 @@ end
 # ╔═╡ c4424838-12e2-11eb-25eb-058344b39c8b
 begin
 	# Initial conditions
-	T = -repeat(y, 1, size(x,2));
+	T = [
+		-y
+		for y in ys, x in xs[:]]
 	t = Ref(0.)
 end;
 
@@ -214,7 +216,7 @@ md"""
 
 # ╔═╡ 1528ed7e-12e5-11eb-34cf-112d2baa7353
 function temperature_heatmap(T)
-	p = contourf(x', y, T, color=:bluesreds, levels=-1.25:0.25:1.25, colorbar_title="Temperature [°C]")
+	p = contourf(xs', ys, T, color=:bluesreds, levels=-1.25:0.25:1.25, colorbar_title="Temperature [°C]")
 	plot!(clims=(-1.25, 1.25))
 end
 
@@ -290,8 +292,8 @@ end
 
 # ╔═╡ c0e46442-27fb-11eb-2c94-15edbda3f84d
 function plot_state()
-	X = repeat(xitp(x), size(yitp(y),1), 1)
-	Y = repeat(yitp(y), 1, size(xitp(x),2))
+	X = repeat(xitp(xs), size(yitp(ys),1), 1)
+	Y = repeat(yitp(ys), 1, size(xitp(xs),2))
 	p = temperature_heatmap(T)
 	Nq = 15
 	quiver!(p, X[(Nq+1)÷2:Nq:end], Y[(Nq+1)÷2:Nq:end], quiver=(U[(Nq+1)÷2:Nq:end]./10., V[(Nq+1)÷2:Nq:end]./10.), color=:black, alpha=0.7)
@@ -312,7 +314,7 @@ begin
 end
 
 # ╔═╡ 3cc1218e-1307-11eb-1907-e7cd68f6af35
-heatmap(x', y, ψ̂)
+heatmap(xs', ys, ψ̂)
 
 # ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
 as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
