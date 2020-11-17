@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.7
+# v0.12.10
 
 using Markdown
 using InteractiveUtils
@@ -135,11 +135,11 @@ begin
 	
 	κ = 0.01
 	
-	x = (0. -Δx/2.:Δx:1. +Δx/2.)'
-	y = (-1. -Δy/2.:Δy:1. +Δx/2.)
+	xs = (0. -Δx/2.:Δx:1. +Δx/2.)'
+	ys = (-1. -Δy/2.:Δy:1. +Δx/2.)
 	
-	Nx = size(x, 2)
-	Ny = size(y, 1)
+	Nx = length(xs)
+	Ny = length(ys)
 end;
 
 # ╔═╡ 9036dc6a-204e-11eb-305d-45e760e62bef
@@ -169,16 +169,16 @@ end
 
 # ╔═╡ 6b3b6030-2066-11eb-3343-e19284638efb
 plot_kernel(A) = heatmap(
-	OffsetArray(A, 1:size(A,1), 1:size(A,2)),
+	collect(A),
 	color=:bluesreds, clims=(-maximum(abs.(A)), maximum(abs.(A))), colorbar=false,
 	xticks=false, yticks=false, size=(100, 100), xaxis=false, yaxis=false
 )
 
 # ╔═╡ fd07ee24-2067-11eb-0ac8-7b3da3993223
- plot_kernel(diff_kernel)
+plot_kernel(diff_kernel)
 
 # ╔═╡ dab0f406-2067-11eb-176d-9dab6819dc98
- plot_kernel(adv_kernel)
+plot_kernel(adv_kernel)
 
 # ╔═╡ b68ca886-2053-11eb-2e39-35c724ed3a3c
 function update_ghostcells!(A; option="no-flux")
@@ -192,8 +192,10 @@ end
 # ╔═╡ c4424838-12e2-11eb-25eb-058344b39c8b
 begin
 	# Initial conditions
-	T = -repeat(y, 1, size(x,2));
-	t = [0.]
+	T = [
+		-y
+		for y in ys, x in xs[:]]
+	t = Ref(0.)
 end;
 
 # ╔═╡ f5ae1756-12e9-11eb-1228-8f03879c154a
@@ -206,15 +208,15 @@ md"""
 ##### Need boundary conditions still! 
 """
 
-# ╔═╡ c32b3270-2110-11eb-3318-31db908f3a07
-
-
 # ╔═╡ 440fe49a-12e5-11eb-1c08-f706f5f33c84
-@bind go Button("Timestep")
+@bind go Clock()
+
+# ╔═╡ 3b0e16a2-12e5-11eb-3130-c763c1c85182
+
 
 # ╔═╡ 1528ed7e-12e5-11eb-34cf-112d2baa7353
 function temperature_heatmap(T)
-	p = contourf(x', y, T, color=:bluesreds, levels=-1.25:0.25:1.25, colorbar_title="Temperature [°C]")
+	p = contourf(xs', ys, T, color=:bluesreds, levels=-1.25:0.25:1.25, colorbar_title="Temperature [°C]")
 	plot!(clims=(-1.25, 1.25))
 end
 
@@ -278,17 +280,7 @@ end
 function timestep!(t, T)
 	update_ghostcells!(T)
 	T[2:end-1, 2:end-1] .+= Δt*(advect(T) .+ diffuse(T))
-	t .+= Δt
-end;
-
-# ╔═╡ 3b0e16a2-12e5-11eb-3130-c763c1c85182
-begin
-	⏩ = nothing
-	go
-	nT = 20
-	for i = 1:nT
-		timestep!(t, T)
-	end
+	t[] += Δt
 end;
 
 # ╔═╡ 3b4e4722-12fe-11eb-238d-17aea2c23f58
@@ -298,25 +290,34 @@ begin
 	CFL_adv, CFL_diff
 end
 
-# ╔═╡ 3cc1218e-1307-11eb-1907-e7cd68f6af35
-heatmap(x', y, ψ̂)
-
-# ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
-as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
-
-# ╔═╡ bd879bbe-12de-11eb-0d1d-93bba42b6ff9
-begin
-	⏩
-	X = repeat(xitp(x), size(yitp(y),1), 1)
-	Y = repeat(yitp(y), 1, size(xitp(x),2))
+# ╔═╡ c0e46442-27fb-11eb-2c94-15edbda3f84d
+function plot_state()
+	X = repeat(xitp(xs), size(yitp(ys),1), 1)
+	Y = repeat(yitp(ys), 1, size(xitp(xs),2))
 	p = temperature_heatmap(T)
-	Nq = 8
+	Nq = 15
 	quiver!(p, X[(Nq+1)÷2:Nq:end], Y[(Nq+1)÷2:Nq:end], quiver=(U[(Nq+1)÷2:Nq:end]./10., V[(Nq+1)÷2:Nq:end]./10.), color=:black, alpha=0.7)
 	plot!(p, xlims=(0., 1.), ylims=(-1.0, 1.0))
 	plot!(p, xlabel="longitudinal distance", ylabel="latitudinal distance")
 	plot!(p, clabel="Temperature")
-	p
-end |> as_svg
+	as_png(p)
+end
+
+# ╔═╡ bd879bbe-12de-11eb-0d1d-93bba42b6ff9
+begin
+	go
+	nT = 5
+	for i = 1:nT
+		timestep!(t, T)
+	end
+	plot_state()
+end
+
+# ╔═╡ 3cc1218e-1307-11eb-1907-e7cd68f6af35
+heatmap(xs', ys, ψ̂)
+
+# ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
+as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
 
 # ╔═╡ Cell order:
 # ╟─0f8db6f4-2113-11eb-18b4-21a469c67f3a
@@ -339,13 +340,13 @@ end |> as_svg
 # ╟─f5ae1756-12e9-11eb-1228-8f03879c154a
 # ╟─f9824610-12e7-11eb-3e61-f96c900a0636
 # ╠═87bfc240-12e3-11eb-03cc-756dc00efa6c
-# ╠═c32b3270-2110-11eb-3318-31db908f3a07
 # ╠═440fe49a-12e5-11eb-1c08-f706f5f33c84
 # ╠═bd879bbe-12de-11eb-0d1d-93bba42b6ff9
+# ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
 # ╠═3cc1218e-1307-11eb-1907-e7cd68f6af35
 # ╠═3b0e16a2-12e5-11eb-3130-c763c1c85182
 # ╠═1528ed7e-12e5-11eb-34cf-112d2baa7353
-# ╠═bb084ace-12e2-11eb-2dfc-111e90eabfdd
+# ╟─bb084ace-12e2-11eb-2dfc-111e90eabfdd
 # ╠═627eb1a4-12e2-11eb-30d1-c1ad292d1522
 # ╠═e3ee80c0-12dd-11eb-110a-c336bb978c51
 # ╠═9c8a7e5a-12dd-11eb-1b99-cd1d52aefa1d
