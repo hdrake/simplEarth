@@ -399,38 +399,17 @@ function PointVortex(G; Ω=1., a=0.2, x0=0.5, y0=0.)
 	return u,v
 end
 
-# ╔═╡ ecaab27e-2a16-11eb-0e99-87c91e659cf3
-function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000.)
-	ϵM = ν/(β*G.L^3)
-	ϵ = ϵM^(1/3.)
-	x = reshape(0. -G.Δx/(G.L):G.Δx/G.L:1. +G.Δx/(G.L), (1, G.Nx+1))
-	y = reshape(-1. -G.Δy/(G.L):G.Δy/G.L:1. +G.Δy/(G.L), (G.Ny+1, 1))
-	
-	ψ̂(x,y) = π*sin.(π*y) * (
-		1 .- x - exp.(-x/(2*ϵ)) .* (
-			cos.(√3*x/(2*ϵ)) .+
-			(1. /√3)*sin.(√3*x/(2*ϵ))
-			)
-		.+ ϵ*exp.((x .- 1.)/ϵ)
-	)
-		
-	u, v = (τ₀/ρ₀)/(β*G.L*H) .* diagnose_velocities(ψ̂(x, y), G)
-	impose_no_flux!(u, v)
-	
-	return u, v
-end
-
 # ╔═╡ 863a6330-2a08-11eb-3992-c3db439fb624
 begin
 	G = Grid(20, 6.e6);
 	P = Parameters(κ_ex);
 	
-	u, v = DoubleGyre(G)
-	#u, v = PointVortex(G, Ω=0.5)
+	#u, v = DoubleGyre(G)
+	u, v = PointVortex(G, Ω=0.5)
 	#u, v = zeros(G), zeros(G)
 
-	IC = InitBox(G)
-	#IC = InitBox(G, nx=G.Nx÷2-1)
+	#IC = InitBox(G)
+	IC = InitBox(G, nx=G.Nx÷2-1)
 	#IC = linearT(G)
 	
 	C = OceanModel(G, P, u, v)
@@ -466,7 +445,12 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 			linewidth=0., size=(400,530)
 		)
 	end
-	annotate!(2000e3, 5500e3, text(string("t = ", round(S.iter[]*S.Δt/(60*60*24)), " days"), color=:white, size=14))
+	annotate!(500e3, 5500e3,
+		text(
+			string("t = ", Int64(round(S.iter[]*S.Δt/(60*60*24))), " days"),
+			color=:white, :left, 10
+		)
+	)
 	
 	Nq = O.G.N÷5
 	if show_quiver
@@ -484,6 +468,27 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 	plot!(p, xlabel="longitudinal distance [km]", ylabel="latitudinal distance [km]")
 	plot!(p, clabel="Temperature")
 	as_png(p)
+end
+
+# ╔═╡ ecaab27e-2a16-11eb-0e99-87c91e659cf3
+function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000.)
+	ϵM = ν/(β*G.L^3)
+	ϵ = ϵM^(1/3.)
+	x = reshape(0. -G.Δx/(G.L):G.Δx/G.L:1. +G.Δx/(G.L), (1, G.Nx+1))
+	y = reshape(-1. -G.Δy/(G.L):G.Δy/G.L:1. +G.Δy/(G.L), (G.Ny+1, 1))
+	
+	ψ̂(x,y) = π*sin.(π*y) * (
+		1 .- x - exp.(-x/(2*ϵ)) .* (
+			cos.(√3*x/(2*ϵ)) .+
+			(1. /√3)*sin.(√3*x/(2*ϵ))
+			)
+		.+ ϵ*exp.((x .- 1.)/ϵ)
+	)
+		
+	u, v = (τ₀/ρ₀)/(β*G.L*H) .* diagnose_velocities(ψ̂(x, y), G)
+	impose_no_flux!(u, v)
+	
+	return u, v
 end
 
 # ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
