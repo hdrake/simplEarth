@@ -167,9 +167,13 @@ begin
 	zeros(G::Grid) = zeros(G.Ny, G.Nx)
 end
 
+# ╔═╡ 32663184-2a81-11eb-0dd1-dd1e10ed9ec6
+abstract type ClimateModel
+end
+
 # ╔═╡ d3796644-2a05-11eb-11b8-87b6e8c311f9
 begin
-	struct OceanModel
+	struct OceanModel <: ClimateModel
 		G::Grid
 		P::Parameters
 
@@ -183,12 +187,14 @@ end;
 
 # ╔═╡ f92086c4-2a74-11eb-3c72-a1096667183b
 begin
-	struct ClimateModel
-		O::OceanModel
+	struct ClimateModelSimulation
+		C::ClimateModel
 		
 		T::Array{Float64, 2}
 		Δt::Float64
+		iter::Base.RefValue{Int64}
 	end
+	ClimateModelSimulation(C, T, Δt) = ClimateModelSimulation(C, T, Δt, Ref(0))
 end
 
 # ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
@@ -302,9 +308,10 @@ md"""
 """
 
 # ╔═╡ 87bfc240-12e3-11eb-03cc-756dc00efa6c
-function timestep!(C)
-	update_ghostcells!(C.T)
-	C.T[2:end-1, 2:end-1] .+= C.Δt*(advect(C.T, C.O) .+ diffuse(C.T, C.O))
+function timestep!(S::ClimateModelSimulation)
+	update_ghostcells!(S.T)
+	S.T[2:end-1, 2:end-1] .+= S.Δt*(advect(S.T, S.C) .+ diffuse(S.T, S.C))
+	S.iter[] += 1
 end;
 
 # ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
@@ -326,63 +333,10 @@ begin
 		#IC = linearT(G)
 
 		Δt = 6*60*60
-		C = ClimateModel(O, copy(IC), Δt)
+		S = ClimateModelSimulation(O, copy(IC), Δt)
 
-		return @elapsed timestep!(C)
+		return @elapsed timestep!(S)
 	end
-end
-
-# ╔═╡ 440fe49a-12e5-11eb-1c08-f706f5f33c84
-@bind go Clock()
-
-# ╔═╡ bd879bbe-12de-11eb-0d1d-93bba42b6ff9
-# begin
-# 	go
-# 	nT = 100
-# 	for i = 1:nT
-# 		timestep!(O)
-# 	end
-# 	plot_state(O)
-# end
-
-# ╔═╡ c0e46442-27fb-11eb-2c94-15edbda3f84d
-function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
-	O = C.O
-	X = repeat(O.G.x, O.G.Ny, 1)
-	Y = repeat(O.G.y, 1, O.G.Nx)
-	if show_anomaly
-		arrow_col = :black
-		maxdiff = maximum(abs.(O.T .- IC))
-		p = contourf(O.G.x[:], O.G.y[:], C.T .- IC, clims=(-maxdiff, maxdiff),
-			color=:balance, colorbar_title="Temperature [°C]", linewidth=0.,
-			size=(400,530)
-		)
-	else
-		arrow_col = :lightblue
-		p = contourf(O.G.x[:], O.G.y[:], C.T,
-			color=:thermal, levels=clims[1]:(clims[2]-clims[1])/21.:clims[2],
-			colorbar_title="Temperature [°C]", clims=clims,
-			linewidth=0., size=(400,530)
-		)
-	end
-	
-	
-	Nq = O.G.N÷5
-	if show_quiver
-		quiver!(p,
-			X[(Nq+1)÷2:Nq:end], Y[(Nq+1)÷2:Nq:end],
-			quiver=O.G.L*4 .*(O.u[(Nq+1)÷2:Nq:end], O.v[(Nq+1)÷2:Nq:end]),
-			color=arrow_col, alpha=0.7
-		)
-	end
-	plot!(p,
-		yticks=( (-O.G.L:1000e3:O.G.L), 1e-3*(-O.G.L:1000e3:O.G.L) ),
-		xticks=( (0:1000e3:O.G.L), 1e-3*(0:1000e3:O.G.L) ),
-		xlims=(0., O.G.L), ylims=(-O.G.L, O.G.L),
-	)
-	plot!(p, xlabel="longitudinal distance [km]", ylabel="latitudinal distance [km]")
-	plot!(p, clabel="Temperature")
-	as_png(p)
 end
 
 # ╔═╡ bb084ace-12e2-11eb-2dfc-111e90eabfdd
@@ -479,17 +433,57 @@ begin
 	#IC = InitBox(G, nx=G.Nx÷2-1)
 	#IC = linearT(G)
 	
-	O = OceanModel(G, P, u, v)
+	C = OceanModel(G, P, u, v)
 	Δt = 6*60*60
 	
-	C = ClimateModel(O, copy(IC), Δt)
+	S = ClimateModelSimulation(C, copy(IC), Δt)
 end;
 
 # ╔═╡ 3b4e4722-12fe-11eb-238d-17aea2c23f58
 begin
-	CFL_adv(C::ClimateModel) = maximum(C.O.v)*C.Δt/C.O.G.Δx
-	CFL_diff(C::ClimateModel) = C.O.P.κ*C.Δt/(C.O.G.Δx^2)
-	CFL_adv(C), CFL_diff(C)
+	CFL_adv(S::ClimateModelSimulation) = maximum(S.C.v)*S.Δt/S.C.G.Δx
+	CFL_diff(S::ClimateModelSimulation) = S.C.P.κ*S.Δt/(S.C.G.Δx^2)
+	CFL_adv(S), CFL_diff(S)
+end
+
+# ╔═╡ c0e46442-27fb-11eb-2c94-15edbda3f84d
+function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
+	O = C.C
+	X = repeat(O.G.x, O.G.Ny, 1)
+	Y = repeat(O.G.y, 1, O.G.Nx)
+	if show_anomaly
+		arrow_col = :black
+		maxdiff = maximum(abs.(O.T .- IC))
+		p = contourf(O.G.x[:], O.G.y[:], C.T .- IC, clims=(-maxdiff, maxdiff),
+			color=:balance, colorbar_title="Temperature [°C]", linewidth=0.,
+			size=(400,530)
+		)
+	else
+		arrow_col = :lightblue
+		p = contourf(O.G.x[:], O.G.y[:], C.T,
+			color=:thermal, levels=clims[1]:(clims[2]-clims[1])/21.:clims[2],
+			colorbar_title="Temperature [°C]", clims=clims,
+			linewidth=0., size=(400,530)
+		)
+	end
+	annotate!(2000e3, 5500e3, text(string("t = ", round(S.iter[]*S.Δt/(60*60*24)), " days"), color=:white, size=14))
+	
+	Nq = O.G.N÷5
+	if show_quiver
+		quiver!(p,
+			X[(Nq+1)÷2:Nq:end], Y[(Nq+1)÷2:Nq:end],
+			quiver=O.G.L*4 .*(O.u[(Nq+1)÷2:Nq:end], O.v[(Nq+1)÷2:Nq:end]),
+			color=arrow_col, alpha=0.7
+		)
+	end
+	plot!(p,
+		yticks=( (-O.G.L:1000e3:O.G.L), 1e-3*(-O.G.L:1000e3:O.G.L) ),
+		xticks=( (0:1000e3:O.G.L), 1e-3*(0:1000e3:O.G.L) ),
+		xlims=(0., O.G.L), ylims=(-O.G.L, O.G.L),
+	)
+	plot!(p, xlabel="longitudinal distance [km]", ylabel="latitudinal distance [km]")
+	plot!(p, clabel="Temperature")
+	as_png(p)
 end
 
 # ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
@@ -499,9 +493,9 @@ as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
 begin
  	go_ex	
 	for i in 1:150
-		timestep!(C)
+		timestep!(S)
 	end
-	plot_state(C, clims=(0., 1), show_quiver=show_quiver, IC=IC)
+	plot_state(S, clims=(0., 1), show_quiver=show_quiver, IC=IC)
 end |> as_svg
 
 # ╔═╡ 794c2148-2a78-11eb-2756-5bd28b7726fa
@@ -535,6 +529,7 @@ plot_kernel(adv_kernel[:, 0:0])
 # ╠═cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
 # ╠═2a93145e-2a09-11eb-323b-01817062aa89
 # ╠═9c3643ea-2a09-11eb-2d38-1589b871ae4a
+# ╠═32663184-2a81-11eb-0dd1-dd1e10ed9ec6
 # ╠═d3796644-2a05-11eb-11b8-87b6e8c311f9
 # ╠═f92086c4-2a74-11eb-3c72-a1096667183b
 # ╠═863a6330-2a08-11eb-3992-c3db439fb624
@@ -560,8 +555,6 @@ plot_kernel(adv_kernel[:, 0:0])
 # ╟─f5ae1756-12e9-11eb-1228-8f03879c154a
 # ╟─f9824610-12e7-11eb-3e61-f96c900a0636
 # ╠═87bfc240-12e3-11eb-03cc-756dc00efa6c
-# ╠═440fe49a-12e5-11eb-1c08-f706f5f33c84
-# ╠═bd879bbe-12de-11eb-0d1d-93bba42b6ff9
 # ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
 # ╟─bb084ace-12e2-11eb-2dfc-111e90eabfdd
 # ╠═df706ebc-2a63-11eb-0b09-fd9f151cb5a8
