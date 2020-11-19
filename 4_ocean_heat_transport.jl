@@ -197,17 +197,13 @@ begin
 	ClimateModelSimulation(C, T, Δt) = ClimateModelSimulation(C, T, Δt, Ref(0))
 end
 
-# ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
-function InitBox(G; value=1., nx=2, ny=2)
-	T = zeros(G)
-	T[G.Ny÷2-ny:G.Ny÷2+ny, G.Nx÷2-nx:G.Nx÷2+nx] .= value
-	return T
-end
-
 # ╔═╡ 2b3d2062-2a73-11eb-368e-f563b2ad7aba
 md"""
 Let's check that the total heat of the ocean is conserved: 
 """
+
+# ╔═╡ 981ef38a-2a8b-11eb-08be-b94be2924366
+md"**Simulation controls**"
 
 # ╔═╡ d042d25a-2a62-11eb-33fe-65494bb2fad5
 begin
@@ -218,11 +214,24 @@ begin
 	"""
 end
 
+# ╔═╡ c20b0e00-2a8a-11eb-045d-9db88411746f
+begin
+	U_ex_Slider = @bind U_ex Slider(-4:1:8, default=0, show_value=false);
+	md"""
+	$(U_ex_Slider)
+	"""
+end
+
+# ╔═╡ 6dbc3d34-2a89-11eb-2c80-75459a8e237a
+begin
+	md"*Vary the current speed U:*  $(2. ^U_ex) [× reference]"
+end
+
 # ╔═╡ 933d42fa-2a67-11eb-07de-61cab7567d7d
 begin
-	κ_ex_Slider = @bind κ_ex Slider(0.:1e5, default=1e4, show_value=true)
+	κ_ex_Slider = @bind κ_ex Slider(0.:1.e3:1.e5, default=1.e4, show_value=true)
 	md"""
-	*Vary the diffusivity κ* $(κ_ex_Slider)
+	*Vary the diffusivity κ:* $(κ_ex_Slider) [m²/s]
 	"""
 end
 
@@ -282,13 +291,6 @@ function update_ghostcells!(A; option="no-flux")
 	end
 end
 
-# ╔═╡ c4424838-12e2-11eb-25eb-058344b39c8b
-begin
-	# Initial conditions
-	linearT(G) = 0.5*(1. .+[ -(y/G.L) for y in G.y[:, 1], x in G.x[1, :] ])
-	t = Ref(0.)
-end;
-
 # ╔═╡ d2c27a5c-2a77-11eb-0772-3b8b0d4cf682
 md"""
 $\mathcal{O}(\text{timestep})*\mathcal{O}(\text{diffusion / advection}) = N * N^2$
@@ -314,52 +316,9 @@ function timestep!(S::ClimateModelSimulation)
 	S.iter[] += 1
 end;
 
-# ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
-begin
-	
-	Nvec = 1:25
-	tvec = map(Nvec) do Npower
-		G = Grid(8*Npower, 6.e6);
-		P = Parameters(κ_ex);
-
-		#u, v = DoubleGyre(G)
-		#u, v = PointVortex(G, Ω=0.5)
-		u, v = zeros(G), zeros(G)
-		
-		O = OceanModel(G, P, u, v)
-		
-		IC = InitBox(G)
-		#IC = InitBox(G, nx=G.Nx÷2-1)
-		#IC = linearT(G)
-
-		Δt = 6*60*60
-		S = ClimateModelSimulation(O, copy(IC), Δt)
-
-		return @elapsed timestep!(S)
-	end
-end
-
-# ╔═╡ bb084ace-12e2-11eb-2dfc-111e90eabfdd
-md"""##### Computing a quasi-realistic ocean velocity field $\vec{u} = (u, v)$
-Our velocity field is given by an analytical solution to the classic wind-driven gyre
-problem, which is given by solving the fourth-order partial differential equation:
-
-$- \epsilon_{M} \hat{\nabla}^{4} \hat{\Psi} + \frac{\partial \hat{\Psi} }{ \partial \hat{x}} = \nabla \times \hat{\tau} \mathbf{z},$
-
-where the hats denote that all of the variables have been non-dimensionalized and all of their constant coefficients have been bundles into the single parameter $\epsilon_{M} \equiv \dfrac{\nu}{\beta L^3}$.
-
-The solution makes use of an advanced *asymptotic method* (valid in the limit that $\epsilon \ll 1$) known as *boundary layer analysis* (see MIT course 18.305 to learn more). 
+# ╔═╡ c0298712-2a88-11eb-09af-bf2c39167aa6
+md"""##### Computing the velocity field for a single circular vortex
 """
-
-
-
-# ╔═╡ df706ebc-2a63-11eb-0b09-fd9f151cb5a8
-function impose_no_flux!(u, v)
-	u[1,:] .= 0.; v[1,:] .= 0.;
-	u[end,:] .= 0.; v[end,:] .= 0.;
-	u[:,1] .= 0.; v[:,1] .= 0.;
-	u[:,end] .= 0.; v[:,end] .= 0.;
-end
 
 # ╔═╡ e3ee80c0-12dd-11eb-110a-c336bb978c51
 begin
@@ -377,6 +336,14 @@ begin
 		v = yitp(-∂x(ψ, G.Δx/G.L))
 		return u,v
 	end
+end
+
+# ╔═╡ df706ebc-2a63-11eb-0b09-fd9f151cb5a8
+function impose_no_flux!(u, v)
+	u[1,:] .= 0.; v[1,:] .= 0.;
+	u[end,:] .= 0.; v[end,:] .= 0.;
+	u[:,1] .= 0.; v[:,1] .= 0.;
+	u[:,end] .= 0.; v[:,end] .= 0.;
 end
 
 # ╔═╡ e2e4cfac-2a63-11eb-1b7f-9d8d5d304b43
@@ -399,31 +366,102 @@ function PointVortex(G; Ω=1., a=0.2, x0=0.5, y0=0.)
 	return u,v
 end
 
+# ╔═╡ bb084ace-12e2-11eb-2dfc-111e90eabfdd
+md"""##### Computing a quasi-realistic ocean velocity field $\vec{u} = (u, v)$
+Our velocity field is given by an analytical solution to the classic wind-driven gyre
+problem, which is given by solving the fourth-order partial differential equation:
+
+$- \epsilon_{M} \hat{\nabla}^{4} \hat{\Psi} + \frac{\partial \hat{\Psi} }{ \partial \hat{x}} = \nabla \times \hat{\tau} \mathbf{z},$
+
+where the hats denote that all of the variables have been non-dimensionalized and all of their constant coefficients have been bundles into the single parameter $\epsilon_{M} \equiv \dfrac{\nu}{\beta L^3}$.
+
+The solution makes use of an advanced *asymptotic method* (valid in the limit that $\epsilon \ll 1$) known as *boundary layer analysis* (see MIT course 18.305 to learn more). 
+"""
+
+
+
+# ╔═╡ ecaab27e-2a16-11eb-0e99-87c91e659cf3
+function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000.)
+	ϵM = ν/(β*G.L^3)
+	ϵ = ϵM^(1/3.)
+	x = reshape(0. -G.Δx/(G.L):G.Δx/G.L:1. +G.Δx/(G.L), (1, G.Nx+1))
+	y = reshape(-1. -G.Δy/(G.L):G.Δy/G.L:1. +G.Δy/(G.L), (G.Ny+1, 1))
+	
+	ψ̂(x,y) = π*sin.(π*y) * (
+		1 .- x - exp.(-x/(2*ϵ)) .* (
+			cos.(√3*x/(2*ϵ)) .+
+			(1. /√3)*sin.(√3*x/(2*ϵ))
+			)
+		.+ ϵ*exp.((x .- 1.)/ϵ)
+	)
+		
+	u, v = (τ₀/ρ₀)/(β*G.L*H) .* diagnose_velocities(ψ̂(x, y), G)
+	impose_no_flux!(u, v)
+	
+	return u, v
+end
+
+# ╔═╡ e59d869c-2a88-11eb-2511-5d5b4b380b80
+md"""
+##### Some simple initial temperature fields
+"""
+
+# ╔═╡ c4424838-12e2-11eb-25eb-058344b39c8b
+linearT(G) = 0.5*(1. .+[ -(y/G.L) for y in G.y[:, 1], x in G.x[1, :] ])
+
+# ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
+function InitBox(G; value=1., nx=2, ny=2)
+	T = zeros(G)
+	T[G.Ny÷2-ny:G.Ny÷2+ny, G.Nx÷2-nx:G.Nx÷2+nx] .= value
+	return T
+end
+
 # ╔═╡ 863a6330-2a08-11eb-3992-c3db439fb624
 begin
 	G = Grid(20, 6.e6);
 	P = Parameters(κ_ex);
 	
-	#u, v = DoubleGyre(G)
-	u, v = PointVortex(G, Ω=0.5)
 	#u, v = zeros(G), zeros(G)
+	u, v = PointVortex(G, Ω=0.5)
+	#u, v = DoubleGyre(G)
 
 	#IC = InitBox(G)
 	IC = InitBox(G, nx=G.Nx÷2-1)
 	#IC = linearT(G)
 	
-	C = OceanModel(G, P, u, v)
+	C = OceanModel(G, P, u*2. ^U_ex, v*2. ^U_ex)
 	Δt = 6*60*60
 	
 	S = ClimateModelSimulation(C, copy(IC), Δt)
 end;
 
+# ╔═╡ 01401212-2a88-11eb-2313-e91860d53087
+begin
+	heat_capacity = 51.
+	total_heat_content = sum(heat_capacity*S.T*(S.C.G.Δx*S.C.G.Δy))*1e-15
+end;
+
+# ╔═╡ 635d29cc-2a87-11eb-34ad-cb04c6c49497
+begin
+	go_ex
+	md"Total heat content = $(round(total_heat_content, digits=3)) peta-Joules"
+end
+
+# ╔═╡ 6abb1e2c-2a8c-11eb-248e-17f5ee318301
+S.C.u.^2 + S.C.v.^2
+
 # ╔═╡ 3b4e4722-12fe-11eb-238d-17aea2c23f58
 begin
-	CFL_adv(S::ClimateModelSimulation) = maximum(S.C.v)*S.Δt/S.C.G.Δx
+	CFL_adv(S::ClimateModelSimulation) = maximum(sqrt.(S.C.u.^2 + S.C.v.^2))*S.Δt/S.C.G.Δx
 	CFL_diff(S::ClimateModelSimulation) = S.C.P.κ*S.Δt/(S.C.G.Δx^2)
 	CFL_adv(S), CFL_diff(S)
 end
+
+# ╔═╡ d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
+md"**The CFL condition**
+
+The CFL condition is defined by $\text{CFL} = \dfrac{\max\left(\sqrt{u² + v²}\right)Δt}{Δx} =$ $(round(CFL_adv(S), digits=2))
+"
 
 # ╔═╡ c0e46442-27fb-11eb-2c94-15edbda3f84d
 function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
@@ -432,17 +470,17 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 	Y = repeat(O.G.y, 1, O.G.Nx)
 	if show_anomaly
 		arrow_col = :black
-		maxdiff = maximum(abs.(O.T .- IC))
-		p = contourf(O.G.x[:], O.G.y[:], C.T .- IC, clims=(-maxdiff, maxdiff),
+		maxdiff = maximum(abs.(C.T .- IC))
+		p = heatmap(O.G.x[:], O.G.y[:], C.T .- IC, clims=(-1.1, 1.1),
 			color=:balance, colorbar_title="Temperature [°C]", linewidth=0.,
 			size=(400,530)
 		)
 	else
-		arrow_col = :lightblue
-		p = contourf(O.G.x[:], O.G.y[:], C.T,
+		arrow_col = :white
+		p = heatmap(O.G.x[:], O.G.y[:], C.T,
 			color=:thermal, levels=clims[1]:(clims[2]-clims[1])/21.:clims[2],
 			colorbar_title="Temperature [°C]", clims=clims,
-			linewidth=0., size=(400,530)
+			linewidth=0., size=(350,466)
 		)
 	end
 	annotate!(500e3, 5500e3,
@@ -470,25 +508,29 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 	as_png(p)
 end
 
-# ╔═╡ ecaab27e-2a16-11eb-0e99-87c91e659cf3
-function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000.)
-	ϵM = ν/(β*G.L^3)
-	ϵ = ϵM^(1/3.)
-	x = reshape(0. -G.Δx/(G.L):G.Δx/G.L:1. +G.Δx/(G.L), (1, G.Nx+1))
-	y = reshape(-1. -G.Δy/(G.L):G.Δy/G.L:1. +G.Δy/(G.L), (G.Ny+1, 1))
+# ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
+begin
 	
-	ψ̂(x,y) = π*sin.(π*y) * (
-		1 .- x - exp.(-x/(2*ϵ)) .* (
-			cos.(√3*x/(2*ϵ)) .+
-			(1. /√3)*sin.(√3*x/(2*ϵ))
-			)
-		.+ ϵ*exp.((x .- 1.)/ϵ)
-	)
+	Nvec = 1:25
+	tvec = map(Nvec) do Npower
+		G = Grid(8*Npower, 6.e6);
+		P = Parameters(κ_ex);
+
+		#u, v = DoubleGyre(G)
+		#u, v = PointVortex(G, Ω=0.5)
+		u, v = zeros(G), zeros(G)
 		
-	u, v = (τ₀/ρ₀)/(β*G.L*H) .* diagnose_velocities(ψ̂(x, y), G)
-	impose_no_flux!(u, v)
-	
-	return u, v
+		O = OceanModel(G, P, u, v)
+		
+		IC = InitBox(G)
+		#IC = InitBox(G, nx=G.Nx÷2-1)
+		#IC = linearT(G)
+
+		Δt = 6*60*60
+		S = ClimateModelSimulation(O, copy(IC), Δt)
+
+		return @elapsed timestep!(S)
+	end
 end
 
 # ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
@@ -497,10 +539,14 @@ as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
 # ╔═╡ 83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
 begin
  	go_ex	
-	for i in 1:150
+	if S.iter[] == 0
 		timestep!(S)
+	else
+		for i in 1:150
+			timestep!(S)
+		end
 	end
-	plot_state(S, clims=(0., 1), show_quiver=show_quiver, IC=IC)
+	plot_state(S, clims=(-0.1, 1), show_quiver=show_quiver, IC=IC)
 end |> as_svg
 
 # ╔═╡ 794c2148-2a78-11eb-2756-5bd28b7726fa
@@ -538,12 +584,17 @@ plot_kernel(adv_kernel[:, 0:0])
 # ╠═d3796644-2a05-11eb-11b8-87b6e8c311f9
 # ╠═f92086c4-2a74-11eb-3c72-a1096667183b
 # ╠═863a6330-2a08-11eb-3992-c3db439fb624
-# ╟─3d12c114-2a0a-11eb-131e-d1a39b4f440b
 # ╟─2b3d2062-2a73-11eb-368e-f563b2ad7aba
+# ╠═01401212-2a88-11eb-2313-e91860d53087
+# ╟─635d29cc-2a87-11eb-34ad-cb04c6c49497
+# ╟─981ef38a-2a8b-11eb-08be-b94be2924366
 # ╟─d042d25a-2a62-11eb-33fe-65494bb2fad5
-# ╠═933d42fa-2a67-11eb-07de-61cab7567d7d
+# ╟─6dbc3d34-2a89-11eb-2c80-75459a8e237a
+# ╟─c20b0e00-2a8a-11eb-045d-9db88411746f
+# ╟─933d42fa-2a67-11eb-07de-61cab7567d7d
 # ╟─c9ea0f72-2a67-11eb-20ba-376ca9c8014f
-# ╠═83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
+# ╟─83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
+# ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
 # ╠═9036dc6a-204e-11eb-305d-45e760e62bef
 # ╟─fd07ee24-2067-11eb-0ac8-7b3da3993223
 # ╠═79a0086c-2050-11eb-1974-49d430b5eecd
@@ -551,21 +602,25 @@ plot_kernel(adv_kernel[:, 0:0])
 # ╟─dab0f406-2067-11eb-176d-9dab6819dc98
 # ╠═16b72cfc-2114-11eb-257d-b7747a99e155
 # ╠═b68ca886-2053-11eb-2e39-35c724ed3a3c
-# ╠═c4424838-12e2-11eb-25eb-058344b39c8b
 # ╠═16905a6a-2a78-11eb-19ea-81adddc21088
 # ╠═794c2148-2a78-11eb-2756-5bd28b7726fa
 # ╠═d2c27a5c-2a77-11eb-0772-3b8b0d4cf682
 # ╠═a138d27e-2a77-11eb-2d5a-09a717f94e7d
-# ╠═3b4e4722-12fe-11eb-238d-17aea2c23f58
+# ╠═6abb1e2c-2a8c-11eb-248e-17f5ee318301
+# ╟─3b4e4722-12fe-11eb-238d-17aea2c23f58
 # ╟─f5ae1756-12e9-11eb-1228-8f03879c154a
 # ╟─f9824610-12e7-11eb-3e61-f96c900a0636
 # ╠═87bfc240-12e3-11eb-03cc-756dc00efa6c
 # ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
+# ╟─c0298712-2a88-11eb-09af-bf2c39167aa6
+# ╟─e2e4cfac-2a63-11eb-1b7f-9d8d5d304b43
+# ╟─e3ee80c0-12dd-11eb-110a-c336bb978c51
+# ╟─df706ebc-2a63-11eb-0b09-fd9f151cb5a8
 # ╟─bb084ace-12e2-11eb-2dfc-111e90eabfdd
-# ╠═df706ebc-2a63-11eb-0b09-fd9f151cb5a8
-# ╠═e2e4cfac-2a63-11eb-1b7f-9d8d5d304b43
-# ╠═ecaab27e-2a16-11eb-0e99-87c91e659cf3
-# ╠═e3ee80c0-12dd-11eb-110a-c336bb978c51
+# ╟─ecaab27e-2a16-11eb-0e99-87c91e659cf3
+# ╟─e59d869c-2a88-11eb-2511-5d5b4b380b80
+# ╟─c4424838-12e2-11eb-25eb-058344b39c8b
+# ╟─3d12c114-2a0a-11eb-131e-d1a39b4f440b
 # ╠═9c8a7e5a-12dd-11eb-1b99-cd1d52aefa1d
 # ╠═d96c7a56-12e4-11eb-123c-d57487bd37df
 # ╟─6b3b6030-2066-11eb-3343-e19284638efb
