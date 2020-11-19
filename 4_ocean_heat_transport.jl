@@ -410,15 +410,21 @@ md"""
 linearT(G) = 0.5*(1. .+[ -(y/G.L) for y in G.y[:, 1], x in G.x[1, :] ])
 
 # ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
-function InitBox(G; value=1., nx=2, ny=2)
+function InitBox(G; value=1., nx=2, ny=2, xspan=false, yspan=false)
 	T = zeros(G)
 	T[G.Ny÷2-ny:G.Ny÷2+ny, G.Nx÷2-nx:G.Nx÷2+nx] .= value
+	if xspan
+		T[G.Ny÷2-ny:G.Ny÷2+ny, :] .= value
+	end
+	if yspan
+		T[:, G.Nx÷2-nx:G.Nx÷2+nx] .= value
+	end
 	return T
 end
 
 # ╔═╡ 863a6330-2a08-11eb-3992-c3db439fb624
 begin
-	G = Grid(20, 6.e6);
+	G = Grid(15, 6.e6);
 	P = Parameters(κ_ex);
 	
 	#u, v = zeros(G), zeros(G)
@@ -426,7 +432,7 @@ begin
 	#u, v = DoubleGyre(G)
 
 	#IC = InitBox(G)
-	IC = InitBox(G, nx=G.Nx÷2-1)
+	IC = InitBox(G, xspan=true)
 	#IC = linearT(G)
 	
 	C = OceanModel(G, P, u*2. ^U_ex, v*2. ^U_ex)
