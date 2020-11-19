@@ -40,7 +40,7 @@ md"""
 
 # ╔═╡ ed741ec6-1f75-11eb-03be-ad6284abaab8
 html"""
-<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/H4HUJs6LQfI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/6_GQuVopmUM?start=15" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
 # ╔═╡ ac759b96-2114-11eb-24cb-d50b556f4142
@@ -127,36 +127,96 @@ md"""
 ### 2)
 """
 
-# ╔═╡ 65da5b38-12dc-11eb-3505-bdaf7834afaa
+# ╔═╡ cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
+struct Grid
+	N::Int64
+	L::Float64
+	
+	Δx::Float64
+	Δy::Float64
+	
+	x::Array{Float64, 2}
+	y::Array{Float64, 2}
+	
+	Nx::Int64
+	Ny::Int64
+	
+	function Grid(N, L)
+		Δx = L/N # [m]
+		Δy = L/N # [m]
+		
+		x = 0. -Δx/2.:Δx:L +Δx/2.
+		x = reshape(x, (1, size(x,1)))
+		y = -L -Δy/2.:Δy:L +Δy/2.
+		y = reshape(y, (size(y,1), 1))
+
+		Nx, Ny = size(x, 2), size(y, 1)
+		
+		return new(N, L, Δx, Δy, x, y, Nx, Ny)
+	end
+end
+
+# ╔═╡ 2a93145e-2a09-11eb-323b-01817062aa89
+struct Parameters
+	κ::Float64
+end
+
+# ╔═╡ 59f9da1e-2a10-11eb-14c0-0b292af2d42f
+struct Velocity
+	u::Array{Float64, 2}
+	v::Array{Float64, 2}
+end
+
+# ╔═╡ 9c3643ea-2a09-11eb-2d38-1589b871ae4a
 begin
-	Δx = 0.02
-	Δy = 0.02
-	Δt = 0.002
-	
-	κ = 0.01
-	
-	xs = (0. -Δx/2.:Δx:1. +Δx/2.)'
-	ys = (-1. -Δy/2.:Δy:1. +Δx/2.)
-	
-	Nx = length(xs)
-	Ny = length(ys)
+	import Base.zeros
+	zeros(G::Grid) = zeros(G.Ny, G.Nx)
+end
+
+# ╔═╡ d3796644-2a05-11eb-11b8-87b6e8c311f9
+begin
+	struct OceanModel
+		G::Grid
+		P::Parameters
+		
+		Δt::Float64
+		T::Array{Float64, 2}
+		u::Array{Float64, 2}
+		v::Array{Float64, 2}
+	end
+
+	OceanModel(G, P, T, Δt) = OceanModel(G, P, Δt, T, zeros(G), zeros(G))
+	OceanModel(G, P, T, Δt) = OceanModel(G, P, Δt, zeros(G), zeros(G), zeros(G))
 end;
+
+# ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
+function InitBox(G; value=1.)
+	T = zeros(G)
+	T[G.Ny÷2-2:G.Ny÷2+2, G.Nx÷2-2:G.Nx÷2+2] .= value
+	return T
+end
+
+# ╔═╡ 0586bff6-2a1a-11eb-25f6-d70c9b7c7f79
+1
 
 # ╔═╡ 9036dc6a-204e-11eb-305d-45e760e62bef
 begin
-	diff_kernel = OffsetArray(zeros(Float64, 3,3), -1:1, -1:1)
-	diff_kernel[0, 0] = -4
-	diff_kernel[-1, 0] = 1.; diff_kernel[1, 0] = 1.;
-	diff_kernel[0, -1] = 1.; diff_kernel[0, 1] = 1.;
-	diff_kernel
-end
+	xdiff_kernel = OffsetArray(reshape([1., -2., 1.], 1, 3),  0:0, -1:1)
+	ydiff_kernel = OffsetArray(reshape([1., -2., 1.], 3, 1),  -1:1, 0:0)
+end;
 
 # ╔═╡ 79a0086c-2050-11eb-1974-49d430b5eecd
 begin
-	function diffuse(T, j, i)
-		return κ.*sum(diff_kernel[-1:1,-1:1].*T[j-1:j+1, i-1:i+1])/(2Δx^2)
+	function diffuse(T, κ, Δy, Δx, j, i)
+		return κ.*(
+			sum(xdiff_kernel[0, -1:1].*T[j, i-1:i+1])/(Δx^2) +
+			sum(ydiff_kernel[-1:1, 0].*T[j-1:j+1, i])/(Δy^2)
+		)
 	end
-	diffuse(T) = [diffuse(T, j, i) for j=2:Ny-1, i=2:Nx-1]
+	diffuse(T, κ, Δy, Δx) = [
+		diffuse(T, κ, Δy, Δx, j, i) for j=2:size(T, 1)-1, i=2:size(T, 2)-1
+	]
+	diffuse(O::OceanModel) = diffuse(O.T, O.P.κ, O.G.Δy, O.G.Δx)
 end
 
 # ╔═╡ 1cea2b90-205d-11eb-0d06-7df64faf1b53
@@ -167,18 +227,21 @@ begin
 	adv_kernel
 end
 
-# ╔═╡ 6b3b6030-2066-11eb-3343-e19284638efb
-plot_kernel(A) = heatmap(
-	collect(A),
-	color=:bluesreds, clims=(-maximum(abs.(A)), maximum(abs.(A))), colorbar=false,
-	xticks=false, yticks=false, size=(100, 100), xaxis=false, yaxis=false
-)
-
-# ╔═╡ fd07ee24-2067-11eb-0ac8-7b3da3993223
-plot_kernel(diff_kernel)
-
-# ╔═╡ dab0f406-2067-11eb-176d-9dab6819dc98
-plot_kernel(adv_kernel)
+# ╔═╡ 16b72cfc-2114-11eb-257d-b7747a99e155
+begin
+	function advect(T, u, v, Δy, Δx, j, i)
+		return .-(
+			sum(adv_kernel[0, -1:1].*(u[j, i-1:i+1].*T[j, i-1:i+1]))/(2Δx) .+
+			sum(adv_kernel[-1:1, 0].*(v[j-1:j+1, i].*T[j-1:j+1, i]))/(2Δy)
+		)
+	end
+	advect(T, u, v, Δy, Δx) = [
+		advect(T, u, v, Δy, Δx, j, i)
+		for j=2:size(T, 1)-1, i=2:size(T, 2)-1
+	]
+	
+	advect(O::OceanModel) = advect(O.T, O.u, O.v, O.G.Δy, O.G.Δx)
+end
 
 # ╔═╡ b68ca886-2053-11eb-2e39-35c724ed3a3c
 function update_ghostcells!(A; option="no-flux")
@@ -192,9 +255,7 @@ end
 # ╔═╡ c4424838-12e2-11eb-25eb-058344b39c8b
 begin
 	# Initial conditions
-	T = [
-		-y
-		for y in ys, x in xs[:]]
+	linearT(G) = [ -(y/G.L) for y in G.y[:, 1], x in G.x[1, :] ]
 	t = Ref(0.)
 end;
 
@@ -208,25 +269,68 @@ md"""
 ##### Need boundary conditions still! 
 """
 
+# ╔═╡ 87bfc240-12e3-11eb-03cc-756dc00efa6c
+function timestep!(O)
+	update_ghostcells!(O.T)
+	O.T[2:end-1, 2:end-1] .+= O.Δt*(advect(O) .+ diffuse(O))
+end;
+
 # ╔═╡ 440fe49a-12e5-11eb-1c08-f706f5f33c84
 @bind go Clock()
 
-# ╔═╡ 3b0e16a2-12e5-11eb-3130-c763c1c85182
+# ╔═╡ bd879bbe-12de-11eb-0d1d-93bba42b6ff9
+# begin
+# 	go
+# 	nT = 100
+# 	for i = 1:nT
+# 		timestep!(O)
+# 	end
+# 	plot_state(O)
+# end
 
-
-# ╔═╡ 1528ed7e-12e5-11eb-34cf-112d2baa7353
-function temperature_heatmap(T)
-	p = contourf(xs', ys, T, color=:bluesreds, levels=-1.25:0.25:1.25, colorbar_title="Temperature [°C]")
-	plot!(clims=(-1.25, 1.25))
+# ╔═╡ c0e46442-27fb-11eb-2c94-15edbda3f84d
+function plot_state(O)
+	X = repeat(O.G.x, O.G.Ny, 1)
+	Y = repeat(O.G.y, 1, O.G.Nx)
+	p = contourf(O.G.x[:], O.G.y[:], O.T,
+		color=:bluesreds, levels=-10:1:10,
+		colorbar_title="Temperature [°C]", clims=(-10, 10)
+	)
+	
+	Nq = O.G.N÷6
+	quiver!(p,
+		X[(Nq+1)÷2:Nq:end], Y[(Nq+1)÷2:Nq:end],
+		quiver=O.G.L*3 .*(O.u[(Nq+1)÷2:Nq:end], O.v[(Nq+1)÷2:Nq:end]),
+		color=:black, alpha=0.7
+	)
+	plot!(p,
+		yticks=( (-O.G.L:1000e3:O.G.L), 1e-3*(-O.G.L:1000e3:O.G.L) ),
+		xticks=( (0:1000e3:O.G.L), 1e-3*(0:1000e3:O.G.L) ),
+		xlims=(0., O.G.L), ylims=(-O.G.L, O.G.L),
+	)
+	plot!(p, xlabel="longitudinal distance [km]", ylabel="latitudinal distance [km]")
+	plot!(p, clabel="Temperature")
+	as_png(p)
 end
 
 # ╔═╡ bb084ace-12e2-11eb-2dfc-111e90eabfdd
-md"##### Setting up the velocity field"
+md"""##### Computing a quasi-realistic ocean velocity field $\vec{u} = (u, v)$
+Our velocity field is given by an analytical solution to the classic wind-driven gyre
+problem, which is given by solving the fourth-order partial differential equation:
+
+$- \epsilon_{M} \hat{\nabla}^{4} \hat{\Psi} + \frac{\partial \hat{\Psi} }{ \partial \hat{x}} = \nabla \times \hat{\tau} \mathbf{z},$
+
+where the hats denote that all of the variables have been non-dimensionalized and all of their constant coefficients have been bundles into the single parameter $\epsilon_{M} \equiv \dfrac{\nu}{\beta L^3}$.
+
+The solution makes use of an advanced *asymptotic method* (valid in the limit that $\epsilon \ll 1$) known as *boundary layer analysis* (see MIT course 18.305 to learn more). 
+"""
+
+
 
 # ╔═╡ e3ee80c0-12dd-11eb-110a-c336bb978c51
 begin
-	∂x(ϕ) = (ϕ[:,2:end] - ϕ[:,1:end-1])/Δx
-	∂y(ϕ) = (ϕ[2:end,:] - ϕ[1:end-1,:])/Δy
+	∂x(ϕ, Δx) = (ϕ[:,2:end] - ϕ[:,1:end-1])/Δx
+	∂y(ϕ, Δy) = (ϕ[2:end,:] - ϕ[1:end-1,:])/Δy
 	
 	xpad(ϕ) = hcat(zeros(size(ϕ,1)), ϕ, zeros(size(ϕ,1)))
 	ypad(ϕ) = vcat(zeros(size(ϕ,2))', ϕ, zeros(size(ϕ,2))')
@@ -234,20 +338,20 @@ begin
 	xitp(ϕ) = 0.5*(ϕ[:,2:end]+ϕ[:,1:end-1])
 	yitp(ϕ) = 0.5*(ϕ[2:end,:]+ϕ[1:end-1,:])
 	
-	function diagnose_velocities(ψ)
-		u = ∂y(ψ)
-		v = -∂x(ψ)
+	function diagnose_velocities(ψ, G)
+		u = xitp(∂y(ψ, G.Δy/G.L))
+		v = yitp(-∂x(ψ, G.Δx/G.L))
 		return u,v
 	end
 end
 
-# ╔═╡ 627eb1a4-12e2-11eb-30d1-c1ad292d1522
-begin
-	ϵ = 0.05
-	xψ = (-Δx:Δx:1. +Δx)'
-	yψ = (-1-Δy:Δy:1. +Δy)
+# ╔═╡ ecaab27e-2a16-11eb-0e99-87c91e659cf3
+function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000.)
+	ϵM = ν/(β*G.L^3)
+	ϵ = ϵM^(1/3.)
+	x_ = reshape(0. -G.Δx/(G.L):G.Δx/G.L:1. +G.Δx/(G.L), (1, G.Nx+1))
+	y_ = reshape(-1. -G.Δy/(G.L):G.Δy/G.L:1. +G.Δy/(G.L), (G.Ny+1, 1))
 	
-	# See page 595 of Vallis Edt.2
 	ψ̂(x,y) = π*sin.(π*y) * (
 		1 .- x - exp.(-x/(2*ϵ)) .* (
 			cos.(√3*x/(2*ϵ)) .+
@@ -256,68 +360,62 @@ begin
 		.+ ϵ*exp.((x .- 1.)/ϵ)
 	)
 	
-	u,v = diagnose_velocities(ψ̂(xψ, yψ))
-	U = xitp(u) ./10.
-	V = yitp(v) ./10.
-	U[1,:] .= 0.; V[1,:] .= 0.;
-	U[end,:] .= 0.; V[end,:] .= 0.;
-	U[:,1] .= 0.; V[:,1] .= 0.;
-	U[:,end] .= 0.; V[:,end] .= 0.;
-end;
-
-# ╔═╡ 16b72cfc-2114-11eb-257d-b7747a99e155
-begin
-	function advect(T, j, i)
-		return .-(
-			sum(adv_kernel[0, -1:1].*(U[j, i-1:i+1].*T[j, i-1:i+1]))/(2Δx) .+
-			sum(adv_kernel[-1:1, 0].*(V[j-1:j+1, i].*T[j-1:j+1, i]))/(2Δy)
-		)
+	function impose_no_flux!(u, v)
+		u[1,:] .= 0.; v[1,:] .= 0.;
+		u[end,:] .= 0.; v[end,:] .= 0.;
+		u[:,1] .= 0.; v[:,1] .= 0.;
+		u[:,end] .= 0.; v[:,end] .= 0.;
 	end
-	advect(T) = [advect(T, j, i) for j=2:Ny-1, i=2:Nx-1]
+		
+	u, v = (τ₀/ρ₀)/(β*G.L*H) .* diagnose_velocities(ψ̂(x_, y_), G)
+	impose_no_flux!(u, v)
+	
+	return u, v
 end
 
-# ╔═╡ 87bfc240-12e3-11eb-03cc-756dc00efa6c
-function timestep!(t, T)
-	update_ghostcells!(T)
-	T[2:end-1, 2:end-1] .+= Δt*(advect(T) .+ diffuse(T))
-	t[] += Δt
+# ╔═╡ 863a6330-2a08-11eb-3992-c3db439fb624
+begin
+	G = Grid(30, 6.e6);
+	P = Parameters(1.e5);
+	u, v = DoubleGyre(G)
+	O = OceanModel(G, P, 6*60*60, InitBox(G), u, v)
 end;
+
+# ╔═╡ b1446ac2-2a16-11eb-2ae9-49267b95a185
+sum(O.T)
+
+# ╔═╡ 83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
+begin
+	timestep!(O)
+	#surface(O.G.x[:], O.G.y[:], O.T)
+	#plot(O.T[:,O.G.Nx÷2], ylims=(0, 1))
+end
 
 # ╔═╡ 3b4e4722-12fe-11eb-238d-17aea2c23f58
 begin
-	CFL_adv = maximum(V)*Δt/Δx
-	CFL_diff = κ*Δt/(Δx^2)
-	CFL_adv, CFL_diff
+	CFL_adv(O) = maximum(O.v)*O.Δt/O.G.Δx
+	CFL_diff(O) = O.P.κ*O.Δt/(O.G.Δx^2)
+	CFL_adv(O), CFL_diff(O)
 end
-
-# ╔═╡ c0e46442-27fb-11eb-2c94-15edbda3f84d
-function plot_state()
-	X = repeat(xitp(xs), size(yitp(ys),1), 1)
-	Y = repeat(yitp(ys), 1, size(xitp(xs),2))
-	p = temperature_heatmap(T)
-	Nq = 15
-	quiver!(p, X[(Nq+1)÷2:Nq:end], Y[(Nq+1)÷2:Nq:end], quiver=(U[(Nq+1)÷2:Nq:end]./10., V[(Nq+1)÷2:Nq:end]./10.), color=:black, alpha=0.7)
-	plot!(p, xlims=(0., 1.), ylims=(-1.0, 1.0))
-	plot!(p, xlabel="longitudinal distance", ylabel="latitudinal distance")
-	plot!(p, clabel="Temperature")
-	as_png(p)
-end
-
-# ╔═╡ bd879bbe-12de-11eb-0d1d-93bba42b6ff9
-begin
-	go
-	nT = 5
-	for i = 1:nT
-		timestep!(t, T)
-	end
-	plot_state()
-end
-
-# ╔═╡ 3cc1218e-1307-11eb-1907-e7cd68f6af35
-heatmap(xs', ys, ψ̂)
 
 # ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
 as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
+
+# ╔═╡ 6b3b6030-2066-11eb-3343-e19284638efb
+plot_kernel(A) = heatmap(
+	collect(A),
+	color=:bluesreds, clims=(-maximum(abs.(A)), maximum(abs.(A))), colorbar=false,
+	xticks=false, yticks=false, size=(30+30*size(A, 2), 30+30*size(A, 1)), xaxis=false, yaxis=false
+)
+
+# ╔═╡ fd07ee24-2067-11eb-0ac8-7b3da3993223
+plot_kernel(xdiff_kernel[0:0, :]),
+plot_kernel(ydiff_kernel[:, 0:0])
+
+# ╔═╡ dab0f406-2067-11eb-176d-9dab6819dc98
+plot_kernel(adv_kernel),
+plot_kernel(adv_kernel[0:0, :]),
+plot_kernel(adv_kernel[:, 0:0])
 
 # ╔═╡ Cell order:
 # ╟─0f8db6f4-2113-11eb-18b4-21a469c67f3a
@@ -326,13 +424,21 @@ as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
 # ╟─3a4a1aea-2118-11eb-30a9-57b87f2ddfae
 # ╟─a60e5550-211a-11eb-3cf8-f9bae0a9efd3
 # ╠═b1b5625e-211a-11eb-3ee1-3ba9c9cc375a
-# ╠═65da5b38-12dc-11eb-3505-bdaf7834afaa
+# ╠═cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
+# ╠═2a93145e-2a09-11eb-323b-01817062aa89
+# ╠═59f9da1e-2a10-11eb-14c0-0b292af2d42f
+# ╠═9c3643ea-2a09-11eb-2d38-1589b871ae4a
+# ╠═d3796644-2a05-11eb-11b8-87b6e8c311f9
+# ╠═863a6330-2a08-11eb-3992-c3db439fb624
+# ╟─3d12c114-2a0a-11eb-131e-d1a39b4f440b
+# ╠═b1446ac2-2a16-11eb-2ae9-49267b95a185
+# ╠═83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
+# ╠═0586bff6-2a1a-11eb-25f6-d70c9b7c7f79
 # ╠═9036dc6a-204e-11eb-305d-45e760e62bef
-# ╠═fd07ee24-2067-11eb-0ac8-7b3da3993223
+# ╟─fd07ee24-2067-11eb-0ac8-7b3da3993223
 # ╠═79a0086c-2050-11eb-1974-49d430b5eecd
 # ╠═1cea2b90-205d-11eb-0d06-7df64faf1b53
-# ╠═dab0f406-2067-11eb-176d-9dab6819dc98
-# ╠═6b3b6030-2066-11eb-3343-e19284638efb
+# ╟─dab0f406-2067-11eb-176d-9dab6819dc98
 # ╠═16b72cfc-2114-11eb-257d-b7747a99e155
 # ╠═b68ca886-2053-11eb-2e39-35c724ed3a3c
 # ╠═c4424838-12e2-11eb-25eb-058344b39c8b
@@ -343,11 +449,9 @@ as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
 # ╠═440fe49a-12e5-11eb-1c08-f706f5f33c84
 # ╠═bd879bbe-12de-11eb-0d1d-93bba42b6ff9
 # ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
-# ╠═3cc1218e-1307-11eb-1907-e7cd68f6af35
-# ╠═3b0e16a2-12e5-11eb-3130-c763c1c85182
-# ╠═1528ed7e-12e5-11eb-34cf-112d2baa7353
 # ╟─bb084ace-12e2-11eb-2dfc-111e90eabfdd
-# ╠═627eb1a4-12e2-11eb-30d1-c1ad292d1522
+# ╠═ecaab27e-2a16-11eb-0e99-87c91e659cf3
 # ╠═e3ee80c0-12dd-11eb-110a-c336bb978c51
 # ╠═9c8a7e5a-12dd-11eb-1b99-cd1d52aefa1d
 # ╠═d96c7a56-12e4-11eb-123c-d57487bd37df
+# ╟─6b3b6030-2066-11eb-3343-e19284638efb
