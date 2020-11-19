@@ -26,6 +26,7 @@ begin
 		"ImageIO",
 		"OffsetArrays"
 	])
+	using Statistics
 	using Plots
 	using PlutoUI
 	using Images
@@ -36,6 +37,8 @@ end
 md"""
 ### Lecture 23: Solving Partial Differential Equations (PDEs) Numerically
 **Part II: Heat transport by ocean currents (two-dimensional advection and diffusion)**
+
+Guest Lecturer: Henri F. Drake (MIT Climate Science and Oceanography PhD Student)
 """
 
 # ╔═╡ ed741ec6-1f75-11eb-03be-ad6284abaab8
@@ -50,11 +53,11 @@ md"""
 ##### 1.1) The two-dimensional advection-diffusion equation
 Recall from **Lecture 22** that the one-dimensional advection-diffusion equation is written as
 
-$\frac{\partial T(x,t)}{\partial t} = -U \frac{\partial T}{\partial x} + \kappa \frac{\partial^{2} T}{\partial x^{2}} - (A - BT)/C + S(1-α)/4/C,$
+$\frac{\partial T(x,t)}{\partial t} = -U \frac{\partial T}{\partial x} + \kappa \frac{\partial^{2} T}{\partial x^{2}},$
 
-where $T(x, t)$ is the temperature, $U$ is a constant advective velocity and $\kappa$ is the diffusivity.
+where $T(x, t)$ is the temperature, $U$ is a constant *advective velocity* and $\kappa$ is the *diffusivity*.
 
-The two-dimensional advection diffusion equation simply adds advection and diffusion operators acting in a second dimensions $y$ (orthogonal to $x$). 
+The two-dimensional advection diffusion equation adds advection and diffusion operators acting in a *second spatial dimension* $y$ (orthogonal to $x$):
 
 $\frac{\partial T(x,y,t)}{\partial t} = u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y} + \kappa \left( \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}} \right),$
 
@@ -64,67 +67,165 @@ Throughout the rest of the Climate Modelling module, we will consider $x$ to be 
 """
 
 # ╔═╡ 3a4a1aea-2118-11eb-30a9-57b87f2ddfae
-md"""
-##### 1.2) Multivariable shorthand notation
+begin
+	reviewBox = @bind show_review CheckBox(default=false)
+	md"""
+	##### 1.2) Review of multivariable calculus identities and notation
 
-Conventionally, the two-dimensional advection-diffusion equation is written more succintly as
+	*Check the box for a review* $(reviewBox)
+	
 
-$\frac{\partial T(x,y,t)}{\partial t} = - \vec{u} \cdot \nabla T + \kappa \nabla^{2} T,$
+	"""
+end
 
-using the following shorthand notation.
+# ╔═╡ 023779a0-2a95-11eb-35b5-7be93c43afaf
+if show_review
+	md"""
+	Conventionally, the two-dimensional advection-diffusion equation is written more succintly as
 
-The **gradient** operator is defined as 
+	$\frac{\partial T(x,y,t)}{\partial t} = - \vec{u} \cdot \nabla T + \kappa \nabla^{2} T,$
 
-$\nabla \equiv (\frac{\partial}{\partial x}, \frac{\partial }{\partial y})$
+	using the following shorthand notation.
 
-such that
+	The **gradient** operator is defined as 
 
-$\nabla T = (\frac{\partial T}{\partial x}, \frac{\partial T}{\partial y})$ and 
+	$\nabla \equiv (\frac{\partial}{\partial x}, \frac{\partial }{\partial y})$
 
-$\vec{u} \cdot \nabla T = (u, v) \cdot (\frac{\partial T}{\partial x}, \frac{\partial T}{\partial y}) = u \frac{\partial T}{\partial x} + v\frac{\partial T}{\partial y}.$
+	such that
 
-The **Laplacian** operator $\nabla^{2}$ (sometimes denoted $\Delta$) is defined as 
+	$\nabla T = (\frac{\partial T}{\partial x}, \frac{\partial T}{\partial y})$ and 
 
-$\nabla^{2} = \frac{\partial^{2}}{\partial x^{2}} + \frac{\partial^{2}}{\partial y^{2}}$
+	$\vec{u} \cdot \nabla T = (u, v) \cdot (\frac{\partial T}{\partial x}, \frac{\partial T}{\partial y}) = u \frac{\partial T}{\partial x} + v\frac{\partial T}{\partial y}.$
 
-such that
+	The **Laplacian** operator $\nabla^{2}$ (sometimes denoted $\Delta$) is defined as 
 
-$\nabla^{2} T = \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}}.$
+	$\nabla^{2} = \frac{\partial^{2}}{\partial x^{2}} + \frac{\partial^{2}}{\partial y^{2}}$
 
-The **divergence** operator is defined as $\nabla \cdot [\quad]$, such that
+	such that
 
-$\nabla \cdot \vec{u} = \left(\frac{\partial}{\partial x}, \frac{\partial}{\partial x} \right) \cdot (u,v) = \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y}.$
+	$\nabla^{2} T = \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}}.$
 
-**Note:** Since seawater is largely incompressible, we can approximate ocean currents as a *non-divergent flow*, with $\nabla \cdot \vec{u} = \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} = 0$. Among other implications, this allows us to write:
+	The **divergence** operator is defined as $\nabla \cdot [\quad]$, such that
 
-\begin{align}
-\vec{u} \cdot \nabla T&=
-u\frac{\partial T(x,y,t)}{\partial x} + v\frac{\partial T(x,y,t)}{\partial y}\newline &=
-u\frac{\partial T}{\partial x} + v\frac{\partial T}{\partial y} + T\left(\frac{\partial u}{\partial x} + \frac{\partial v}{\partial y}\right)\newline &=
-\left( u\frac{\partial T}{\partial x} + T\frac{\partial u}{\partial x} \right) +
-\left( v\frac{\partial T}{\partial y} + \frac{\partial v}{\partial y} \right)
-\newline &=
-\frac{\partial (uT)}{\partial x} + \frac{\partial (vT)}{\partial x}\newline &=
-\nabla \cdot (\vec{u}T)
-\end{align}
+	$\nabla \cdot \vec{u} = \left(\frac{\partial}{\partial x}, \frac{\partial}{\partial x} \right) \cdot (u,v) = \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y}.$
 
-using the product rule (separately in both $x$ and $y$).
-"""
+	**Note:** Since seawater is largely incompressible, we can approximate ocean currents as a *non-divergent flow*, with $\nabla \cdot \vec{u} = \frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} = 0$. Among other implications, this allows us to write:
 
-# ╔═╡ a60e5550-211a-11eb-3cf8-f9bae0a9efd3
-md"""
-##### 1.3) The flux-form two-dimensional advection-diffusion equation
+	\begin{align}
+	\vec{u} \cdot \nabla T&=
+	u\frac{\partial T(x,y,t)}{\partial x} + v\frac{\partial T(x,y,t)}{\partial y}\newline &=
+	u\frac{\partial T}{\partial x} + v\frac{\partial T}{\partial y} + T\left(\frac{\partial u}{\partial x} + \frac{\partial v}{\partial y}\right)\newline &=
+	\left( u\frac{\partial T}{\partial x} + T\frac{\partial u}{\partial x} \right) +
+	\left( v\frac{\partial T}{\partial y} + \frac{\partial v}{\partial y} \right)
+	\newline &=
+	\frac{\partial (uT)}{\partial x} + \frac{\partial (vT)}{\partial x}\newline &=
+	\nabla \cdot (\vec{u}T)
+	\end{align}
 
-This lets us finally re-write the two-dimensional advection-diffusion equation as:
+	using the product rule (separately in both $x$ and $y$).
+	
+	##### 1.3) The flux-form two-dimensional advection-diffusion equation
 
-$\frac{\partial T}{\partial t} = - \nabla \cdot (\vec{u}T) + \kappa \nabla^{2} T$
+	This lets us finally re-write the two-dimensional advection-diffusion equation as:
 
-which is the form we will use in our numerical algorithm below.
-"""
+	$\frac{\partial T}{\partial t} = - \nabla \cdot (\vec{u}T) + \kappa \nabla^{2} T$
+
+	which is the form we will use in our numerical algorithm below.
+	"""
+end
 
 # ╔═╡ b1b5625e-211a-11eb-3ee1-3ba9c9cc375a
 md"""
-### 2)
+### 2) Numerical implementation
+
+##### 2.1) Discretizing advection in two dimensions
+
+In Lecture XX we saw that in one dimension we can discretize a first-partial derivative in space using the *centered finite difference*
+
+$\frac{\partial T(x_{i}, t_{n})}{\partial x} \approx \frac{T_{i+1}^{n} - T_{i-1}^{n}}{2 \Delta x}.$
+
+In two dimensions, we discretize the partial derivative the exact same way, except that we also need to keep track of the cell index $j$ in the $y$ dimension:
+
+$\frac{\partial T(x_{i}, y_{j}, t_{n})}{\partial x} \approx \frac{T_{i+1,\, j}^{n} - T_{i-1,\,j}^{n}}{2 \Delta x}.$
+
+The *x-gradient kernel* below, implemented using the `OffsetArray` type, is shown below, and is reminiscent of the *edge-detection* or *sharpening* kernels used in image processing and machine learning:
+"""
+
+# ╔═╡ 3578b158-2a97-11eb-0771-bf6d82d3b6d1
+md"""
+The first-order partial derivative in $y$ is similarly discretized as:
+
+$\frac{\partial T(x_{i}, y_{j}, t_{n})}{\partial y} \approx \frac{T_{i,\, j+1}^{n} - T_{i,\,j-1}^{n}}{2 \Delta y}.$
+
+Its kernel is shown below.
+"""
+
+# ╔═╡ 7f3c9550-2a97-11eb-1549-455009025872
+md"""
+Now that we have discretized the two derivate terms, we can write out the *advective tendency* for computing $T_{i, j, n+1}$ as
+
+$u\frac{\partial T}{\partial x} + v\frac{\partial T}{\partial y} \approx u_{i,\, j}^{n} \frac{T_{i,\, j+1}^{n} - T_{i,\,j-1}^{n}}{2 \Delta y} + v_{i,\, j}^{n} \frac{T_{i,\, j+1}^{n} - T_{i,\,j-1}^{n}}{2 \Delta y}.$
+
+We implement this in julia as a series of methods for the `advect` function. The first method computes the advective tendency (as a single `Float64` type) for the $(i,j)$ grid cell while the second method returns an array of the tendencies for each grid cell using two nested for loops.
+"""
+
+# ╔═╡ 0127bca6-2a99-11eb-16a0-8d7af66694f8
+md"""
+##### 2.2) Discretizing diffusion in two dimensions
+
+Just as with advection, the process for discretizing the diffusion operators effectively consists of repeating the one-dimensional process for $x$ in a second dimension $y$, separately:
+
+$\kappa \left( \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}} \right) = \kappa \left(
+\frac{T_{i+1,\;j}^{n} - 2T_{i,\;j}^{n} + T_{i-1,\;j}^{n}}{\left( \Delta x \right)^{2}} +
+\frac{T_{i,\;j+1}^{n} - 2T_{i,\;j}^{n} + T_{i,\;j-1}^{n}}{\left( \Delta y \right)^{2}}
+\right)$
+
+The corresponding $x$ and $y$ second-derivative kernels are shown below:
+"""
+
+# ╔═╡ eac507ce-2a99-11eb-3eba-0780a4a7e078
+md"""
+Just as we did with advection, we implement a `diffuse` function using multiple dispatch:
+"""
+
+# ╔═╡ 09f179c0-2a9a-11eb-1d0f-e59012f9e77b
+md"""##### 2.3) No-flux boundary conditions
+
+We want to impose the no-flux boundary conditions, which states that
+
+$u\frac{\partial T}{\partial x} = \kappa \frac{\partial T}{\partial x} = 0$ at $x$ boundaries and 
+
+$v\frac{\partial T}{\partial y} = \kappa \frac{\partial T}{\partial y} = 0$ at the $y$ boundaries.
+
+To impose this, we treat $i=1$ and $i=N_{x}$ as *ghost cells*, which do not do anything expect help us impose these boundaries conditions. Discretely, the boundary fluxes between $i=1$ and $i=2$ vanish if
+
+$\dfrac{T_{2,\,j}^{n} -T_{1,\,j}^{n}}{\Delta x} = 0$ or 
+
+$T_{1,\,j}^{n} = T_{2,\,j}^{n}.$
+
+Thus, we can implement the boundary conditions by updating the temperature of the ghost cells to match their interior-point neighbors:
+"""
+
+# ╔═╡ 7caca2fa-2a9a-11eb-373f-156a459a1637
+function update_ghostcells!(A; option="no-flux")
+	Atmp = @view A[:,:]
+	if option=="no-flux"
+		A[1, :] = Atmp[2, :]; Atmp[end, :] = Atmp[end-1, :]
+		A[:, 1] = Atmp[:, 2]; Atmp[:, end] = Atmp[:, end-1]
+	end
+end
+
+# ╔═╡ 1f06bc34-2a9b-11eb-1030-ff12d103176c
+md"Let's get a feel for what this is actually doing"
+
+# ╔═╡ 74aa7512-2a9c-11eb-118c-c7a5b60eac1b
+md"""
+##### 2.4) Timestepping
+"""
+
+# ╔═╡ 13eb3966-2a9a-11eb-086c-05510a3f5b80
+md"""
+##### 2.5) Data structures
 """
 
 # ╔═╡ cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
@@ -161,29 +262,9 @@ struct Parameters
 	κ::Float64
 end
 
-# ╔═╡ 9c3643ea-2a09-11eb-2d38-1589b871ae4a
-begin
-	import Base.zeros
-	zeros(G::Grid) = zeros(G.Ny, G.Nx)
-end
-
 # ╔═╡ 32663184-2a81-11eb-0dd1-dd1e10ed9ec6
 abstract type ClimateModel
 end
-
-# ╔═╡ d3796644-2a05-11eb-11b8-87b6e8c311f9
-begin
-	struct OceanModel <: ClimateModel
-		G::Grid
-		P::Parameters
-
-		u::Array{Float64, 2}
-		v::Array{Float64, 2}
-	end
-
-	OceanModel(G, P) = OceanModel(G, P, zeros(G), zeros(G))
-	OceanModel(G) = OceanModel(G, Parameters(1.e4), zeros(G), zeros(G))
-end;
 
 # ╔═╡ f92086c4-2a74-11eb-3c72-a1096667183b
 begin
@@ -197,9 +278,9 @@ begin
 	ClimateModelSimulation(C, T, Δt) = ClimateModelSimulation(C, T, Δt, Ref(0))
 end
 
-# ╔═╡ 2b3d2062-2a73-11eb-368e-f563b2ad7aba
+# ╔═╡ 31cb0c2c-2a9a-11eb-10ba-d90a00d8e03a
 md"""
-Let's check that the total heat of the ocean is conserved: 
+##### 3) Simulating heat transport by advective & diffusive ocean currents
 """
 
 # ╔═╡ 981ef38a-2a8b-11eb-08be-b94be2924366
@@ -238,87 +319,74 @@ end
 # ╔═╡ c9ea0f72-2a67-11eb-20ba-376ca9c8014f
 @bind go_ex Clock(0.3)
 
-# ╔═╡ 9036dc6a-204e-11eb-305d-45e760e62bef
-begin
-	xdiff_kernel = OffsetArray(reshape([1., -2., 1.], 1, 3),  0:0, -1:1)
-	ydiff_kernel = OffsetArray(reshape([1., -2., 1.], 3, 1),  -1:1, 0:0)
-end;
-
-# ╔═╡ 79a0086c-2050-11eb-1974-49d430b5eecd
-begin
-	function diffuse(T, κ, Δy, Δx, j, i)
-		return κ.*(
-			sum(xdiff_kernel[0, -1:1].*T[j, i-1:i+1])/(Δx^2) +
-			sum(ydiff_kernel[-1:1, 0].*T[j-1:j+1, i])/(Δy^2)
-		)
-	end
-	diffuse(T, κ, Δy, Δx) = [
-		diffuse(T, κ, Δy, Δx, j, i) for j=2:size(T, 1)-1, i=2:size(T, 2)-1
-	]
-	diffuse(T, O::OceanModel) = diffuse(T, O.P.κ, O.G.Δy, O.G.Δx)
-end
-
-# ╔═╡ 1cea2b90-205d-11eb-0d06-7df64faf1b53
-begin
-	adv_kernel = OffsetArray(zeros(Float64, 3,3), -1:1, -1:1)
-	adv_kernel[-1, 0] = -1.; adv_kernel[1, 0] = 1.;
-	adv_kernel[0, -1] = -1.; adv_kernel[0, 1] = 1.;
-	adv_kernel
-end
-
-# ╔═╡ 16b72cfc-2114-11eb-257d-b7747a99e155
-begin
-	function advect(T, u, v, Δy, Δx, j, i)
-		return .-(
-			sum(adv_kernel[0, -1:1].*(u[j, i-1:i+1].*T[j, i-1:i+1]))/(2Δx) .+
-			sum(adv_kernel[-1:1, 0].*(v[j-1:j+1, i].*T[j-1:j+1, i]))/(2Δy)
-		)
-	end
-	advect(T, u, v, Δy, Δx) = [
-		advect(T, u, v, Δy, Δx, j, i)
-		for j=2:size(T, 1)-1, i=2:size(T, 2)-1
-	]
-	
-	advect(T, O::OceanModel) = advect(T, O.u, O.v, O.G.Δy, O.G.Δx)
-end
-
-# ╔═╡ b68ca886-2053-11eb-2e39-35c724ed3a3c
-function update_ghostcells!(A; option="no-flux")
-	Atmp = @view A[:,:]
-	if option=="no-flux"
-		A[1, :] = Atmp[2, :]; Atmp[end, :] = Atmp[end-1, :]
-		A[:, 1] = Atmp[:, 2]; Atmp[:, end] = Atmp[:, end-1]
-	end
-end
-
-# ╔═╡ d2c27a5c-2a77-11eb-0772-3b8b0d4cf682
+# ╔═╡ c3f086f4-2a9a-11eb-0978-27532cbecebf
 md"""
-$\mathcal{O}(\text{timestep})*\mathcal{O}(\text{diffusion / advection}) = N * N^2$
+**Some unit tests for verification**
 """
 
-# ╔═╡ a138d27e-2a77-11eb-2d5a-09a717f94e7d
-md"$\Delta t < \frac{\Delta x}{max(v)}$"
+# ╔═╡ ad7b7ed6-2a9c-11eb-06b7-0f5595167575
+begin
+	CFL_adv(S::ClimateModelSimulation) = maximum(sqrt.(S.C.u.^2 + S.C.v.^2))*S.Δt/S.C.G.Δx
+end
 
-# ╔═╡ f5ae1756-12e9-11eb-1228-8f03879c154a
+# ╔═╡ a04d3dee-2a9c-11eb-040e-7bd2facb2eaa
 md"""
-### Two-dimensional advection and diffusion
+# Appendix
 """
-
-# ╔═╡ f9824610-12e7-11eb-3e61-f96c900a0636
-md"""
-##### Need boundary conditions still! 
-"""
-
-# ╔═╡ 87bfc240-12e3-11eb-03cc-756dc00efa6c
-function timestep!(S::ClimateModelSimulation)
-	update_ghostcells!(S.T)
-	S.T[2:end-1, 2:end-1] .+= S.Δt*(advect(S.T, S.C) .+ diffuse(S.T, S.C))
-	S.iter[] += 1
-end;
 
 # ╔═╡ c0298712-2a88-11eb-09af-bf2c39167aa6
 md"""##### Computing the velocity field for a single circular vortex
 """
+
+# ╔═╡ df706ebc-2a63-11eb-0b09-fd9f151cb5a8
+function impose_no_flux!(u, v)
+	u[1,:] .= 0.; v[1,:] .= 0.;
+	u[end,:] .= 0.; v[end,:] .= 0.;
+	u[:,1] .= 0.; v[:,1] .= 0.;
+	u[:,end] .= 0.; v[:,end] .= 0.;
+end
+
+# ╔═╡ bb084ace-12e2-11eb-2dfc-111e90eabfdd
+md"""##### Computing a quasi-realistic ocean velocity field $\vec{u} = (u, v)$
+Our velocity field is given by an analytical solution to the classic wind-driven gyre
+problem, which is given by solving the fourth-order partial differential equation:
+
+$- \epsilon_{M} \hat{\nabla}^{4} \hat{\Psi} + \frac{\partial \hat{\Psi} }{ \partial \hat{x}} = \nabla \times \hat{\tau} \mathbf{z},$
+
+where the hats denote that all of the variables have been non-dimensionalized and all of their constant coefficients have been bundles into the single parameter $\epsilon_{M} \equiv \dfrac{\nu}{\beta L^3}$.
+
+The solution makes use of an advanced *asymptotic method* (valid in the limit that $\epsilon \ll 1$) known as *boundary layer analysis* (see MIT course 18.305 to learn more). 
+"""
+
+
+
+# ╔═╡ e59d869c-2a88-11eb-2511-5d5b4b380b80
+md"""
+##### Some simple initial temperature fields
+"""
+
+# ╔═╡ c4424838-12e2-11eb-25eb-058344b39c8b
+linearT(G) = 0.5*(1. .+[ -(y/G.L) for y in G.y[:, 1], x in G.x[1, :] ])
+
+# ╔═╡ 2908988e-2a9a-11eb-2cf7-494972f93152
+begin
+	import Base.zeros
+	zeros(G::Grid) = zeros(G.Ny, G.Nx)
+end
+
+# ╔═╡ d3796644-2a05-11eb-11b8-87b6e8c311f9
+begin
+	struct OceanModel <: ClimateModel
+		G::Grid
+		P::Parameters
+
+		u::Array{Float64, 2}
+		v::Array{Float64, 2}
+	end
+
+	OceanModel(G, P) = OceanModel(G, P, zeros(G), zeros(G))
+	OceanModel(G) = OceanModel(G, Parameters(1.e4), zeros(G), zeros(G))
+end;
 
 # ╔═╡ e3ee80c0-12dd-11eb-110a-c336bb978c51
 begin
@@ -336,14 +404,6 @@ begin
 		v = yitp(-∂x(ψ, G.Δx/G.L))
 		return u,v
 	end
-end
-
-# ╔═╡ df706ebc-2a63-11eb-0b09-fd9f151cb5a8
-function impose_no_flux!(u, v)
-	u[1,:] .= 0.; v[1,:] .= 0.;
-	u[end,:] .= 0.; v[end,:] .= 0.;
-	u[:,1] .= 0.; v[:,1] .= 0.;
-	u[:,end] .= 0.; v[:,end] .= 0.;
 end
 
 # ╔═╡ e2e4cfac-2a63-11eb-1b7f-9d8d5d304b43
@@ -366,20 +426,6 @@ function PointVortex(G; Ω=1., a=0.2, x0=0.5, y0=0.)
 	return u,v
 end
 
-# ╔═╡ bb084ace-12e2-11eb-2dfc-111e90eabfdd
-md"""##### Computing a quasi-realistic ocean velocity field $\vec{u} = (u, v)$
-Our velocity field is given by an analytical solution to the classic wind-driven gyre
-problem, which is given by solving the fourth-order partial differential equation:
-
-$- \epsilon_{M} \hat{\nabla}^{4} \hat{\Psi} + \frac{\partial \hat{\Psi} }{ \partial \hat{x}} = \nabla \times \hat{\tau} \mathbf{z},$
-
-where the hats denote that all of the variables have been non-dimensionalized and all of their constant coefficients have been bundles into the single parameter $\epsilon_{M} \equiv \dfrac{\nu}{\beta L^3}$.
-
-The solution makes use of an advanced *asymptotic method* (valid in the limit that $\epsilon \ll 1$) known as *boundary layer analysis* (see MIT course 18.305 to learn more). 
-"""
-
-
-
 # ╔═╡ ecaab27e-2a16-11eb-0e99-87c91e659cf3
 function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000.)
 	ϵM = ν/(β*G.L^3)
@@ -401,14 +447,6 @@ function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000
 	return u, v
 end
 
-# ╔═╡ e59d869c-2a88-11eb-2511-5d5b4b380b80
-md"""
-##### Some simple initial temperature fields
-"""
-
-# ╔═╡ c4424838-12e2-11eb-25eb-058344b39c8b
-linearT(G) = 0.5*(1. .+[ -(y/G.L) for y in G.y[:, 1], x in G.x[1, :] ])
-
 # ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
 function InitBox(G; value=1., nx=2, ny=2, xspan=false, yspan=false)
 	T = zeros(G)
@@ -424,7 +462,7 @@ end
 
 # ╔═╡ 863a6330-2a08-11eb-3992-c3db439fb624
 begin
-	G = Grid(15, 6.e6);
+	G = Grid(16, 6.e6);
 	P = Parameters(κ_ex);
 	
 	#u, v = zeros(G), zeros(G)
@@ -441,26 +479,19 @@ begin
 	S = ClimateModelSimulation(C, copy(IC), Δt)
 end;
 
-# ╔═╡ 01401212-2a88-11eb-2313-e91860d53087
+# ╔═╡ dc9d12d0-2a9a-11eb-3dae-85b3b6029658
 begin
 	heat_capacity = 51.
 	total_heat_content = sum(heat_capacity*S.T*(S.C.G.Δx*S.C.G.Δy))*1e-15
+	mean_temp = mean(S.T)
 end;
 
-# ╔═╡ 635d29cc-2a87-11eb-34ad-cb04c6c49497
+# ╔═╡ bff89550-2a9a-11eb-3038-d70249c96219
 begin
 	go_ex
-	md"Total heat content = $(round(total_heat_content, digits=3)) peta-Joules"
-end
-
-# ╔═╡ 6abb1e2c-2a8c-11eb-248e-17f5ee318301
-S.C.u.^2 + S.C.v.^2
-
-# ╔═╡ 3b4e4722-12fe-11eb-238d-17aea2c23f58
-begin
-	CFL_adv(S::ClimateModelSimulation) = maximum(sqrt.(S.C.u.^2 + S.C.v.^2))*S.Δt/S.C.G.Δx
-	CFL_diff(S::ClimateModelSimulation) = S.C.P.κ*S.Δt/(S.C.G.Δx^2)
-	CFL_adv(S), CFL_diff(S)
+	md"""
+	Let's make sure our model conserves energy. We have not added any energy to the system: advection and diffusion just move the energy around. The total heat content is $(round(total_heat_content, digits=3)) peta-Joules and the average temperature is $(round(mean_temp, digits=2)) °C.
+	"""
 end
 
 # ╔═╡ d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
@@ -505,14 +536,109 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 		)
 	end
 	plot!(p,
-		yticks=( (-O.G.L:1000e3:O.G.L), 1e-3*(-O.G.L:1000e3:O.G.L) ),
-		xticks=( (0:1000e3:O.G.L), 1e-3*(0:1000e3:O.G.L) ),
+		yticks=( (-O.G.L:1000e3:O.G.L), Int64.(1e-3*(-O.G.L:1000e3:O.G.L)) ),
+		xticks=( (0:1000e3:O.G.L), Int64.(1e-3*(0:1000e3:O.G.L)) ),
 		xlims=(0., O.G.L), ylims=(-O.G.L, O.G.L),
 	)
 	plot!(p, xlabel="longitudinal distance [km]", ylabel="latitudinal distance [km]")
 	plot!(p, clabel="Temperature")
 	as_png(p)
 end
+
+# ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
+as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
+
+# ╔═╡ 2ef2f0cc-2a9b-11eb-03c6-5d8b4c6ae822
+begin
+	A = rand(Float64, 6,6);
+	heatmap(A, size=(200,200))
+end |> as_svg
+
+# ╔═╡ 4558d4f8-2a9b-11eb-1f56-416975bcd180
+begin
+	Acopy = copy(A);
+	update_ghostcells!(Acopy)
+	heatmap(Acopy, size=(200,200))
+end |> as_svg
+
+# ╔═╡ 6b3b6030-2066-11eb-3343-e19284638efb
+plot_kernel(A) = heatmap(
+	collect(A),
+	color=:bluesreds, clims=(-maximum(abs.(A)), maximum(abs.(A))), colorbar=false,
+	xticks=false, yticks=false, size=(30+30*size(A, 2), 30+30*size(A, 1)), xaxis=false, yaxis=false
+)
+
+# ╔═╡ 1e8d37ee-2a97-11eb-1d45-6b426b25d4eb
+begin
+	xgrad_kernel = OffsetArray(reshape([-1., 0, 1.], 1, 3),  0:0, -1:1)
+	plot_kernel(xgrad_kernel)
+end
+
+# ╔═╡ 682f2530-2a97-11eb-3ee6-99a7c79b3767
+begin
+	ygrad_kernel = OffsetArray(reshape([-1., 0, 1.], 3, 1),  -1:1, 0:0)
+	plot_kernel(ygrad_kernel)
+end
+
+# ╔═╡ f4c884fc-2a97-11eb-1ba9-01bf579f8b43
+begin
+	function advect(T, u, v, Δy, Δx, j, i)
+		return .-(
+			u[j, i].*sum(xgrad_kernel[0, -1:1].*T[j, i-1:i+1])/(2Δx) .+
+			v[j, i].*sum(ygrad_kernel[-1:1, 0].*T[j-1:j+1, i])/(2Δy)
+		)
+	end
+	advect(T, u, v, Δy, Δx) = [
+		advect(T, u, v, Δy, Δx, j, i)
+		for j=2:size(T, 1)-1, i=2:size(T, 2)-1
+	]
+	
+	advect(T, O::OceanModel) = advect(T, O.u, O.v, O.G.Δy, O.G.Δx)
+end
+
+# ╔═╡ b629d89a-2a95-11eb-2f27-3dfa45789be4
+begin
+	xdiff_kernel = OffsetArray(reshape([1., -2., 1.], 1, 3),  0:0, -1:1)
+	ydiff_kernel = OffsetArray(reshape([1., -2., 1.], 3, 1),  -1:1, 0:0)
+
+	[plot_kernel(xdiff_kernel), plot_kernel(ydiff_kernel)]
+end
+
+# ╔═╡ ee6716c8-2a95-11eb-3a00-319ee69dd37f
+begin
+	function diffuse(T, κ, Δy, Δx, j, i)
+		return κ.*(
+			sum(xdiff_kernel[0, -1:1].*T[j, i-1:i+1])/(Δx^2) +
+			sum(ydiff_kernel[-1:1, 0].*T[j-1:j+1, i])/(Δy^2)
+		)
+	end
+	diffuse(T, κ, Δy, Δx) = [
+		diffuse(T, κ, Δy, Δx, j, i) for j=2:size(T, 1)-1, i=2:size(T, 2)-1
+	]
+	
+	diffuse(T, O::OceanModel) = diffuse(T, O.P.κ, O.G.Δy, O.G.Δx)
+end
+
+# ╔═╡ 81bb6a4a-2a9c-11eb-38bb-f7701c79afa2
+function timestep!(S::ClimateModelSimulation)
+	update_ghostcells!(S.T)
+	tendencies = advect(S.T, S.C) .+ diffuse(S.T, S.C)
+	S.T[2:end-1, 2:end-1] .+= S.Δt*tendencies
+	S.iter[] += 1
+end;
+
+# ╔═╡ 83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
+begin
+ 	go_ex	
+	if S.iter[] == 0
+		timestep!(S)
+	else
+		for i in 1:150
+			timestep!(S)
+		end
+	end
+	plot_state(S, clims=(-0.1, 1), show_quiver=show_quiver, IC=IC)
+end |> as_svg
 
 # ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
 begin
@@ -539,60 +665,42 @@ begin
 	end
 end
 
-# ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
-as_svg(x) = PlutoUI.Show(MIME"image/svg+xml"(), repr(MIME"image/svg+xml"(), x))
-
-# ╔═╡ 83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
-begin
- 	go_ex	
-	if S.iter[] == 0
-		timestep!(S)
-	else
-		for i in 1:150
-			timestep!(S)
-		end
-	end
-	plot_state(S, clims=(-0.1, 1), show_quiver=show_quiver, IC=IC)
-end |> as_svg
-
 # ╔═╡ 794c2148-2a78-11eb-2756-5bd28b7726fa
 begin
 	plot(8*Nvec, tvec, xlabel="Number of Grid Cells (in x-direction)", ylabel="elapsed time per timestep [s]")
 end |> as_svg
-
-# ╔═╡ 6b3b6030-2066-11eb-3343-e19284638efb
-plot_kernel(A) = heatmap(
-	collect(A),
-	color=:bluesreds, clims=(-maximum(abs.(A)), maximum(abs.(A))), colorbar=false,
-	xticks=false, yticks=false, size=(30+30*size(A, 2), 30+30*size(A, 1)), xaxis=false, yaxis=false
-)
-
-# ╔═╡ fd07ee24-2067-11eb-0ac8-7b3da3993223
-plot_kernel(xdiff_kernel[0:0, :]),
-plot_kernel(ydiff_kernel[:, 0:0])
-
-# ╔═╡ dab0f406-2067-11eb-176d-9dab6819dc98
-plot_kernel(adv_kernel),
-plot_kernel(adv_kernel[0:0, :]),
-plot_kernel(adv_kernel[:, 0:0])
 
 # ╔═╡ Cell order:
 # ╟─0f8db6f4-2113-11eb-18b4-21a469c67f3a
 # ╟─ed741ec6-1f75-11eb-03be-ad6284abaab8
 # ╟─ac759b96-2114-11eb-24cb-d50b556f4142
 # ╟─3a4a1aea-2118-11eb-30a9-57b87f2ddfae
-# ╟─a60e5550-211a-11eb-3cf8-f9bae0a9efd3
-# ╠═b1b5625e-211a-11eb-3ee1-3ba9c9cc375a
+# ╟─023779a0-2a95-11eb-35b5-7be93c43afaf
+# ╟─b1b5625e-211a-11eb-3ee1-3ba9c9cc375a
+# ╠═1e8d37ee-2a97-11eb-1d45-6b426b25d4eb
+# ╟─3578b158-2a97-11eb-0771-bf6d82d3b6d1
+# ╟─682f2530-2a97-11eb-3ee6-99a7c79b3767
+# ╟─7f3c9550-2a97-11eb-1549-455009025872
+# ╠═f4c884fc-2a97-11eb-1ba9-01bf579f8b43
+# ╟─0127bca6-2a99-11eb-16a0-8d7af66694f8
+# ╟─b629d89a-2a95-11eb-2f27-3dfa45789be4
+# ╟─eac507ce-2a99-11eb-3eba-0780a4a7e078
+# ╠═ee6716c8-2a95-11eb-3a00-319ee69dd37f
+# ╟─09f179c0-2a9a-11eb-1d0f-e59012f9e77b
+# ╠═7caca2fa-2a9a-11eb-373f-156a459a1637
+# ╟─1f06bc34-2a9b-11eb-1030-ff12d103176c
+# ╠═2ef2f0cc-2a9b-11eb-03c6-5d8b4c6ae822
+# ╠═4558d4f8-2a9b-11eb-1f56-416975bcd180
+# ╟─74aa7512-2a9c-11eb-118c-c7a5b60eac1b
+# ╠═81bb6a4a-2a9c-11eb-38bb-f7701c79afa2
+# ╟─13eb3966-2a9a-11eb-086c-05510a3f5b80
 # ╠═cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
 # ╠═2a93145e-2a09-11eb-323b-01817062aa89
-# ╠═9c3643ea-2a09-11eb-2d38-1589b871ae4a
 # ╠═32663184-2a81-11eb-0dd1-dd1e10ed9ec6
 # ╠═d3796644-2a05-11eb-11b8-87b6e8c311f9
 # ╠═f92086c4-2a74-11eb-3c72-a1096667183b
+# ╟─31cb0c2c-2a9a-11eb-10ba-d90a00d8e03a
 # ╠═863a6330-2a08-11eb-3992-c3db439fb624
-# ╟─2b3d2062-2a73-11eb-368e-f563b2ad7aba
-# ╠═01401212-2a88-11eb-2313-e91860d53087
-# ╟─635d29cc-2a87-11eb-34ad-cb04c6c49497
 # ╟─981ef38a-2a8b-11eb-08be-b94be2924366
 # ╟─d042d25a-2a62-11eb-33fe-65494bb2fad5
 # ╟─6dbc3d34-2a89-11eb-2c80-75459a8e237a
@@ -600,23 +708,14 @@ plot_kernel(adv_kernel[:, 0:0])
 # ╟─933d42fa-2a67-11eb-07de-61cab7567d7d
 # ╟─c9ea0f72-2a67-11eb-20ba-376ca9c8014f
 # ╟─83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
+# ╟─c3f086f4-2a9a-11eb-0978-27532cbecebf
+# ╟─bff89550-2a9a-11eb-3038-d70249c96219
+# ╠═dc9d12d0-2a9a-11eb-3dae-85b3b6029658
 # ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
-# ╠═9036dc6a-204e-11eb-305d-45e760e62bef
-# ╟─fd07ee24-2067-11eb-0ac8-7b3da3993223
-# ╠═79a0086c-2050-11eb-1974-49d430b5eecd
-# ╠═1cea2b90-205d-11eb-0d06-7df64faf1b53
-# ╟─dab0f406-2067-11eb-176d-9dab6819dc98
-# ╠═16b72cfc-2114-11eb-257d-b7747a99e155
-# ╠═b68ca886-2053-11eb-2e39-35c724ed3a3c
-# ╠═16905a6a-2a78-11eb-19ea-81adddc21088
+# ╠═ad7b7ed6-2a9c-11eb-06b7-0f5595167575
+# ╟─a04d3dee-2a9c-11eb-040e-7bd2facb2eaa
+# ╟─16905a6a-2a78-11eb-19ea-81adddc21088
 # ╠═794c2148-2a78-11eb-2756-5bd28b7726fa
-# ╠═d2c27a5c-2a77-11eb-0772-3b8b0d4cf682
-# ╠═a138d27e-2a77-11eb-2d5a-09a717f94e7d
-# ╠═6abb1e2c-2a8c-11eb-248e-17f5ee318301
-# ╟─3b4e4722-12fe-11eb-238d-17aea2c23f58
-# ╟─f5ae1756-12e9-11eb-1228-8f03879c154a
-# ╟─f9824610-12e7-11eb-3e61-f96c900a0636
-# ╠═87bfc240-12e3-11eb-03cc-756dc00efa6c
 # ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
 # ╟─c0298712-2a88-11eb-09af-bf2c39167aa6
 # ╟─e2e4cfac-2a63-11eb-1b7f-9d8d5d304b43
@@ -627,6 +726,7 @@ plot_kernel(adv_kernel[:, 0:0])
 # ╟─e59d869c-2a88-11eb-2511-5d5b4b380b80
 # ╟─c4424838-12e2-11eb-25eb-058344b39c8b
 # ╟─3d12c114-2a0a-11eb-131e-d1a39b4f440b
+# ╟─2908988e-2a9a-11eb-2cf7-494972f93152
 # ╠═9c8a7e5a-12dd-11eb-1b99-cd1d52aefa1d
 # ╠═d96c7a56-12e4-11eb-123c-d57487bd37df
 # ╟─6b3b6030-2066-11eb-3343-e19284638efb
