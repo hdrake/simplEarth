@@ -447,34 +447,21 @@ function DoubleGyre(G; β=2e-11, τ₀=0.1, ρ₀=1.e3, ν=1.e5, κ=1.e5, H=1000
 	return u, v
 end
 
-# ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
-function InitBox(G; value=1., nx=2, ny=2, xspan=false, yspan=false)
-	T = zeros(G)
-	T[G.Ny÷2-ny:G.Ny÷2+ny, G.Nx÷2-nx:G.Nx÷2+nx] .= value
-	if xspan
-		T[G.Ny÷2-ny:G.Ny÷2+ny, :] .= value
-	end
-	if yspan
-		T[:, G.Nx÷2-nx:G.Nx÷2+nx] .= value
-	end
-	return T
-end
-
 # ╔═╡ 863a6330-2a08-11eb-3992-c3db439fb624
 begin
-	G = Grid(16, 6.e6);
+	G = Grid(10, 6.e6);
 	P = Parameters(κ_ex);
 	
 	#u, v = zeros(G), zeros(G)
-	u, v = PointVortex(G, Ω=0.5)
-	#u, v = DoubleGyre(G)
+	#u, v = PointVortex(G, Ω=0.5)
+	u, v = DoubleGyre(G)
 
 	#IC = InitBox(G)
-	IC = InitBox(G, xspan=true)
-	#IC = linearT(G)
+	#IC = InitBox(G, xspan=true)
+	IC = linearT(G)
 	
 	C = OceanModel(G, P, u*2. ^U_ex, v*2. ^U_ex)
-	Δt = 6*60*60
+	Δt = 12*60*60
 	
 	S = ClimateModelSimulation(C, copy(IC), Δt)
 end;
@@ -488,7 +475,7 @@ end;
 
 # ╔═╡ bff89550-2a9a-11eb-3038-d70249c96219
 begin
-	go_ex
+	#go_ex
 	md"""
 	Let's make sure our model conserves energy. We have not added any energy to the system: advection and diffusion just move the energy around. The total heat content is $(round(total_heat_content, digits=3)) peta-Joules and the average temperature is $(round(mean_temp, digits=2)) °C.
 	"""
@@ -509,7 +496,7 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 		arrow_col = :black
 		maxdiff = maximum(abs.(C.T .- IC))
 		p = heatmap(O.G.x[:], O.G.y[:], C.T .- IC, clims=(-1.1, 1.1),
-			color=:balance, colorbar_title="Temperature [°C]", linewidth=0.,
+			color=:balance, colorbar_title="Temperature anomaly [°C]", linewidth=0.,
 			size=(400,530)
 		)
 	else
@@ -517,13 +504,13 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 		p = heatmap(O.G.x[:], O.G.y[:], C.T,
 			color=:thermal, levels=clims[1]:(clims[2]-clims[1])/21.:clims[2],
 			colorbar_title="Temperature [°C]", clims=clims,
-			linewidth=0., size=(350,466)
+			linewidth=0., size=(400,520)
 		)
 	end
-	annotate!(500e3, 5500e3,
+	annotate!(50e3, 6170e3,
 		text(
 			string("t = ", Int64(round(S.iter[]*S.Δt/(60*60*24))), " days"),
-			color=:white, :left, 10
+			color=:black, :left, 9
 		)
 	)
 	
@@ -543,6 +530,19 @@ function plot_state(C; clims=(-1.1,1.1), show_quiver=true, IC=nothing)
 	plot!(p, xlabel="longitudinal distance [km]", ylabel="latitudinal distance [km]")
 	plot!(p, clabel="Temperature")
 	as_png(p)
+end
+
+# ╔═╡ 3d12c114-2a0a-11eb-131e-d1a39b4f440b
+function InitBox(G; value=1., nx=2, ny=2, xspan=false, yspan=false)
+	T = zeros(G)
+	T[G.Ny÷2-ny:G.Ny÷2+ny, G.Nx÷2-nx:G.Nx÷2+nx] .= value
+	if xspan
+		T[G.Ny÷2-ny:G.Ny÷2+ny, :] .= value
+	end
+	if yspan
+		T[:, G.Nx÷2-nx:G.Nx÷2+nx] .= value
+	end
+	return T
 end
 
 # ╔═╡ d96c7a56-12e4-11eb-123c-d57487bd37df
@@ -633,7 +633,7 @@ begin
 	if S.iter[] == 0
 		timestep!(S)
 	else
-		for i in 1:150
+		for i in 1:75
 			timestep!(S)
 		end
 	end
@@ -707,7 +707,7 @@ end |> as_svg
 # ╟─c20b0e00-2a8a-11eb-045d-9db88411746f
 # ╟─933d42fa-2a67-11eb-07de-61cab7567d7d
 # ╟─c9ea0f72-2a67-11eb-20ba-376ca9c8014f
-# ╟─83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
+# ╠═83c5dbb2-2a0a-11eb-0b1d-d120efa14de5
 # ╟─c3f086f4-2a9a-11eb-0978-27532cbecebf
 # ╟─bff89550-2a9a-11eb-3038-d70249c96219
 # ╠═dc9d12d0-2a9a-11eb-3dae-85b3b6029658
