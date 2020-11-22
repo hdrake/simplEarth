@@ -521,10 +521,10 @@ For constant ``M``, we want to verify that $\mathcal{O}(T(t_{M})) = \mathcal{O}(
 """
 
 # ╔═╡ 126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
-function runtime(N)
+# function runtime(N)
 	
-	return missing
-end
+# 	return missing
+# end
 
 # ╔═╡ 923af680-2d0b-11eb-3f6a-db4bf29bb6a9
 md"""
@@ -533,6 +533,9 @@ md"""
 
 # ╔═╡ b50d25c0-2d0b-11eb-3b0c-1b178bbddecd
 
+
+# ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
+Nvec = 8:8:200
 
 # ╔═╡ a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
 md"""
@@ -552,30 +555,15 @@ Hi!
 
 """
 
-# ╔═╡ 87e59680-2d0c-11eb-03c7-1d845ca6a1a5
-md"""
-What you experienced is _numerical instability_ in our simulation method. This is not caused by floating point errors -- it is a theoretical limitation of our method.
-
-To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
-
-$L_{CFL} \equiv \max(|\vec{u}|) \Delta t < \Delta x$
-
-or 
-
-$\Delta t  < \frac{\Delta x}{\max(|\vec{u}|) },$
-
-which is known as **the Courant-Freidrichs-Levy (CFL) condition**. This inequality states that if we want to decrease the grid spacing $\Delta x$ (or increase the *resolution* $N_{x}$), we also have to decrease the timestep $\Delta t$ by the same factor. In other words, the timestep can not be thought of as fixed an in fact also depends on the spatial resolution: $\Delta t \equiv \Delta t_{0} N_{x}$.
-
-Revisiting our complexity equation, we now have
-
-$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) * \mathcal{O}(\Delta t) * \mathcal{O}(\text{tendencies}) = \mathcal{O}(M) \mathcal{O}(N_{x}^{3}),$
-
-EXERCISE: VERIFY THAT THIS IS TRUE BY SETTING $\Delta t = 0.1 \frac{\Delta x}{\max(|\vec{u}|) }$ TO ENSURE THE CFL CONDITION ALWAYS HOLDS
-"""
+# ╔═╡ ad7b7ed6-2a9c-11eb-06b7-0f5595167575
+function CFL_adv(sim::ClimateModelSimulation)
+	maximum(sqrt.(sim.model.u.^2 + sim.model.v.^2)) * sim.Δt / sim.model.G.Δx
+end
 
 # ╔═╡ 433a9c1e-2ce0-11eb-319c-e9c785b080ce
 md"""
-Note: in reality, state-of-the-art climate models are 3-D, not 2-D. It turns out that to preserve the aspect ratio of oceanic motions, the *vertical* grid resolution should also be increased $N_{z} \propto N_{x}$, such that in reality the computational complexity of climate models is:
+#### Exercise 2.3
+In practice, state-of-the-art climate models are 3-D, not 2-D. It turns out that to preserve the aspect ratio of oceanic motions, the *vertical* grid resolution should also be increased $N_{z} \propto N_{x}$, such that in reality the computational complexity of climate models is:
 
 $\mathcal{O}(T(t_{M})) = \mathcal{O}(M) \mathcal{O}(N_{x}^4).$
 
@@ -590,23 +578,17 @@ html"""
 <img src="https://www.nap.edu/openbook/13430/xhtml/images/p_78.jpg" height=450>
 """
 
-# ╔═╡ ad7b7ed6-2a9c-11eb-06b7-0f5595167575
-function CFL_adv(sim::ClimateModelSimulation)
-	maximum(sqrt.(sim.model.u.^2 + sim.model.v.^2)) * sim.Δt / sim.model.G.Δx
-end
-
 # ╔═╡ d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
 md"**The CFL condition**
 
 The CFL condition is defined by $\text{CFL} = \dfrac{\max\left(\sqrt{u² + v²}\right)Δt}{Δx} =$ $(round(CFL_adv(ocean_sim), digits=2))
 "
 
-# ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
-Nvec = 1:25
-
 # ╔═╡ 545cf530-2b48-11eb-378c-3f8eeb89bcba
 md"""
-# Radiation
+## **Exercise 3** - _Radiation_
+
+Blablabllabab
 """
 
 # ╔═╡ 57535c60-2b49-11eb-07cc-ffc5b4d1f13c
@@ -738,8 +720,8 @@ function timestep!(sim::ClimateModelSimulation{RadiationOceanModel})
 end;
 
 # ╔═╡ 8346b590-2b41-11eb-0bc1-1ba79bb77dfb
-tvec = map(Nvec) do Npower
-	G = Grid(8*Npower, 6.e6);
+function runtime(N)
+	G = Grid(N, 6.e6);
 	P = OceanModelParameters(1.e4);
 
 	#u, v = DoubleGyre(G)
@@ -758,9 +740,12 @@ tvec = map(Nvec) do Npower
 	return @elapsed timestep!(S)
 end
 
+# ╔═╡ a8136ed0-2d0e-11eb-01b3-4101bd813faf
+tvec = runtime.(Nvec)
+
 # ╔═╡ 794c2148-2a78-11eb-2756-5bd28b7726fa
 begin
-	plot(8*Nvec, tvec, xlabel="Number of Grid Cells (in x-direction)", ylabel="elapsed time per timestep [s]")
+	plot(Nvec, tvec, xlabel="Number of Grid Cells (in x-direction)", ylabel="elapsed time per timestep [s]")
 end |> as_svg
 
 # ╔═╡ ef902590-2bf7-11eb-1eb0-712b3eb3f7c1
@@ -1017,7 +1002,7 @@ let
 	for i in 1:100
 		timestep!(radiation_sim)
 	end
-	plot_state(radiation_sim; clims=(-0,40))
+	plot_state(radiation_sim; clims=(-0,50))
 end
 
 # ╔═╡ 57b6e7d0-2c07-11eb-16c1-0d058a34c7ee
@@ -1116,14 +1101,47 @@ Goals:
 
 """ |> todo
 
+# ╔═╡ 87e59680-2d0c-11eb-03c7-1d845ca6a1a5
+md"""
+What you experienced is _numerical instability_ in our simulation method. This is not caused by floating point errors -- it is a theoretical limitation of our method.
+
+To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
+
+$L_{CFL} \equiv \max(|\vec{u}|) \Delta t < \Delta x$
+
+or 
+
+$\Delta t  < \frac{\Delta x}{\max(|\vec{u}|) },$
+
+which is known as **the Courant-Freidrichs-Levy (CFL) condition**. This inequality states that if we want to decrease the grid spacing $\Delta x$ (or increase the *resolution* $N_{x}$), we also have to decrease the timestep $\Delta t$ by the same factor. In other words, the timestep can not be thought of as fixed an in fact also depends on the spatial resolution: $\Delta t \equiv \Delta t_{0} N_{x}$.
+
+Revisiting our complexity equation, we now have
+
+$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) * \mathcal{O}(\Delta t) * \mathcal{O}(\text{tendencies}) = \mathcal{O}(M) \mathcal{O}(N_{x}^{3}),$
+
+👉 EXERCISE: VERIFY THAT THIS IS TRUE BY SETTING $\Delta t = 0.1 \frac{\Delta x}{\max(|\vec{u}|) }$ TO ENSURE THE CFL CONDITION ALWAYS HOLDS
+
+$(todo(md"We need to think about how this exercise actually _verifies_ the condition, instead of just implementing it. They need to find that the same Δt can be stable/unstable, depending on N."))
+"""
+
+# ╔═╡ e1d01f70-2d0d-11eb-1367-5b5305d94774
+md"""
+
+To Henri:
+
+I thought that we assume that we want to simulate a fixed amount of time, but depending on Δt, this will require a variable number of steps, M.
+
+
+So $M = O(1 / Δt)$, right? And $Δt = O(1 / N)$, (not ``O(N)``), 
+
+So, in 3D:
+
+``runtime = O(M)O(N^3) = O(N^4)``
+
+""" |> todo
+
 # ╔═╡ fced660c-2cd9-11eb-1737-0110789f429e
 md"""
-Talk about the theoretical constraints for Δt
-
-This gives us N^3
-
-N^4 for state-of-the-art 3D ocean models
-
 compare to Moore's Law
 
 """ |> todo
@@ -1241,22 +1259,24 @@ md"""
 # ╟─014495d6-2cda-11eb-05d7-91e5a467647e
 # ╟─d6a56496-2cda-11eb-3d54-d7141a49a446
 # ╠═126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
+# ╠═8346b590-2b41-11eb-0bc1-1ba79bb77dfb
 # ╟─171c6880-2d0b-11eb-0180-454f2876cf51
 # ╟─923af680-2d0b-11eb-3f6a-db4bf29bb6a9
 # ╠═b50d25c0-2d0b-11eb-3b0c-1b178bbddecd
+# ╠═16905a6a-2a78-11eb-19ea-81adddc21088
+# ╠═a8136ed0-2d0e-11eb-01b3-4101bd813faf
+# ╠═794c2148-2a78-11eb-2756-5bd28b7726fa
 # ╟─a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
 # ╠═87de1c70-2d0c-11eb-2c22-f76eeca58f33
-# ╠═87e59680-2d0c-11eb-03c7-1d845ca6a1a5
+# ╟─87e59680-2d0c-11eb-03c7-1d845ca6a1a5
+# ╠═ad7b7ed6-2a9c-11eb-06b7-0f5595167575
+# ╟─e1d01f70-2d0d-11eb-1367-5b5305d94774
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
 # ╠═fced660c-2cd9-11eb-1737-0110789f429e
 # ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
-# ╠═ad7b7ed6-2a9c-11eb-06b7-0f5595167575
-# ╠═16905a6a-2a78-11eb-19ea-81adddc21088
-# ╠═8346b590-2b41-11eb-0bc1-1ba79bb77dfb
-# ╠═794c2148-2a78-11eb-2756-5bd28b7726fa
 # ╠═4cba7260-2c08-11eb-0a81-abdff2f867de
-# ╟─545cf530-2b48-11eb-378c-3f8eeb89bcba
+# ╠═545cf530-2b48-11eb-378c-3f8eeb89bcba
 # ╠═57535c60-2b49-11eb-07cc-ffc5b4d1f13c
 # ╠═ef902590-2bf7-11eb-1eb0-712b3eb3f7c1
 # ╠═90e1aa00-2b48-11eb-1a2d-8701a3069e50
@@ -1276,8 +1296,8 @@ md"""
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
 # ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 # ╠═b059c6e0-2b4a-11eb-216a-39bb43c7b423
-# ╠═5fd346d0-2b4d-11eb-066b-9ba9c9d97613
-# ╠═6568b850-2b4d-11eb-02e9-696654ac2d37
+# ╟─5fd346d0-2b4d-11eb-066b-9ba9c9d97613
+# ╟─6568b850-2b4d-11eb-02e9-696654ac2d37
 # ╠═50c6d850-2b57-11eb-2330-1d1547219b5e
 # ╠═57dcf660-2b57-11eb-1518-b7e2e65abfcc
 # ╠═f5010a40-2b56-11eb-266a-a71b92692172
