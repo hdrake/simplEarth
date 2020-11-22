@@ -25,7 +25,8 @@ begin
 		"ImageMagick",
 		"ImageIO",
 		"OffsetArrays",
-		"ThreadsX"
+		"ThreadsX",
+		"BenchmarkTools",
 	])
 	using Statistics
 	using Plots
@@ -33,6 +34,7 @@ begin
 	using Images
 	using OffsetArrays
 	using ThreadsX
+	using BenchmarkTools
 end
 
 # ╔═╡ 67c3dcc0-2c05-11eb-3a84-9dfea24f95a8
@@ -78,7 +80,7 @@ The model is written in a way that it can be **extended with more physical proce
 md"""
 ## **Exercise 1** - _Advection-diffusion_
 
-Included below is the two-dimensional advection-diffusion model from Lecture 23. To keep this homework concise, we have only included the code. To see the original notebook with comments, use the link below:
+Included below is the two-dimensional advection-diffusion model from Lecture 23. To keep this homework concise, we have only included the code. To see the original notebook with more detailed comments, use the link below:
 """
 
 # ╔═╡ c33ebe40-2cf9-11eb-384c-432dc70497b0
@@ -151,8 +153,8 @@ begin
 	Base.zeros(G::Grid) = zeros(G.Ny, G.Nx)
 end
 
-# ╔═╡ 9841ff20-2c06-11eb-3c4c-c34e465e1594
-default_grid = Grid(10, 6.e6)
+# ╔═╡ e7f563f0-2d04-11eb-036d-992da68470a6
+Grid(5,300.0e3)
 
 # ╔═╡ 39404240-2cfe-11eb-2e3c-710e37f8cd4b
 md"""
@@ -264,6 +266,24 @@ end;
 # ╔═╡ 31cb0c2c-2a9a-11eb-10ba-d90a00d8e03a
 md"""
 ##### 3) Simulating heat transport by advective & diffusive ocean currents
+"""
+
+# ╔═╡ 9841ff20-2c06-11eb-3c4c-c34e465e1594
+default_grid = Grid(10, 6000.0e3);
+
+# ╔═╡ 31cb7aae-2d04-11eb-30cb-a365a6a4aa6b
+md"""
+Uncomment (`Ctrl+/` or `Cmd+/`) one of the lines below two choose a different velocity field.
+"""
+
+# ╔═╡ 50e89130-2d04-11eb-1c8e-a34775aec40c
+md"""
+Choose the initial temperature state:
+"""
+
+# ╔═╡ c7736640-2d04-11eb-1108-59a7446e244d
+md"""
+We define our ocean simulation. Run this cell again to reset the simulation to the initial state.
 """
 
 # ╔═╡ 981ef38a-2a8b-11eb-08be-b94be2924366
@@ -492,13 +512,49 @@ $\mathcal{O}(T(t_{M})) = \mathcal{O}(M) \mathcal{O}(N_{x}^{2}),$
 
 i.e. quadratic in the spatial resolution $N_{x}$.
 
-EXERCISE: VERIFY THAT THIS IS TRUE
+#### Exercise 2.1
+
+For constant ``M``, we want to verify that $\mathcal{O}(T(t_{M})) = \mathcal{O}(N_{x}^{2})$ holds for our numerical model. 
+
+👉 Write a function `model_runtime` that takes `N` as an argument, and sets up a model with grid of resolution `N`, and returns the runtime of a single `timestep!`.
 
 """
 
+# ╔═╡ 126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
+function runtime(N)
+	
+	return missing
+end
+
+# ╔═╡ 923af680-2d0b-11eb-3f6a-db4bf29bb6a9
+md"""
+👉 Call your `runtime` function on a range of values for `N`, and use a plot to demonstrate that the predicted runtime complexity holds.
+"""
+
+# ╔═╡ b50d25c0-2d0b-11eb-3b0c-1b178bbddecd
+
+
 # ╔═╡ a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
 md"""
-**The CFL condition on the timestep**
+#### Exercise 2.2 - _The CFL condition on $\Delta t$_
+
+In Exercise 1, look for the definition of `Δt`. It is currently set to `12*60*60` (12 hours).
+
+👉 Double `Δt` and run the simulation again. You should see that it runs faster, great! Now, keep doubling `Δt` until you see something 'strange'. Describe what you see.
+
+
+"""
+
+# ╔═╡ 87de1c70-2d0c-11eb-2c22-f76eeca58f33
+Δt_doubling_observations = md"""
+
+Hi!
+
+"""
+
+# ╔═╡ 87e59680-2d0c-11eb-03c7-1d845ca6a1a5
+md"""
+What you experienced is _numerical instability_ in our simulation method. This is not caused by floating point errors -- it is a theoretical limitation of our method.
 
 To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
 
@@ -996,6 +1052,16 @@ Just some helper functions used in the notebook."
 # ╔═╡ 57f57770-2c07-11eb-1720-cf00aa7f597b
 hint(text) = Markdown.MD(Markdown.Admonition("hint", "Hint", [text]))
 
+# ╔═╡ 171c6880-2d0b-11eb-0180-454f2876cf51
+hint(md"""
+To measure the runtime of a Julia command, you can do:
+```julia
+runtime = @elapsed do_something()
+```
+
+To get a more precise benchmark, you can average a fixed number of runs, by putting `@elapsed` in front of a `for` loop, for example.
+""")
+
 # ╔═╡ 58094d90-2c07-11eb-2987-15c068fefd8f
 almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
 
@@ -1131,7 +1197,7 @@ md"""
 # ╠═a8d8f8d2-2cfa-11eb-3c3e-d54f7b32e4a2
 # ╠═13eb3966-2a9a-11eb-086c-05510a3f5b80
 # ╠═cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
-# ╠═9841ff20-2c06-11eb-3c4c-c34e465e1594
+# ╠═e7f563f0-2d04-11eb-036d-992da68470a6
 # ╠═39404240-2cfe-11eb-2e3c-710e37f8cd4b
 # ╠═0d63e6b2-2b49-11eb-3413-43977d299d90
 # ╠═32663184-2a81-11eb-0dd1-dd1e10ed9ec6
@@ -1142,8 +1208,12 @@ md"""
 # ╠═81bb6a4a-2a9c-11eb-38bb-f7701c79afa2
 # ╠═7caca2fa-2a9a-11eb-373f-156a459a1637
 # ╟─31cb0c2c-2a9a-11eb-10ba-d90a00d8e03a
+# ╠═9841ff20-2c06-11eb-3c4c-c34e465e1594
+# ╟─31cb7aae-2d04-11eb-30cb-a365a6a4aa6b
 # ╠═1dd3fc70-2c06-11eb-27fe-f325ca208504
+# ╟─50e89130-2d04-11eb-1c8e-a34775aec40c
 # ╠═6f19cd80-2c06-11eb-278d-178c1590856f
+# ╟─c7736640-2d04-11eb-1108-59a7446e244d
 # ╠═863a6330-2a08-11eb-3992-c3db439fb624
 # ╟─981ef38a-2a8b-11eb-08be-b94be2924366
 # ╟─d042d25a-2a62-11eb-33fe-65494bb2fad5
@@ -1151,7 +1221,7 @@ md"""
 # ╟─c20b0e00-2a8a-11eb-045d-9db88411746f
 # ╟─933d42fa-2a67-11eb-07de-61cab7567d7d
 # ╟─c9ea0f72-2a67-11eb-20ba-376ca9c8014f
-# ╠═3b24e1b0-2b46-11eb-383b-c57cbf3e68f1
+# ╟─3b24e1b0-2b46-11eb-383b-c57cbf3e68f1
 # ╟─c3f086f4-2a9a-11eb-0978-27532cbecebf
 # ╟─bff89550-2a9a-11eb-3038-d70249c96219
 # ╟─dc9d12d0-2a9a-11eb-3dae-85b3b6029658
@@ -1169,8 +1239,14 @@ md"""
 # ╠═b19df5b0-2c05-11eb-0f59-83fa0aa6d0bb
 # ╟─88c56350-2c08-11eb-14e9-77e71d749e6d
 # ╟─014495d6-2cda-11eb-05d7-91e5a467647e
-# ╠═d6a56496-2cda-11eb-3d54-d7141a49a446
-# ╠═a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
+# ╟─d6a56496-2cda-11eb-3d54-d7141a49a446
+# ╠═126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
+# ╟─171c6880-2d0b-11eb-0180-454f2876cf51
+# ╟─923af680-2d0b-11eb-3f6a-db4bf29bb6a9
+# ╠═b50d25c0-2d0b-11eb-3b0c-1b178bbddecd
+# ╟─a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
+# ╠═87de1c70-2d0c-11eb-2c22-f76eeca58f33
+# ╠═87e59680-2d0c-11eb-03c7-1d845ca6a1a5
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
 # ╠═fced660c-2cd9-11eb-1737-0110789f429e
