@@ -823,6 +823,8 @@ mean(radiation_sim.T)
 # ╔═╡ 127bcb0e-2c0a-11eb-23df-a75767910fcb
 md"""
 #### Exercise 4.1 - _Equilibrium temperature_
+
+👉 Write a function `eq_T` that takes two argments, `S` and `T_init`, that sets up a radiation ocean model with `S` as `S_mean`, and with `T_init` as the constant initial temperature. Run the model until you have reached equilibrium (approximately), and return the average temperature.
 """
 
 # ╔═╡ c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
@@ -858,33 +860,61 @@ function eq_T(S, T_init)
 	mean(sim.T)
 end
 
-# ╔═╡ ec39a792-2bf7-11eb-11e5-515b39f1adf6
+# ╔═╡ 2ef83140-2d16-11eb-1d8c-a13048a8e04f
+md"""
+#### Exercise 4.2
+"""
 
+# ╔═╡ 2ae47330-2d15-11eb-1d2e-55343fa3b01a
+md"""
+👉 For ``S=1380`` (present-day value), does `T_init=-50` give a different result than `T_init=+50`? What about `T_ini+55`? By trying various values for `T_init`, **how many stable states do you find?**
+"""
 
-# ╔═╡ 38759600-2b8f-11eb-047d-490b567a2644
-# eq_T(1500, -50)
+# ╔═╡ 5294aad0-2d15-11eb-091d-59d7517c4dc2
+S_1380_stable_states = md"""
 
-# ╔═╡ 4fd13342-2b8f-11eb-1584-19578501385b
-# eq_T(1500, 0)
+I found ...
 
-# ╔═╡ 5300ef60-2b8f-11eb-2433-950848aded8d
-# eq_T(1500, 50)
+"""
 
-# ╔═╡ 703ebe90-2b8f-11eb-27f7-d7207fb41cda
-# eq_T(1900, -50)
+# ╔═╡ abd2475e-2d15-11eb-26dc-05253cf65232
+md"""
+👉 Answer the same question for ``S=1000`` and ``S=2000``.
+"""
 
-# ╔═╡ 75ea0200-2b8f-11eb-000d-f397e04704f2
-# eq_T(1700, 50)
+# ╔═╡ bdd86250-2d15-11eb-0b62-7903ca714312
+S_1000_stable_states = md"""
 
-# ╔═╡ 7735bbe0-2b8f-11eb-36dc-73439f762444
-# eq_T(1300, -50)
+I found ...
 
-# ╔═╡ 7c45829e-2b8f-11eb-15f1-09e84f0e0070
-# eq_T(1300, 50)
+"""
+
+# ╔═╡ bed2c7e0-2d15-11eb-14e3-93f5d1b6f3a1
+S_2000_stable_states = md"""
+
+I found ...
+
+"""
+
+# ╔═╡ c40b7360-2d15-11eb-0558-d95d615f9b9b
+md"""
+👉 Use the interactive simulation to check these simulations manually. Why is the number of stable states different for a lower or higher value of ``S``?
+"""
+
+# ╔═╡ 02767460-2d16-11eb-2074-07657f84e22d
+num_stable_states_answer = md"""
+
+Hi! 🍪
+
+"""
 
 # ╔═╡ 2495e330-2c0a-11eb-3a10-530f8b87a4eb
 md"""
-#### Exercise 4.2
+That's right, we have found a _bifurcation_!
+
+#### Exercise 4.3
+
+👉 Make a bifurcation diagram. Create a plot with ``S`` on the horizontal axis, and ``T_{\text{equilibrium}}`` on the vertical. For a couple of pairs TODO
 """
 
 # ╔═╡ 59da0470-2b8f-11eb-098c-993effcedecf
@@ -1047,6 +1077,15 @@ runtime = @elapsed do_something()
 To get a more precise benchmark, you can average a fixed number of runs, by putting `@elapsed` in front of a `for` loop, for example.
 """)
 
+# ╔═╡ ec39a792-2bf7-11eb-11e5-515b39f1adf6
+md"""
+**How do you determine that the model has reached equilibrium?**
+
+The simplest way is to use the interactive simulation above to find a fixed time/number of steps, for which any initial value has reached equilibrium. 
+
+Using a long time period is more accurate, but it means that the runtime will be long. If this is a problem, you can use a dynamic stopping condition instead. For example, you can stop the simulation early when the total incoming and total outgoing radiation are roughly equal.
+""" |> hint
+
 # ╔═╡ 58094d90-2c07-11eb-2987-15c068fefd8f
 almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
 
@@ -1187,6 +1226,13 @@ u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y}
 
 """ |> todo
 
+# ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
+md"""
+
+We still need to find more realistic initial values. Right now, the contrast between pole and equator is too large, maybe more adv + diffusion, and then we need to re-tune the rest to have three stable states at S=1380
+
+""" |> todo
+
 # ╔═╡ 8b5a22f0-2b8f-11eb-094f-c5ceb1842998
 md"""
 ## **Exercise 4** - _Bifurcation diagram_
@@ -1295,6 +1341,7 @@ md"""
 # ╟─fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
 # ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
+# ╠═8de8dda0-2d0f-11eb-105b-9d8779275e6c
 # ╠═b059c6e0-2b4a-11eb-216a-39bb43c7b423
 # ╟─5fd346d0-2b4d-11eb-066b-9ba9c9d97613
 # ╟─6568b850-2b4d-11eb-02e9-696654ac2d37
@@ -1305,15 +1352,16 @@ md"""
 # ╟─8b5a22f0-2b8f-11eb-094f-c5ceb1842998
 # ╟─127bcb0e-2c0a-11eb-23df-a75767910fcb
 # ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
-# ╠═ec39a792-2bf7-11eb-11e5-515b39f1adf6
-# ╠═38759600-2b8f-11eb-047d-490b567a2644
-# ╠═4fd13342-2b8f-11eb-1584-19578501385b
-# ╠═5300ef60-2b8f-11eb-2433-950848aded8d
-# ╠═703ebe90-2b8f-11eb-27f7-d7207fb41cda
-# ╠═75ea0200-2b8f-11eb-000d-f397e04704f2
-# ╠═7735bbe0-2b8f-11eb-36dc-73439f762444
-# ╠═7c45829e-2b8f-11eb-15f1-09e84f0e0070
-# ╟─2495e330-2c0a-11eb-3a10-530f8b87a4eb
+# ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
+# ╟─2ef83140-2d16-11eb-1d8c-a13048a8e04f
+# ╟─2ae47330-2d15-11eb-1d2e-55343fa3b01a
+# ╠═5294aad0-2d15-11eb-091d-59d7517c4dc2
+# ╠═abd2475e-2d15-11eb-26dc-05253cf65232
+# ╠═bdd86250-2d15-11eb-0b62-7903ca714312
+# ╠═bed2c7e0-2d15-11eb-14e3-93f5d1b6f3a1
+# ╟─c40b7360-2d15-11eb-0558-d95d615f9b9b
+# ╠═02767460-2d16-11eb-2074-07657f84e22d
+# ╠═2495e330-2c0a-11eb-3a10-530f8b87a4eb
 # ╠═59da0470-2b8f-11eb-098c-993effcedecf
 # ╠═9f54c570-2b90-11eb-0e94-07e475a1908f
 # ╠═b0db7730-2b90-11eb-126b-33b04be4d686
