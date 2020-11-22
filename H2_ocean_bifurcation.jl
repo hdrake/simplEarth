@@ -501,7 +501,7 @@ end
 # ╔═╡ 6f19cd80-2c06-11eb-278d-178c1590856f
 # ocean_T_init = InitBox(default_grid; value=40);
 ocean_T_init = InitBox(default_grid, value=50, xspan=true);
-# ocean_T_init = linearT(default_grid);
+# ocean_T_init = linearT(default_grid); 
 
 # ╔═╡ 863a6330-2a08-11eb-3992-c3db439fb624
 ocean_sim = let
@@ -595,6 +595,81 @@ function timestep!(sim::ClimateModelSimulation{OceanModel})
 	sim.iteration += 1
 end;
 
+# ╔═╡ 88c56350-2c08-11eb-14e9-77e71d749e6d
+md"""
+## **Exercise 2** - _Complexity_
+
+In this class we have purposefully restricted ourself to small problems ($N_{t} < 100$ timesteps and $N_{x;\, y} < 30$ spatial grid-cells) so that they can be run reactively in Pluto. In state-of-the-art climate modelling however, the goal is to push the *numerical resolution* $N$ to be as large as possible (the *grid spacing* $\Delta t$ or $\Delta x$ as small as possible), to resolve physical processes that improve the realism of the simulation (see below).
+
+"""
+
+# ╔═╡ 014495d6-2cda-11eb-05d7-91e5a467647e
+html""" <img src="https://www.researchgate.net/profile/Robert_Weller/publication/221923361/figure/fig3/AS:305213442412551@1449779963798/Time-and-space-scales-of-ocean-variability-courtesy-D-Chelton-Oregon-State-University.png" height=470>"""
+
+# ╔═╡ d6a56496-2cda-11eb-3d54-d7141a49a446
+md"""
+Here, we provide a simple estimate of the *computational complexity* of climate models, which reveals a substantial challenge to the improvement of climate models.
+
+Our climate model algorithm can be summarized by the recursive formula:
+
+$T_{i,\, j}^{n+1} = T^{n}_{i,j} + \Delta t * \left( \text{tendencies} \right)$
+
+For a time $t_{M} = M \Delta t$, the complexity is
+
+$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) * \mathcal{O}(\text{tendencies}),$
+
+where $M$ is the number of timesteps (assuming $\Delta t$ constant) and $\mathcal{O}(\text{tendencies})$ is the computational complexity of computing the tendency for each $i \in [1, N_{x}]$ and $j \in [1, N_{y}]$ for a single timestep. For a fixed aspect ratio $N_{y} = 2N_{x}$, our nested-for-loop implementation has a complexity
+
+$\mathcal{O}(\text{tendencies}) = \mathcal{O}(2N_{x}^{2}).$
+
+Thus, the computational complexity of our 2D climate model appears to be:
+
+$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) \mathcal{O}(N_{x}^{2}),$
+
+i.e. quadratic in the spatial resolution $N_{x}$.
+
+EXERCISE: VERIFY THAT THIS IS TRUE
+
+"""
+
+# ╔═╡ a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
+md"""
+**The CFL condition on the timestep**
+
+To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
+
+$L_{CFL} \equiv \max(|\vec{u}|) \Delta t < \Delta x$
+
+or 
+
+$\Delta t  < \frac{\Delta x}{\max(|\vec{u}|) },$
+
+which is known as **the Courant-Freidrichs-Levy (CFL) condition**. This inequality states that if we want to decrease the grid spacing $\Delta x$ (or increase the *resolution* $N_{x}$), we also have to decrease the timestep $\Delta t$ by the same factor. In other words, the timestep can not be thought of as fixed an in fact also depends on the spatial resolution: $\Delta t \equiv \Delta t_{0} N_{x}$.
+
+Revisiting our complexity equation, we now have
+
+$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) * \mathcal{O}(\Delta t) * \mathcal{O}(\text{tendencies}) = \mathcal{O}(M) \mathcal{O}(N_{x}^{3}),$
+
+EXERCISE: VERIFY THAT THIS IS TRUE
+"""
+
+# ╔═╡ 433a9c1e-2ce0-11eb-319c-e9c785b080ce
+md"""
+Note: in reality, state-of-the-art climate models are 3-D, not 2-D. It turns out that to preserve the aspect ratio of oceanic motions, the *vertical* grid resolution should also be increased $N_{z} \propto N_{x}$, such that in reality the computational complexity of climate models is:
+
+$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) \mathcal{O}(N_{x}^4).$
+
+This is the fundamental challenge of high-performance climate computing: to increase the resolution of the models by a factor of $2$, the model's run-time increases by a factor of $2^4 = 16$.
+
+The figure below shows how the grid spacing of state-of-the-art climate models has decreased from $500$ km in 1990 (FAR) to $100$ km in the 2010s (AR4). In other words, grid resolution increased by a factor of $5$ in 20 years.
+"""
+
+# ╔═╡ 213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
+html"""
+
+<img src="https://www.nap.edu/openbook/13430/xhtml/images/p_78.jpg" height=450>
+"""
+
 # ╔═╡ ad7b7ed6-2a9c-11eb-06b7-0f5595167575
 function CFL_adv(sim::ClimateModelSimulation)
 	maximum(sqrt.(sim.model.u.^2 + sim.model.v.^2)) * sim.Δt / sim.model.G.Δx
@@ -618,7 +693,7 @@ md"""
 Base.@kwdef struct RadiationOceanModelParameters
 	κ::Float64=3.e4
 	
-	C::Float64=51.0 * 60*60*24*365.25
+	C::Float64=51.0 * 60*60*24*365.25 # converted from [W*year/m^2/K] to [J/m^2/K]
 	
 	A::Float64=210
 	B::Float64=-1.3
@@ -642,6 +717,8 @@ end
 # ╔═╡ e80b0532-2b4b-11eb-26fa-cd09eca808bc
 md"""
 ## Incoming radiation
+
+The incoming solar radiation $S$
 """
 
 # ╔═╡ 42bb2f70-2b4a-11eb-1637-e50e1fad45f3
@@ -1101,10 +1178,8 @@ Goals:
 
 """ |> todo
 
-# ╔═╡ 88c56350-2c08-11eb-14e9-77e71d749e6d
+# ╔═╡ fced660c-2cd9-11eb-1737-0110789f429e
 md"""
-## **Exercise 2** - _Complexity_
-
 Talk about the theoretical constraints for Δt
 
 This gives us N^3
@@ -1117,10 +1192,15 @@ compare to Moore's Law
 
 # ╔═╡ 4cba7260-2c08-11eb-0a81-abdff2f867de
 md"""
-## **Exercise 3** - _Radiation_
+## **Exercise 3** - Adding radiation to our ocean model to build a 2-D climate model
 
-In Homework 9, we had an EBM with radiation. This week we will do the same, but in 2D instead of 0D.
+In Homework 9, we used a **zero-dimensional (0-D)** Energy Balance Model (EBM) to understand how Earth's average radiative imbalance results in temperature changes:
 
+$C\frac{\partial T}{\partial t} = \frac{S(1 - \alpha)}{4} - (A - BT)$
+
+This week we will do the same, but now in **two-dimensions (2-D)**, where in addition to heat being added or removed from the system by radiation, heat can be *transported around the system* by oceanic **advection** and **diffusion** (see also Lectures 22 & 23 for 1-D and 2-D advection-diffusion). The governing equation for temperature $T(x,y,t)$ in our coupled climate model is:
+
+$\frac{\partial T}{\partial t} = u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y} + \kappa \left( \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}} \right) + \frac{S(1 - \alpha)}{4C} - \frac{(A - BT)}{C}.$
 
 ### What we will give:
 - The struct `RadiationOceanModelParameters` below, with our tuned initial values
@@ -1205,6 +1285,12 @@ md"""
 # ╟─3d12c114-2a0a-11eb-131e-d1a39b4f440b
 # ╟─6b3b6030-2066-11eb-3343-e19284638efb
 # ╠═88c56350-2c08-11eb-14e9-77e71d749e6d
+# ╟─014495d6-2cda-11eb-05d7-91e5a467647e
+# ╠═d6a56496-2cda-11eb-3d54-d7141a49a446
+# ╟─a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
+# ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
+# ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
+# ╠═fced660c-2cd9-11eb-1737-0110789f429e
 # ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
 # ╠═ad7b7ed6-2a9c-11eb-06b7-0f5595167575
 # ╠═16905a6a-2a78-11eb-19ea-81adddc21088
@@ -1219,7 +1305,7 @@ md"""
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
 # ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
 # ╠═6c20ca1e-2b48-11eb-1c3c-418118408c4c
-# ╟─e80b0532-2b4b-11eb-26fa-cd09eca808bc
+# ╠═e80b0532-2b4b-11eb-26fa-cd09eca808bc
 # ╠═42bb2f70-2b4a-11eb-1637-e50e1fad45f3
 # ╠═b99b5b00-2b4b-11eb-260e-21363d1f4a9b
 # ╠═a3e524d0-2b55-11eb-09e2-25a968d79640
