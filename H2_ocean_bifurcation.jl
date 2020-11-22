@@ -650,7 +650,7 @@ Revisiting our complexity equation, we now have
 
 $\mathcal{O}(T(t_{M})) = \mathcal{O}(M) * \mathcal{O}(\Delta t) * \mathcal{O}(\text{tendencies}) = \mathcal{O}(M) \mathcal{O}(N_{x}^{3}),$
 
-EXERCISE: VERIFY THAT THIS IS TRUE
+EXERCISE: VERIFY THAT THIS IS TRUE BY SETTING $\Delta t = 0.1 \frac{\Delta x}{\max(|\vec{u}|) }$ TO ENSURE THE CFL CONDITION ALWAYS HOLDS
 """
 
 # ╔═╡ 433a9c1e-2ce0-11eb-319c-e9c785b080ce
@@ -1287,7 +1287,7 @@ md"""
 # ╠═88c56350-2c08-11eb-14e9-77e71d749e6d
 # ╟─014495d6-2cda-11eb-05d7-91e5a467647e
 # ╠═d6a56496-2cda-11eb-3d54-d7141a49a446
-# ╟─a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
+# ╠═a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
 # ╠═fced660c-2cd9-11eb-1737-0110789f429e

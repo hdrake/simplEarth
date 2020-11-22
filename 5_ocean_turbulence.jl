@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.4
+# v0.12.10
 
 using Markdown
 using InteractiveUtils
@@ -20,7 +20,7 @@ md"""
 Potential vorticity, the fluid-dynamic equivalent of angular momentum, is a useful quantity for oceanography. It is defined as 
 
 $q \equiv R\zeta + y,$
-where $R$ is a constant, called the Rossby number, $\zeta = \frac{\partial v}{\partial x} - \frac{\partial u}{\partial y}$ is the *relative vorticity*, and $f=y$ is the Coriolis parameter.
+where $R \equiv \pi \frac{\tau₀}{\rho H \beta^2 L^3} $ is a constant, called the Rossby number, $\zeta = \frac{\partial v}{\partial x} - \frac{\partial u}{\partial y}$ is the *relative vorticity*, and $f=y$ is the Coriolis parameter.
 
 The vorticity equation
 \begin{gather}
@@ -33,10 +33,51 @@ R^{-1} \frac{\partial q}{\partial t} + J(\psi, q) = F - D,
 where the streamfunction $\psi$ is found by solving the Poisson equation
 
 $\zeta = \nabla^{2}\psi,$
+"""
 
-Let us first consider the conservative form of this equation– no forcing and no dissipation.
+# ╔═╡ bf7c1c06-29b8-11eb-2b87-d16032f11b13
+md"""
+
+1) Classical Munk 1966 formulation
+
+2) Marshall 1984 formulation
 
 """
+
+# ╔═╡ a586ae48-29b7-11eb-330d-cd4b9686b6e6
+md"""
+Boundary conditions are that
+
+A) No-flow: $ψ = 0$ on all boundaries
+
+B) No-slip: $\frac{\partial v}{\partial x} = 0$ (or $\frac{\partial \zeta}{\partial x} = 0$) on zonal boundaries and $\frac{\partial u}{\partial y} = 0$ ($\frac{\partial \zeta}{\partial y} = 0$) on meridional boundaries.
+"""
+
+# ╔═╡ 6c69565a-29b8-11eb-32d5-634cc9835d3b
+md""" 
+#### 1.2) Numerical solution method
+
+Invert the Poisson equation $\zeta = \nabla^{2} \psi$ using the Jacobi method.
+
+Time-step the relative vorticity using Arakawa's discretization:
+
+Leap-frogging in time
+"""
+
+# ╔═╡ e4a27062-29bc-11eb-12c1-2577c0d3ffcd
+md"""
+\begin{align}
+& J_{i,j}(\zeta, \psi) = - \frac{1}{12 d^2} \bigg[ & \newline
+&
+& \; \left( \psi _{i,j-1} + \psi _{i+1,j-1} - \psi _{i,j+1} - \psi _{i+1,j+1} \right)\left( \zeta _{i+1,j} - \zeta _{i,j} \right) \newline
+&
+& + \left( \psi _{i-1,j-1} + \psi _{i,j-1} - \psi _{i-1,j+1} - \psi _{i,j+1} \right)\left( \zeta _{i,j} - \zeta _{i-1,j} \right) \newline
+&\bigg] &
+\end{align}
+"""
+
+# ╔═╡ b304d45c-29bc-11eb-2b24-57dbaf0ae47c
+md"$\left( \psi_{i,j-1} + \psi_{i+1,j-1} - \psi_{i,j+1} \right)$"
 
 # ╔═╡ 776c2c40-0d83-11eb-1824-b3b471bd61bf
 begin
@@ -114,6 +155,11 @@ end
 
 # ╔═╡ Cell order:
 # ╟─1a2343ee-0d82-11eb-3b6f-6fadae311344
+# ╠═bf7c1c06-29b8-11eb-2b87-d16032f11b13
+# ╟─a586ae48-29b7-11eb-330d-cd4b9686b6e6
+# ╠═6c69565a-29b8-11eb-32d5-634cc9835d3b
+# ╠═e4a27062-29bc-11eb-12c1-2577c0d3ffcd
+# ╠═b304d45c-29bc-11eb-2b24-57dbaf0ae47c
 # ╠═776c2c40-0d83-11eb-1824-b3b471bd61bf
 # ╠═e4cf21dc-0d82-11eb-0c3d-f949de09fe3a
 # ╠═b86a64a6-0d8c-11eb-1cff-6bc28b7bb559
