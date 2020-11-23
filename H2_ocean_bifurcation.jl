@@ -710,7 +710,7 @@ An area of ocean below 0°C is covered in ice, which is more reflective, and the
 
 In this week's two-dimensional model, the factor ``\alpha`` is also two-dimensional: instead of a global albedo, every grid cell has its own temperature, which determines its own albedo. We can now have an ocean with warm and cold regions, which absorb different amounts of radiation. The same positive feedback can have a _local_ effect.
 
-👉 TODOTODTODTOd
+Here is a second method for `α` that takes a 2D array `T` with the current ocean temperatures and a `RadiationOceanModel`, and returns the 2D array of albedos. We use the [dot operator](https://docs.julialang.org/en/v1/manual/mathematical-operations/#man-dot-operators) to apply `α` pointwise to `T`, also called _broadcasting_.
 """
 
 # ╔═╡ d63c5fe0-2b49-11eb-07fd-a7ec98af3a89
@@ -735,7 +735,7 @@ md"""
 
 Our rectangular grid represents the North Atlantic Ocean, stretching from the equator to the North Pole in the latitudinal direction (`y`), and from the east coast of North America to the west coast of Europe in the longitudinal direction (`x`).
 
-Just like the albedo, every grid cell will have a local amount of solar insulation. In our model, we use the **yearly average** at the latitude of a grid cell. This is given by:
+Just like the albedo, every grid cell will have a local amount of solar insulation. In our model, we use the **yearly average** at the latitude of a grid cell. This is given by: ([_source_](http://www.atmos.albany.edu/facstaff/brose/classes/ATM623_Spring2015/Notes/Lectures/Lecture11%20--%20Insolation.html))
 
 """
 
@@ -776,6 +776,11 @@ let
 		label="Global mean"
 	)	
 end
+
+# ╔═╡ 86a004ce-2dd5-11eb-1dca-5702d793ef39
+md"""
+👉 TODODTOODODT
+"""
 
 # ╔═╡ f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
 function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
@@ -1224,10 +1229,6 @@ todo(text) = HTML("""<div
 	style="background: rgb(220, 200, 255); padding: 2em; border-radius: 1em;"
 	><h1>TODO</h1>$(repr(MIME"text/html"(), text))</div>""")
 
-
-
-#html"<span style='display: inline; font-size: 2em; color: purple; font-weight: 900;'>TODO</span>"
-
 # ╔═╡ 13eb3966-2a9a-11eb-086c-05510a3f5b80
 md"""
 #### Data structures
@@ -1300,30 +1301,25 @@ md"""
 
 # ╔═╡ db1b6060-2dbf-11eb-313f-1f8b856408a3
 md"""
-Fix this (I need the source)
 
-divide by 4 here? I currently precompute S, delete it?
+divide by 4 here? it looks like B Rose does
+
+in the plot, "Global mean" should definitely be divided by 4
 """ |> todo
-
-# ╔═╡ cfd87ad0-2dba-11eb-2396-0de0100bbed8
-md"""
-
-The incoming solar radiation $S$
-
-$(todo(md"source"))
-"""
 
 # ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
 md"""
 #### Exercise 3.2 - _Outgoing radiation_
 
-Just like in our EBM, the ocean radiates heat as a function of temperature, and we approximate this relationship linearly. $(todo(""))
+Just like in our EBM, the ocean radiates heat as a function of temperature, and we approximate this relationship linearly. $(todo("i got stuck"))
 """
 
 # ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
 md"""
 
 We still need to find more realistic initial values. Right now, the contrast between pole and equator is too large, maybe more adv + diffusion, and then we need to re-tune the rest to have three stable states at S=1380
+
+**the exercises are designed for three stable states at S=1380**
 
 """ |> todo
 
@@ -1420,15 +1416,15 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─e80b0532-2b4b-11eb-26fa-cd09eca808bc
 # ╟─d9296db0-2dba-11eb-3bb5-9533a338dad8
 # ╠═629454e0-2b48-11eb-2ff0-abed400c49f9
-# ╠═287395d0-2dbb-11eb-3ca7-ddcea24a074f
+# ╟─287395d0-2dbb-11eb-3ca7-ddcea24a074f
 # ╠═d63c5fe0-2b49-11eb-07fd-a7ec98af3a89
 # ╟─8d729390-2dbc-11eb-0628-f3ed9c9f5ffd
 # ╠═db1b6060-2dbf-11eb-313f-1f8b856408a3
 # ╠═2ace4750-2dbe-11eb-0074-0f3a7a929176
-# ╠═5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
+# ╟─5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
 # ╟─71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
 # ╠═0de643d0-2dbf-11eb-3a4c-538c176923f4
-# ╠═cfd87ad0-2dba-11eb-2396-0de0100bbed8
+# ╠═86a004ce-2dd5-11eb-1dca-5702d793ef39
 # ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
 # ╠═de7456c0-2b4b-11eb-13c8-01b196821de4
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
@@ -1478,4 +1474,4 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─58403c10-2c07-11eb-1f4b-f9ecb741d881
 # ╟─5853eb20-2c07-11eb-18bf-c14ed22ce153
 # ╟─5867e850-2c07-11eb-17d5-9dac155d381b
-# ╠═587b9760-2c07-11eb-17ff-b9e950aa04ac
+# ╟─587b9760-2c07-11eb-17ff-b9e950aa04ac
