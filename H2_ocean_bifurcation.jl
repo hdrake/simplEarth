@@ -588,8 +588,42 @@ The CFL condition is defined by $\text{CFL} = \dfrac{\max\left(\sqrt{u² + v²}\
 md"""
 ## **Exercise 3** - _Radiation_
 
-Blablabllabab
+
+In Homework 9, we used a **zero-dimensional (0-D)** Energy Balance Model (EBM) to understand how Earth's average radiative imbalance results in temperature changes:
+
+$\begin{split}
+C\frac{\partial T}{\partial t} =&\ \hphantom{+} 
+\frac{S(1 - \alpha)}{4} 
+&\qquad\text{(absorbed radiation)}
+\\
+
+&- (A - BT)
+&\qquad\text{(outgoing radiation)}
+\end{split}$
+
+This week we will do the same, but now in **two-dimensions (2-D)**, where in addition to heat being added or removed from the system by radiation, heat can be *transported around the system* by oceanic **advection** and **diffusion** (see also Lectures 22 & 23 for 1-D and 2-D advection-diffusion). The governing equation for temperature $T(x,y,t)$ in our coupled climate model is:
+
+$\begin{split}
+\frac{\partial T}{\partial t} = &  \hphantom{+}
+u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y} 
+&\qquad\text{(advection)}
+\\
+
+& + \kappa \left( \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}} \right) 
+&\qquad\text{(diffusion)}
+\\
+
+& + \frac{S(x,y)(1 - \alpha(x,y))}{4C} 
+&\qquad\text{(absorbed radiation)}
+\\
+
+& - \frac{(A - BT)}{C}. 
+&\qquad\text{(outgoing radiation)}
+\end{split}$
 """
+
+# ╔═╡ 705ddb90-2d8d-11eb-0c78-13eea6a2df38
+
 
 # ╔═╡ 57535c60-2b49-11eb-07cc-ffc5b4d1f13c
 Base.@kwdef struct RadiationOceanModelParameters
@@ -606,19 +640,9 @@ Base.@kwdef struct RadiationOceanModelParameters
 	ΔT::Float64=2.0
 end
 
-# ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
-md"""
-## Outgoing radiation
-"""
-
-# ╔═╡ 6745f610-2b48-11eb-2f6c-79e0009dc9c3
-function outgoing_thermal_radiation(T; A, B)
-	A .- B .* (T)
-end
-
 # ╔═╡ e80b0532-2b4b-11eb-26fa-cd09eca808bc
 md"""
-## Incoming radiation
+#### Exercise 3.1 - _Absorbed radiation_
 
 The incoming solar radiation $S$
 """
@@ -650,20 +674,6 @@ begin
 	RadiationOceanModel(G::Grid) = 
 		RadiationOceanModel(G, RadiationOceanModelParameters(), zeros(G), zeros(G))
 end;
-
-# ╔═╡ a033fa20-2b49-11eb-20e0-5dd968b0c0c6
-function outgoing_thermal_radiation(T, model::RadiationOceanModel)
-	outgoing_thermal_radiation(T; A=model.params.A, B=model.params.B) ./ model.params.C
-end
-
-# ╔═╡ 6c20ca1e-2b48-11eb-1c3c-418118408c4c
-plot(
-	-10:40, outgoing_thermal_radiation(-10:40, A=11, B=-0.7),
-	xlabel="Temperature",
-	ylabel="Outgoing radiation",
-	label=nothing,
-	size=(300,200)
-)
 
 # ╔═╡ b99b5b00-2b4b-11eb-260e-21363d1f4a9b
 hello = let
@@ -700,6 +710,30 @@ function absorbed_solar_radiation(T, model::RadiationOceanModel)
 	
 	absorption .* model.S ./ 4. ./ model.params.C
 end
+
+# ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
+md"""
+#### Exercise 3.2 - _Outgoing radiation_
+"""
+
+# ╔═╡ 6745f610-2b48-11eb-2f6c-79e0009dc9c3
+function outgoing_thermal_radiation(T; A, B, C)
+	(A .- B .* (T)) ./ C
+end
+
+# ╔═╡ a033fa20-2b49-11eb-20e0-5dd968b0c0c6
+function outgoing_thermal_radiation(T, model::RadiationOceanModel)
+	outgoing_thermal_radiation(T; A=model.params.A, B=model.params.B, C=model.params.C)
+end
+
+# ╔═╡ 6c20ca1e-2b48-11eb-1c3c-418118408c4c
+plot(
+	-10:40, outgoing_thermal_radiation(-10:40, A=11, B=-0.7),
+	xlabel="Temperature",
+	ylabel="Outgoing radiation",
+	label=nothing,
+	size=(300,200)
+)
 
 # ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 md"""
@@ -747,39 +781,6 @@ tvec = runtime.(Nvec)
 begin
 	plot(Nvec, tvec, xlabel="Number of Grid Cells (in x-direction)", ylabel="elapsed time per timestep [s]")
 end |> as_svg
-
-# ╔═╡ ef902590-2bf7-11eb-1eb0-712b3eb3f7c1
-let
-	G = Grid(10, 6.e6)
-	P = RadiationOceanModelParameters()
-	
-	#u, v = zeros(G), zeros(G)
-	# u, v = PointVortex(G, Ω=0.5)
-	u, v = DoubleGyre(G)
-
-	# IC = InitBox(G; value=50.)
-	# IC = InitBox(G, xspan=true)
-	IC = constantT(G; value=14)
-	
-	model = RadiationOceanModel(G, P, u*2. ^U_ex, v*2. ^U_ex)
-	Δt = 400*60*60
-	
-	sim = ClimateModelSimulation(model, copy(IC), Δt)
-	
-	while (
-			abs(
-				mean(absorbed_solar_radiation(sim.T, sim.model)) * sim.model.params.C - 
-				mean(outgoing_thermal_radiation(sim.T, sim.model)) * sim.model.params.C
-			) > 4.0 || sim.iteration < 1_000) && (
-			sim.iteration < 6_000
-			)
-		for i in 1:500
-			timestep!(sim)
-		end
-	end
-	
-	mean(sim.T)
-end
 
 # ╔═╡ ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 md"""
@@ -914,13 +915,18 @@ That's right, we have found a _bifurcation_!
 
 #### Exercise 4.3
 
-👉 Make a bifurcation diagram. Create a plot with ``S`` on the horizontal axis, and ``T_{\text{equilibrium}}`` on the vertical. For a couple of pairs TODO
+👉 Make a bifurcation diagram. For a couple of pairs `(S,T_init)`, calculate the equilibrium temperature. Create a scatter plot with ``S`` on the horizontal axis, and ``T_{\text{equilibrium}}`` on the vertical. 
+
+> This calculation can take quite some time. Some tips:
+> 1. Start out with a small amount of points.
+> 1. Run the `eq_T` calculations in one cell, and store the result as a vector. Generate the scatter plot in a different cell.
+> 1. You can replace a `map` with `ThreadsX.map` to run it in parallel across multiple CPU cores. More on this [below](#threadsx).
 """
 
 # ╔═╡ 59da0470-2b8f-11eb-098c-993effcedecf
 # bifurcation_ST = [(S,T) for S in 1350:10:1600 for T in [-50, 0, 50]]
 
-# bifurcation_ST = [(S,T) for S in 1350:10:1600 for T in [-50, 0, 50]]
+bifurcation_ST = [(S,T) for S in [1000, 1380, 2000] for T in [-50, 0, 50]]
 # bifurcation_ST = [(S,T) for S in 1180:100:1680 for T in [-50, 0, 50]]
 
 # ╔═╡ 9f54c570-2b90-11eb-0e94-07e475a1908f
@@ -936,6 +942,28 @@ scatter(
 	ylabel="Equilibrium temperature",
 	color=:black,
 	) |> as_svg
+
+# ╔═╡ 92ae22de-2d88-11eb-1d03-2977c539ba23
+md"""
+$(html"<span id=threadsx></span>")
+##### Parallelize a `map`
+
+You use `map` to apply a function to each element of a vector. Why not use a `for` loop? One nice property of `map` code is that you only describe the operation for each element, not the order to run the operations in. This means that it can be _easily parallelized_ by the computer. For example, on a computer with 4 cores, the computation `map(sqrt, 1:100)` can be parallelized by handling `1:25` on the first core, `26:50` on the second, etc., at the same time. 
+
+In Julia, many functional primitives (`map`, `filter`, `sum`, `maximum`, `all`, and more) have an automatically multithreaded version, in the `ThreadsX.jl` package. As a demo, compare the two cells below. (You can see the runtime in the bottom right of a cell.) You might need to run the cells a second time, the first time includes Julia's compiler doing its thing.
+"""
+
+# ╔═╡ 547d92d0-2d88-11eb-18b5-0fc468ae0026
+map(1:8) do i
+	sleep(.1) # to simulate an expensive computation
+	i ^ 2
+end
+
+# ╔═╡ 60bbba90-2d88-11eb-1616-87d6e15c0795
+ThreadsX.map(1:8) do i
+	sleep(.1) # to simulate an expensive computation
+	i ^ 2
+end
 
 # ╔═╡ a04d3dee-2a9c-11eb-040e-7bd2facb2eaa
 md"""
@@ -1187,31 +1215,6 @@ compare to Moore's Law
 
 # ╔═╡ 4cba7260-2c08-11eb-0a81-abdff2f867de
 md"""
-## **Exercise 3** - Adding radiation to our ocean model to build a 2-D climate model
-
-In Homework 9, we used a **zero-dimensional (0-D)** Energy Balance Model (EBM) to understand how Earth's average radiative imbalance results in temperature changes:
-
-$C\frac{\partial T}{\partial t} = \frac{S(1 - \alpha)}{4} - (A - BT)$
-
-This week we will do the same, but now in **two-dimensions (2-D)**, where in addition to heat being added or removed from the system by radiation, heat can be *transported around the system* by oceanic **advection** and **diffusion** (see also Lectures 22 & 23 for 1-D and 2-D advection-diffusion). The governing equation for temperature $T(x,y,t)$ in our coupled climate model is:
-
-$\begin{split}
-\frac{\partial T}{\partial t} &= 
-u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y} 
-&\qquad\text{(advection)}
-\\
-
-& + \kappa \left( \frac{\partial^{2} T}{\partial x^{2}} + \frac{\partial^{2} T}{\partial y^{2}} \right) 
-&\qquad\text{(diffusion)}
-\\
-
-& + \frac{S(x,y)(1 - \alpha(x,y))}{4C} 
-&\qquad\text{(absorbed radiation)}
-\\
-
-& - \frac{(A - BT)}{C}. 
-&\qquad\text{(outgoing radiation)}
-\end{split}$
 
 ### What we will give:
 - The struct `RadiationOceanModelParameters` below, with our tuned initial values
@@ -1322,14 +1325,10 @@ md"""
 # ╠═fced660c-2cd9-11eb-1737-0110789f429e
 # ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
 # ╠═4cba7260-2c08-11eb-0a81-abdff2f867de
-# ╠═545cf530-2b48-11eb-378c-3f8eeb89bcba
+# ╟─545cf530-2b48-11eb-378c-3f8eeb89bcba
+# ╠═705ddb90-2d8d-11eb-0c78-13eea6a2df38
 # ╠═57535c60-2b49-11eb-07cc-ffc5b4d1f13c
-# ╠═ef902590-2bf7-11eb-1eb0-712b3eb3f7c1
 # ╠═90e1aa00-2b48-11eb-1a2d-8701a3069e50
-# ╟─de7456c0-2b4b-11eb-13c8-01b196821de4
-# ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
-# ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
-# ╠═6c20ca1e-2b48-11eb-1c3c-418118408c4c
 # ╠═e80b0532-2b4b-11eb-26fa-cd09eca808bc
 # ╠═42bb2f70-2b4a-11eb-1637-e50e1fad45f3
 # ╠═b99b5b00-2b4b-11eb-260e-21363d1f4a9b
@@ -1338,6 +1337,10 @@ md"""
 # ╠═629454e0-2b48-11eb-2ff0-abed400c49f9
 # ╠═d63c5fe0-2b49-11eb-07fd-a7ec98af3a89
 # ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
+# ╠═de7456c0-2b4b-11eb-13c8-01b196821de4
+# ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
+# ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
+# ╠═6c20ca1e-2b48-11eb-1c3c-418118408c4c
 # ╟─fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
 # ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
@@ -1361,10 +1364,13 @@ md"""
 # ╠═bed2c7e0-2d15-11eb-14e3-93f5d1b6f3a1
 # ╟─c40b7360-2d15-11eb-0558-d95d615f9b9b
 # ╠═02767460-2d16-11eb-2074-07657f84e22d
-# ╠═2495e330-2c0a-11eb-3a10-530f8b87a4eb
+# ╟─2495e330-2c0a-11eb-3a10-530f8b87a4eb
 # ╠═59da0470-2b8f-11eb-098c-993effcedecf
 # ╠═9f54c570-2b90-11eb-0e94-07e475a1908f
 # ╠═b0db7730-2b90-11eb-126b-33b04be4d686
+# ╟─92ae22de-2d88-11eb-1d03-2977c539ba23
+# ╠═547d92d0-2d88-11eb-18b5-0fc468ae0026
+# ╠═60bbba90-2d88-11eb-1616-87d6e15c0795
 # ╟─a04d3dee-2a9c-11eb-040e-7bd2facb2eaa
 # ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
 # ╠═0a6e6ad2-2c01-11eb-3151-3d58bc09bc69
