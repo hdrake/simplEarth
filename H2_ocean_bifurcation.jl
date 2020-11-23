@@ -866,7 +866,7 @@ end |> as_svg
 
 # ╔═╡ ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 md"""
-#### lets try it out
+#### Exercise 3.4 - _Running the model_
 """
 
 # ╔═╡ b059c6e0-2b4a-11eb-216a-39bb43c7b423
@@ -899,9 +899,6 @@ end
 
 # ╔═╡ f5010a40-2b56-11eb-266a-a71b92692172
 mean(radiation_sim.T)
-
-# ╔═╡ ef647620-2c01-11eb-185e-3f36f98fcfaf
-
 
 # ╔═╡ 127bcb0e-2c0a-11eb-23df-a75767910fcb
 md"""
@@ -1329,6 +1326,9 @@ md"""
 We still need to find more realistic initial values. Right now, the contrast between pole and equator is too large, maybe more adv + diffusion, and then we need to re-tune the rest to have three stable states at S=1380
 
 """ |> todo
+
+# ╔═╡ ef647620-2c01-11eb-185e-3f36f98fcfaf
+todo(md"Write text-based exercises to encourage experiments")
 
 # ╔═╡ Cell order:
 # ╟─67c3dcc0-2c05-11eb-3a84-9dfea24f95a8
