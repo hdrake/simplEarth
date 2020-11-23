@@ -623,7 +623,11 @@ u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y}
 """
 
 # ╔═╡ 705ddb90-2d8d-11eb-0c78-13eea6a2df38
+md"""
+##### Parameters
 
+Below we define two new types: `RadiationOceanModel` and `RadiationOceanModelParameters`. Notice the similarities and differences with our original model. By making `RadiationOceanModel` also a subtype of `ClimateModel`, we will be able to re-use much of our original code.
+"""
 
 # ╔═╡ 57535c60-2b49-11eb-07cc-ffc5b4d1f13c
 Base.@kwdef struct RadiationOceanModelParameters
@@ -640,12 +644,19 @@ Base.@kwdef struct RadiationOceanModelParameters
 	ΔT::Float64=2.0
 end
 
-# ╔═╡ e80b0532-2b4b-11eb-26fa-cd09eca808bc
+# ╔═╡ e5b95760-2d98-11eb-0ea3-8bfcf07031d6
 md"""
-#### Exercise 3.1 - _Absorbed radiation_
 
-The incoming solar radiation $S$
+Notice that this struct has `Base.@kwdef` in front of its definition. This allows us to:
+1. assign default values to the struct fields, directly inside the definition, and
+2. automatically create an easier constructor function that takes _keyword arguments:_
 """
+
+# ╔═╡ adf007c2-2d98-11eb-3004-dfe1b1303454
+RadiationOceanModelParameters()
+
+# ╔═╡ be456570-2d98-11eb-0c4e-cd92e0af728b
+RadiationOceanModelParameters(S_mean=2000)
 
 # ╔═╡ 42bb2f70-2b4a-11eb-1637-e50e1fad45f3
 function precompute_S(grid::Grid, params::RadiationOceanModelParameters)
@@ -711,11 +722,6 @@ function absorbed_solar_radiation(T, model::RadiationOceanModel)
 	absorption .* model.S ./ 4. ./ model.params.C
 end
 
-# ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
-md"""
-#### Exercise 3.2 - _Outgoing radiation_
-"""
-
 # ╔═╡ 6745f610-2b48-11eb-2f6c-79e0009dc9c3
 function outgoing_thermal_radiation(T; A, B, C)
 	(A .- B .* (T)) ./ C
@@ -727,18 +733,17 @@ function outgoing_thermal_radiation(T, model::RadiationOceanModel)
 end
 
 # ╔═╡ 6c20ca1e-2b48-11eb-1c3c-418118408c4c
-plot(
-	-10:40, outgoing_thermal_radiation(-10:40, A=11, B=-0.7),
-	xlabel="Temperature",
-	ylabel="Outgoing radiation",
-	label=nothing,
-	size=(300,200)
-)
-
-# ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
-md"""
-## New timestep method
-"""
+let
+	params = RadiationOceanModelParameters()
+	model = RadiationOceanModel(default_grid, params)
+	plot(
+		-10:40, outgoing_thermal_radiation(-10:40, model),
+		xlabel="Temperature",
+		ylabel="Outgoing radiation",
+		label=nothing,
+		size=(500,250)
+	)
+end
 
 # ╔═╡ 068795ee-2b4c-11eb-3e58-353eb8978c1c
 function timestep!(sim::ClimateModelSimulation{RadiationOceanModel})
@@ -823,6 +828,14 @@ mean(radiation_sim.T)
 
 # ╔═╡ 127bcb0e-2c0a-11eb-23df-a75767910fcb
 md"""
+## **Exercise 4** - _Bifurcation diagram_
+
+So far, we are able to set up a model and run it interactively. You see that the model quickly goes from the initial temperatures to a _stable state_: a state with balanced energy (radiation out, radiation in). Changing the initial state slightly will result in the same stable state. 
+
+But notice that two TODO
+
+In this final exercise, we will TODO
+
 #### Exercise 4.1 - _Equilibrium temperature_
 
 👉 Write a function `eq_T` that takes two argments, `S` and `T_init`, that sets up a radiation ocean model with `S` as `S_mean`, and with `T_init` as the constant initial temperature. Run the model until you have reached equilibrium (approximately), and return the average temperature.
@@ -965,6 +978,30 @@ ThreadsX.map(1:8) do i
 	i ^ 2
 end
 
+# ╔═╡ 57b6e7d0-2c07-11eb-16c1-0d058a34c7ee
+md"""
+## **Exercise XX:** _Lecture transcript_
+_(MIT students only)_
+
+Please see the link for the transcript document on [Canvas](https://canvas.mit.edu/courses/5637).
+We want each of you to correct about 500 lines, but don’t spend more than 20 minutes on it.
+See the the beginning of the document for more instructions.
+:point_right: Please mention the name of the video(s) and the line ranges you edited:
+"""
+
+# ╔═╡ 57c0d2e0-2c07-11eb-1091-15fec09c4e8b
+lines_i_edited = md"""
+Abstraction, lines 1-219; Array Basics, lines 1-137; Course Intro, lines 1-144 (_for example_)
+"""
+
+# ╔═╡ 57cdcb30-2c07-11eb-39b2-2f225acf589d
+if student.name == "Jazzy Doe" || student.kerberos_id == "jazz"
+	md"""
+	!!! danger "Before you submit"
+	    Remember to fill in your **name** and **Kerberos ID** at the top of this notebook.
+	"""
+end
+
 # ╔═╡ a04d3dee-2a9c-11eb-040e-7bd2facb2eaa
 md"""
 # Appendix
@@ -1061,30 +1098,6 @@ let
 		timestep!(radiation_sim)
 	end
 	plot_state(radiation_sim; clims=(-0,50))
-end
-
-# ╔═╡ 57b6e7d0-2c07-11eb-16c1-0d058a34c7ee
-md"""
-## **Exercise XX:** _Lecture transcript_
-_(MIT students only)_
-
-Please see the link for the transcript document on [Canvas](https://canvas.mit.edu/courses/5637).
-We want each of you to correct about 500 lines, but don’t spend more than 20 minutes on it.
-See the the beginning of the document for more instructions.
-:point_right: Please mention the name of the video(s) and the line ranges you edited:
-"""
-
-# ╔═╡ 57c0d2e0-2c07-11eb-1091-15fec09c4e8b
-lines_i_edited = md"""
-Abstraction, lines 1-219; Array Basics, lines 1-137; Course Intro, lines 1-144 (_for example_)
-"""
-
-# ╔═╡ 57cdcb30-2c07-11eb-39b2-2f225acf589d
-if student.name == "Jazzy Doe" || student.kerberos_id == "jazz"
-	md"""
-	!!! danger "Before you submit"
-	    Remember to fill in your **name** and **Kerberos ID** at the top of this notebook.
-	"""
 end
 
 # ╔═╡ 57e264a0-2c07-11eb-0e31-2b8fa01be2d1
@@ -1229,18 +1242,33 @@ md"""
 
 """ |> todo
 
+# ╔═╡ e80b0532-2b4b-11eb-26fa-cd09eca808bc
+md"""
+#### Exercise 3.1 - _Absorbed radiation_
+
+The incoming solar radiation $S$
+
+$(todo(md"explain"))
+"""
+
+# ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
+md"""
+#### Exercise 3.2 - _Outgoing radiation_
+
+$(todo(md"explain"))
+"""
+
+# ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
+md"""
+#### Exercise 3.3 - _New timestep method_
+
+$(todo(md"Is this too difficult?"))
+"""
+
 # ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
 md"""
 
 We still need to find more realistic initial values. Right now, the contrast between pole and equator is too large, maybe more adv + diffusion, and then we need to re-tune the rest to have three stable states at S=1380
-
-""" |> todo
-
-# ╔═╡ 8b5a22f0-2b8f-11eb-094f-c5ceb1842998
-md"""
-## **Exercise 4** - _Bifurcation diagram_
-
-
 
 """ |> todo
 
@@ -1324,11 +1352,14 @@ md"""
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
 # ╠═fced660c-2cd9-11eb-1737-0110789f429e
 # ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
-# ╠═4cba7260-2c08-11eb-0a81-abdff2f867de
 # ╟─545cf530-2b48-11eb-378c-3f8eeb89bcba
-# ╠═705ddb90-2d8d-11eb-0c78-13eea6a2df38
-# ╠═57535c60-2b49-11eb-07cc-ffc5b4d1f13c
+# ╟─705ddb90-2d8d-11eb-0c78-13eea6a2df38
 # ╠═90e1aa00-2b48-11eb-1a2d-8701a3069e50
+# ╠═57535c60-2b49-11eb-07cc-ffc5b4d1f13c
+# ╟─e5b95760-2d98-11eb-0ea3-8bfcf07031d6
+# ╠═adf007c2-2d98-11eb-3004-dfe1b1303454
+# ╠═be456570-2d98-11eb-0c4e-cd92e0af728b
+# ╠═4cba7260-2c08-11eb-0a81-abdff2f867de
 # ╠═e80b0532-2b4b-11eb-26fa-cd09eca808bc
 # ╠═42bb2f70-2b4a-11eb-1637-e50e1fad45f3
 # ╠═b99b5b00-2b4b-11eb-260e-21363d1f4a9b
@@ -1341,7 +1372,7 @@ md"""
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
 # ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
 # ╠═6c20ca1e-2b48-11eb-1c3c-418118408c4c
-# ╟─fe492480-2b4b-11eb-050e-9b9b2e2bf50f
+# ╠═fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
 # ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 # ╠═8de8dda0-2d0f-11eb-105b-9d8779275e6c
@@ -1352,8 +1383,7 @@ md"""
 # ╠═57dcf660-2b57-11eb-1518-b7e2e65abfcc
 # ╠═f5010a40-2b56-11eb-266a-a71b92692172
 # ╠═ef647620-2c01-11eb-185e-3f36f98fcfaf
-# ╟─8b5a22f0-2b8f-11eb-094f-c5ceb1842998
-# ╟─127bcb0e-2c0a-11eb-23df-a75767910fcb
+# ╠═127bcb0e-2c0a-11eb-23df-a75767910fcb
 # ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
 # ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
 # ╟─2ef83140-2d16-11eb-1d8c-a13048a8e04f
@@ -1371,12 +1401,12 @@ md"""
 # ╟─92ae22de-2d88-11eb-1d03-2977c539ba23
 # ╠═547d92d0-2d88-11eb-18b5-0fc468ae0026
 # ╠═60bbba90-2d88-11eb-1616-87d6e15c0795
-# ╟─a04d3dee-2a9c-11eb-040e-7bd2facb2eaa
-# ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
-# ╠═0a6e6ad2-2c01-11eb-3151-3d58bc09bc69
 # ╟─57b6e7d0-2c07-11eb-16c1-0d058a34c7ee
 # ╠═57c0d2e0-2c07-11eb-1091-15fec09c4e8b
 # ╟─57cdcb30-2c07-11eb-39b2-2f225acf589d
+# ╟─a04d3dee-2a9c-11eb-040e-7bd2facb2eaa
+# ╠═c0e46442-27fb-11eb-2c94-15edbda3f84d
+# ╠═0a6e6ad2-2c01-11eb-3151-3d58bc09bc69
 # ╟─57e264a0-2c07-11eb-0e31-2b8fa01be2d1
 # ╟─57f57770-2c07-11eb-1720-cf00aa7f597b
 # ╟─58094d90-2c07-11eb-2987-15c068fefd8f
