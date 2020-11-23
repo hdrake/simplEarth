@@ -25,6 +25,7 @@ begin
 		"ImageMagick",
 		"ImageIO",
 		"OffsetArrays",
+		"PaddedViews",
 		"ThreadsX",
 		"BenchmarkTools",
 	])
@@ -33,6 +34,7 @@ begin
 	using PlutoUI
 	using Images
 	using OffsetArrays
+	using PaddedViews
 	using ThreadsX
 	using BenchmarkTools
 end
@@ -119,6 +121,17 @@ xdiff_kernel = OffsetArray(reshape([1., -2., 1.], 1, 3),  0:0, -1:1);
 # ╔═╡ a8d8f8d2-2cfa-11eb-3c3e-d54f7b32e4a2
 ydiff_kernel = OffsetArray(reshape([1., -2., 1.], 3, 1),  -1:1, 0:0);
 
+# ╔═╡ 2beb6ec0-2dcc-11eb-1768-0b8e4fba1597
+"Surround an array with one layer of zeros."
+function pad_zeros(A::AbstractArray{T,N}) where {T,N}
+	PaddedView(
+		zero(T), 
+		A, 
+		size(A) .+ 2, 
+		Tuple(fill(2,N))
+	)
+end
+
 # ╔═╡ cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
 begin
 	struct Grid
@@ -158,7 +171,7 @@ Grid(5,300.0e3)
 
 # ╔═╡ 39404240-2cfe-11eb-2e3c-710e37f8cd4b
 md"""
-Next, let's look at three new types. Two structs: `OceanModel` and `OceanModelParameters`, and an abstract type: `ClimateModel`.
+Next, let's look at three types. Two structs: `OceanModel` and `OceanModelParameters`, and an abstract type: `ClimateModel`.
 """
 
 # ╔═╡ 0d63e6b2-2b49-11eb-3413-43977d299d90
@@ -174,13 +187,13 @@ abstract type ClimateModel end
 begin
 	# main method:
 	advect(T::Array{Float64,2}, O::ClimateModel) = 
-		advect(T, O.u, O.v, O.G.Δy, O.G.Δx)
+		advect(T, O.u, O.v, O.grid.Δy, O.grid.Δx)
 	
 	# helper methods:
-	advect(T::Array{Float64,2}, u, v, Δy, Δx) = [
+	advect(T::Array{Float64,2}, u, v, Δy, Δx) = pad_zeros([
 		advect(T, u, v, Δy, Δx, j, i)
 		for j=2:size(T, 1)-1, i=2:size(T, 2)-1
-	]
+	])
 	
 	advect(T::Array{Float64,2}, u, v, Δy, Δx, j, i) = .-(
 		u[j, i].*sum(xgrad_kernel[0, -1:1].*T[j, i-1:i+1])/(2Δx) .+
@@ -192,12 +205,12 @@ end
 begin
 	# main method:
 	diffuse(T::Array{Float64,2}, O::ClimateModel) = 
-		diffuse(T, O.params.κ, O.G.Δy, O.G.Δx)
+		diffuse(T, O.params.κ, O.grid.Δy, O.grid.Δx)
 	
 	# helper methods:
-	diffuse(T, κ, Δy, Δx) = [
+	diffuse(T, κ, Δy, Δx) = pad_zeros([
 		diffuse(T, κ, Δy, Δx, j, i) for j=2:size(T, 1)-1, i=2:size(T, 2)-1
-	]
+	])
 	diffuse(T, κ, Δy, Δx, j, i) = κ.*(
 		sum(xdiff_kernel[0, -1:1].*T[j, i-1:i+1])/(Δx^2) +
 		sum(ydiff_kernel[-1:1, 0].*T[j-1:j+1, i])/(Δy^2)
@@ -207,7 +220,7 @@ end
 # ╔═╡ d3796644-2a05-11eb-11b8-87b6e8c311f9
 begin
 	struct OceanModel <: ClimateModel
-		G::Grid
+		grid::Grid
 		params::OceanModelParameters
 
 		u::Array{Float64, 2}
@@ -228,7 +241,7 @@ OceanModel <: ClimateModel
 md"""
 #### Timestepping
 
-
+The `OceanModel` struct contains a complete _description_ of the model being simulated. The next struct, `ClimateModelSimulation`, contains a _model_, together with the simulation results. It is mutable: timestepping the model means modifying a `ClimateModelSimulation` object.
 """
 
 # ╔═╡ f92086c4-2a74-11eb-3c72-a1096667183b
@@ -248,24 +261,30 @@ end
 
 # ╔═╡ 7caca2fa-2a9a-11eb-373f-156a459a1637
 function update_ghostcells!(A::Array{Float64,2}; option="no-flux")
-	Atmp = @view A[:,:]
+	# Atmp = @view A[:,:]
 	if option=="no-flux"
-		A[1, :] = Atmp[2, :]; Atmp[end, :] = Atmp[end-1, :]
-		A[:, 1] = Atmp[:, 2]; Atmp[:, end] = Atmp[:, end-1]
+		A[1, :] .= A[2, :]; A[end, :] .= A[end-1, :]
+		A[:, 1] .= A[:, 2]; A[:, end] .= A[:, end-1]
 	end
 end
 
 # ╔═╡ 81bb6a4a-2a9c-11eb-38bb-f7701c79afa2
 function timestep!(sim::ClimateModelSimulation{OceanModel})
 	update_ghostcells!(sim.T)
+	
 	tendencies = advect(sim.T, sim.model) .+ diffuse(sim.T, sim.model)
-	sim.T[2:end-1, 2:end-1] .+= sim.Δt*tendencies
+	sim.T .+= sim.Δt*tendencies
+	
 	sim.iteration += 1
 end;
 
 # ╔═╡ 31cb0c2c-2a9a-11eb-10ba-d90a00d8e03a
 md"""
-##### 3) Simulating heat transport by advective & diffusive ocean currents
+#### Exercise 1.1 - _Running the model_
+
+In the next few cells, we set up a simulation. We have included an interactive visualisation of the simulation.
+
+👉 Familiarize yourself with the simulation through interaction. Get a sense for each parameter by changing their values.
 """
 
 # ╔═╡ 9841ff20-2c06-11eb-3c4c-c34e465e1594
@@ -322,13 +341,8 @@ end
 # ╔═╡ c9ea0f72-2a67-11eb-20ba-376ca9c8014f
 @bind go_ex Clock(0.1)
 
-# ╔═╡ c3f086f4-2a9a-11eb-0978-27532cbecebf
-md"""
-**Some unit tests for verification**
-"""
-
 # ╔═╡ c0298712-2a88-11eb-09af-bf2c39167aa6
-md"""##### Computing the velocity field for a single circular vortex
+md"""##### Velocity field for a single circular vortex
 """
 
 # ╔═╡ e3ee80c0-12dd-11eb-110a-c336bb978c51
@@ -383,7 +397,7 @@ ocean_velocities = PointVortex(default_grid, Ω=0.5);
 # ocean_velocities = DoubleGyre(default_grid);
 
 # ╔═╡ bb084ace-12e2-11eb-2dfc-111e90eabfdd
-md"""##### Computing a quasi-realistic ocean velocity field $\vec{u} = (u, v)$
+md"""##### Quasi-realistic ocean velocity field $\vec{u} = (u, v)$
 Our velocity field is given by an analytical solution to the classic wind-driven gyre
 problem, which is given by solving the fourth-order partial differential equation:
 
@@ -457,21 +471,6 @@ ocean_sim = let
 	ClimateModelSimulation(model, copy(ocean_T_init), Δt)
 end;
 
-# ╔═╡ dc9d12d0-2a9a-11eb-3dae-85b3b6029658
-begin
-	heat_capacity = 51.
-	total_heat_content = sum(heat_capacity*ocean_sim.T*(ocean_sim.model.G.Δx*ocean_sim.model.G.Δy))*1e-15
-	mean_temp = mean(ocean_sim.T)
-end;
-
-# ╔═╡ bff89550-2a9a-11eb-3038-d70249c96219
-begin
-	#go_ex
-	md"""
-	Let's make sure our model conserves energy. We have not added any energy to the system: advection and diffusion just move the energy around. The total heat content is $(round(total_heat_content, digits=3)) peta-Joules and the average temperature is $(round(mean_temp, digits=2)) °C.
-	"""
-end
-
 # ╔═╡ 6b3b6030-2066-11eb-3343-e19284638efb
 plot_kernel(A) = heatmap(
 	collect(A),
@@ -479,11 +478,22 @@ plot_kernel(A) = heatmap(
 	xticks=false, yticks=false, size=(30+30*size(A, 2), 30+30*size(A, 1)), xaxis=false, yaxis=false
 ) |> as_svg
 
+# ╔═╡ 3dffa000-2db7-11eb-263b-57fa833d5785
+md"""
+👉 Some parameters have a physical meaning (`κ`, `u` and `v`), while other parameters control our numerical process. Choose two of these _numerical_ parameters, and describe their effect on the simulation's runtime and the simulation's accuracy.
+"""
+
+# ╔═╡ b952d290-2db7-11eb-3fa9-2bc8d77b9fd6
+numerical_parameters_observation = md"""
+
+Hello!
+"""
+
 # ╔═╡ 88c56350-2c08-11eb-14e9-77e71d749e6d
 md"""
 ## **Exercise 2** - _Complexity_
 
-In this class we have purposefully restricted ourself to small problems ($N_{t} < 100$ timesteps and $N_{x;\, y} < 30$ spatial grid-cells) so that they can be run interactively on an average computer. In state-of-the-art climate modelling however, the goal is to push the *numerical resolution* $N$ to be as large as possible (the *grid spacing* $\Delta t$ or $\Delta x$ as small as possible), to resolve physical processes that improve the realism of the simulation (see below).
+In this class we have restricted ourself to small problems ($N_{t} < 100$ timesteps and $N_{x;\, y} < 30$ spatial grid-cells) so that they can be run interactively on an average computer. In state-of-the-art climate modelling however, the goal is to push the *numerical resolution* $N$ to be as large as possible (the *grid spacing* $\Delta t$ or $\Delta x$ as small as possible), to resolve physical processes that improve the realism of the simulation (see below).
 
 """
 
@@ -557,7 +567,7 @@ Hi!
 
 # ╔═╡ ad7b7ed6-2a9c-11eb-06b7-0f5595167575
 function CFL_adv(sim::ClimateModelSimulation)
-	maximum(sqrt.(sim.model.u.^2 + sim.model.v.^2)) * sim.Δt / sim.model.G.Δx
+	maximum(sqrt.(sim.model.u.^2 + sim.model.v.^2)) * sim.Δt / sim.model.grid.Δx
 end
 
 # ╔═╡ 433a9c1e-2ce0-11eb-319c-e9c785b080ce
@@ -613,7 +623,7 @@ u(x,y) \frac{\partial T}{\partial x} + v(x,y) \frac{\partial T}{\partial y}
 &\qquad\text{(diffusion)}
 \\
 
-& + \frac{S(x,y)(1 - \alpha(x,y))}{4C} 
+& + \frac{S(x,y)(1 - \alpha(T))}{4C} 
 &\qquad\text{(absorbed radiation)}
 \\
 
@@ -644,6 +654,24 @@ Base.@kwdef struct RadiationOceanModelParameters
 	ΔT::Float64=2.0
 end
 
+# ╔═╡ 90e1aa00-2b48-11eb-1a2d-8701a3069e50
+begin
+	struct RadiationOceanModel <: ClimateModel
+		grid::Grid
+		params::RadiationOceanModelParameters
+		
+		u::Array{Float64, 2}
+		v::Array{Float64, 2}
+	end
+
+	RadiationOceanModel(G::Grid, P::RadiationOceanModelParameters, u, v) = 
+		RadiationOceanModel(G, P, u, v)
+	RadiationOceanModel(G::Grid, P::RadiationOceanModelParameters) = 
+		RadiationOceanModel(G, P, zeros(G), zeros(G))
+	RadiationOceanModel(G::Grid) = 
+		RadiationOceanModel(G, RadiationOceanModelParameters(), zeros(G), zeros(G))
+end;
+
 # ╔═╡ e5b95760-2d98-11eb-0ea3-8bfcf07031d6
 md"""
 
@@ -658,46 +686,12 @@ RadiationOceanModelParameters()
 # ╔═╡ be456570-2d98-11eb-0c4e-cd92e0af728b
 RadiationOceanModelParameters(S_mean=2000)
 
-# ╔═╡ 42bb2f70-2b4a-11eb-1637-e50e1fad45f3
-function precompute_S(grid::Grid, params::RadiationOceanModelParameters)
-	[
-		params.S_mean .* (1+0.5*sin((-y / grid.L) * π/2))
-		for y in grid.y[:], x in grid.x[:]
-	]
-end
+# ╔═╡ e80b0532-2b4b-11eb-26fa-cd09eca808bc
+md"""
+#### Exercise 3.1 - _Absorbed radiation_
 
-# ╔═╡ 90e1aa00-2b48-11eb-1a2d-8701a3069e50
-begin
-	struct RadiationOceanModel <: ClimateModel
-		G::Grid
-		params::RadiationOceanModelParameters
-		
-		S::Array{Float64, 2}
-
-		u::Array{Float64, 2}
-		v::Array{Float64, 2}
-	end
-
-	RadiationOceanModel(G::Grid, P::RadiationOceanModelParameters, u, v) = 
-		RadiationOceanModel(G, P, precompute_S(G, P), u, v)
-	RadiationOceanModel(G::Grid, P::RadiationOceanModelParameters) = 
-		RadiationOceanModel(G, P, zeros(G), zeros(G))
-	RadiationOceanModel(G::Grid) = 
-		RadiationOceanModel(G, RadiationOceanModelParameters(), zeros(G), zeros(G))
-end;
-
-# ╔═╡ b99b5b00-2b4b-11eb-260e-21363d1f4a9b
-hello = let
-	G = Grid(10, 6.e6)
-	P = RadiationOceanModelParameters()
-	precompute_S(G, P)
-end
-
-# ╔═╡ a3e524d0-2b55-11eb-09e2-25a968d79640
-plot(hello[:,1])
-
-# ╔═╡ 388898b0-2b56-11eb-2537-c596394b9e20
-
+The ocean absorbs solar radiation, increasing the temperature. Just like in our EBM model, we model the ocean as a surface with a _temperature-dependent albedo_: ``\alpha(T)``. A high albedo means that more sunlight is reflected, and less is absorbed. We model the albedo function as:
+"""
 
 # ╔═╡ 629454e0-2b48-11eb-2ff0-abed400c49f9
 function α(T::Float64; α0, αi, ΔT)
@@ -710,25 +704,106 @@ function α(T::Float64; α0, αi, ΔT)
 	end
 end
 
+# ╔═╡ 287395d0-2dbb-11eb-3ca7-ddcea24a074f
+md"""
+An area of ocean below 0°C is covered in ice, which is more reflective, and therefore absorbs less solar radiation. In our EBM model, this _positive feedback_ leads to a bifurcation: under the same external conditions, the climate system has multiple equilibria.
+
+In this week's two-dimensional model, the factor ``\alpha`` is also two-dimensional: instead of a global albedo, every grid cell has its own temperature, which determines its own albedo. We can now have an ocean with warm and cold regions, which absorb different amounts of radiation. The same positive feedback can have a _local_ effect.
+
+👉 TODOTODTODTOd
+"""
+
 # ╔═╡ d63c5fe0-2b49-11eb-07fd-a7ec98af3a89
 function α(T::Array{Float64,2}, model::RadiationOceanModel)
 	α.(T; α0=model.params.α0, αi=model.params.αi, ΔT=model.params.ΔT)
+end
+
+# ╔═╡ d9296db0-2dba-11eb-3bb5-9533a338dad8
+let
+	T = -10.0:30.0
+	plot(
+		T, α.(T; α0=0.3, αi=0.5, ΔT=2.0),
+		ylim=(0,1),
+		ylabel="α (albedo) [unitless]",
+		xlabel="Temperature [°C]",
+	)
+end
+
+# ╔═╡ 8d729390-2dbc-11eb-0628-f3ed9c9f5ffd
+md"""
+##### Solar insulation
+
+Our rectangular grid represents the North Atlantic Ocean, stretching from the equator to the North Pole in the latitudinal direction (`y`), and from the east coast of North America to the west coast of Europe in the longitudinal direction (`x`).
+
+Just like the albedo, every grid cell will have a local amount of solar insulation. In our model, we use the **yearly average** at the latitude of a grid cell. This is given by:
+
+"""
+
+# ╔═╡ 71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
+md"""
+_Note that latitude is the horizontal axis in this graph, not the vertical._
+"""
+
+# ╔═╡ 0de643d0-2dbf-11eb-3a4c-538c176923f4
+function y_to_lat(y; grid::Grid)
+	π/2 * 0.5 * (y / grid.L + 1.0)
+end
+
+# ╔═╡ 2ace4750-2dbe-11eb-0074-0f3a7a929176
+function S_at(y::Float64; grid::Grid, S_mean::Float64)
+	S_mean .* (1+0.5*cos(2 * y_to_lat(y; grid=grid)))
+end
+
+# ╔═╡ 5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
+let
+	grid = Grid(50, 6000e3)
+	params = RadiationOceanModelParameters()
+	
+	y = grid.y[:]
+	λ = rad2deg.(y_to_lat.(y; grid=grid))
+	S = S_at.(y; grid=grid, S_mean=params.S_mean)
+	p = plot(
+		λ, S,
+		ylabel="Solar insulation [W/m²]",
+		xlabel="Latitude [°]",
+		label=nothing,
+		lw=3,
+		ylim=(0,maximum(S)*1.05)
+	)
+	plot!(p,
+		λ, fill(params.S_mean, size(y)),
+		linestyle=:dash,
+		label="Global mean"
+	)	
 end
 
 # ╔═╡ f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
 function absorbed_solar_radiation(T, model::RadiationOceanModel)
 	absorption = 1.0 .- α(T, model)
 	
-	absorption .* model.S ./ 4. ./ model.params.C
+	S = S_at.(model.grid.y; grid=model.grid, S_mean=model.params.S_mean)
+	
+	S .* absorption ./ 4. ./ model.params.C
 end
 
+# ╔═╡ 9ad50752-2dcd-11eb-301b-c9f95775fd7d
+
+
+# ╔═╡ 4a3624a0-2dcd-11eb-39d7-97119a6a44d7
+(0:4) .* rand(5,5)
+
 # ╔═╡ 6745f610-2b48-11eb-2f6c-79e0009dc9c3
-function outgoing_thermal_radiation(T; A, B, C)
+function outgoing_thermal_radiation(T; C, A, B)
 	(A .- B .* (T)) ./ C
 end
 
+# ╔═╡ 2274f6b0-2dc5-11eb-10a1-e980bd461ea0
+md"""
+👉 Write a method `outgoing_termal_radiation` that takes a 2D array `T` with the current ocean temperatures and a `RadiationOceanModel`, and returns the tendencies corresponding to outgoing radiation. This is the analogue of `advect` and `diffuse`.
+"""
+
 # ╔═╡ a033fa20-2b49-11eb-20e0-5dd968b0c0c6
-function outgoing_thermal_radiation(T, model::RadiationOceanModel)
+function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
 	outgoing_thermal_radiation(T; A=model.params.A, B=model.params.B, C=model.params.C)
 end
 
@@ -737,7 +812,7 @@ let
 	params = RadiationOceanModelParameters()
 	model = RadiationOceanModel(default_grid, params)
 	plot(
-		-10:40, outgoing_thermal_radiation(-10:40, model),
+		-10:40, outgoing_thermal_radiation(-10:40, A=params.A, B=params.B, C=params.C),
 		xlabel="Temperature",
 		ylabel="Outgoing radiation",
 		label=nothing,
@@ -749,11 +824,12 @@ end
 function timestep!(sim::ClimateModelSimulation{RadiationOceanModel})
 	update_ghostcells!(sim.T)
 	tendencies = 
-		advect(sim.T, sim.model) .+ diffuse(sim.T, sim.model) .+ 
-		(@view absorbed_solar_radiation(sim.T, sim.model)[2:end-1, 2:end-1]) .- 
-		(@view outgoing_thermal_radiation(sim.T, sim.model)[2:end-1, 2:end-1])
+		advect(sim.T, sim.model) .+ 
+		diffuse(sim.T, sim.model) .+ 
+		absorbed_solar_radiation(sim.T, sim.model) .- 
+		outgoing_thermal_radiation(sim.T, sim.model)
 	
-	sim.T[2:end-1, 2:end-1] .+= sim.Δt*tendencies
+	sim.T .+= sim.Δt*tendencies
 	
 	sim.iteration += 1
 end;
@@ -789,7 +865,7 @@ end |> as_svg
 
 # ╔═╡ ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 md"""
-## lets try it out
+#### lets try it out
 """
 
 # ╔═╡ b059c6e0-2b4a-11eb-216a-39bb43c7b423
@@ -809,6 +885,11 @@ radiation_sim = let
 	Δt = 400*60*60
 	
 	ClimateModelSimulation(model, copy(IC), Δt)
+end
+
+# ╔═╡ 3baa1540-2dcd-11eb-320f-33bbf243e80c
+for _ in 1:200
+	timestep!(radiation_sim)
 end
 
 # ╔═╡ 5fd346d0-2b4d-11eb-066b-9ba9c9d97613
@@ -832,7 +913,7 @@ md"""
 
 So far, we are able to set up a model and run it interactively. You see that the model quickly goes from the initial temperatures to a _stable state_: a state with balanced energy (radiation out, radiation in). Changing the initial state slightly will result in the same stable state. 
 
-But notice that two TODO
+But notice that there are **multiple**
 
 In this final exercise, we will TODO
 
@@ -1022,7 +1103,7 @@ function plot_state(sim::ClimateModelSimulation; clims=(-1.1,1.1),
 		show_quiver=true, show_anomaly=false, IC=nothing)
 	
 	model = sim.model
-	grid = sim.model.G
+	grid = sim.model.grid
 	
 	
 	p = plot(;
@@ -1163,24 +1244,6 @@ Let's look at our first type, `Grid`. Notice that it only has one 'constructor f
 $(todo(md"talk about grid size, ghost cells"))
 """
 
-# ╔═╡ b19df5b0-2c05-11eb-0f59-83fa0aa6d0bb
-md"""
-
-
-Goals:
-
-- play with the model, different initial temp conditions
-- what is the effect of ...?
-  - asdfasdf
-
-
-
-- increase Δt for better performance
-- increase it too high -- find zebra pattern
-- higher N needs smaller Δt 👉 exercise 2
-
-""" |> todo
-
 # ╔═╡ 87e59680-2d0c-11eb-03c7-1d845ca6a1a5
 md"""
 What you experienced is _numerical instability_ in our simulation method. This is not caused by floating point errors -- it is a theoretical limitation of our method.
@@ -1242,27 +1305,35 @@ md"""
 
 """ |> todo
 
-# ╔═╡ e80b0532-2b4b-11eb-26fa-cd09eca808bc
+# ╔═╡ db1b6060-2dbf-11eb-313f-1f8b856408a3
 md"""
-#### Exercise 3.1 - _Absorbed radiation_
+Fix this (I need the source)
+
+divide by 4 here? I currently precompute S, delete it?
+""" |> todo
+
+# ╔═╡ cfd87ad0-2dba-11eb-2396-0de0100bbed8
+md"""
 
 The incoming solar radiation $S$
 
-$(todo(md"explain"))
+$(todo(md"source"))
 """
 
 # ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
 md"""
 #### Exercise 3.2 - _Outgoing radiation_
 
-$(todo(md"explain"))
+Just like in our EBM, the ocean radiates heat as a function of temperature, and we approximate this relationship linearly. $(todo(""))
 """
 
 # ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 md"""
 #### Exercise 3.3 - _New timestep method_
 
-$(todo(md"Is this too difficult?"))
+$(todo(md"Is this too difficult? Maybe we can modify our advect and diffuse methods to return a 1:end 1:end array instead of 2:end-1 2:end-1. 
+
+i.e. pad it with zeros. That way you can just add them all together."))
 """
 
 # ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
@@ -1290,15 +1361,16 @@ We still need to find more realistic initial values. Right now, the contrast bet
 # ╠═ee6716c8-2a95-11eb-3a00-319ee69dd37f
 # ╠═b629d89a-2a95-11eb-2f27-3dfa45789be4
 # ╠═a8d8f8d2-2cfa-11eb-3c3e-d54f7b32e4a2
+# ╟─2beb6ec0-2dcc-11eb-1768-0b8e4fba1597
 # ╠═13eb3966-2a9a-11eb-086c-05510a3f5b80
 # ╠═cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
 # ╠═e7f563f0-2d04-11eb-036d-992da68470a6
-# ╠═39404240-2cfe-11eb-2e3c-710e37f8cd4b
+# ╟─39404240-2cfe-11eb-2e3c-710e37f8cd4b
 # ╠═0d63e6b2-2b49-11eb-3413-43977d299d90
 # ╠═32663184-2a81-11eb-0dd1-dd1e10ed9ec6
 # ╠═d3796644-2a05-11eb-11b8-87b6e8c311f9
 # ╠═5f5e4120-2cfe-11eb-1fa7-99fdd734f7a7
-# ╠═74aa7512-2a9c-11eb-118c-c7a5b60eac1b
+# ╟─74aa7512-2a9c-11eb-118c-c7a5b60eac1b
 # ╠═f92086c4-2a74-11eb-3c72-a1096667183b
 # ╠═81bb6a4a-2a9c-11eb-38bb-f7701c79afa2
 # ╠═7caca2fa-2a9a-11eb-373f-156a459a1637
@@ -1317,9 +1389,6 @@ We still need to find more realistic initial values. Right now, the contrast bet
 # ╟─933d42fa-2a67-11eb-07de-61cab7567d7d
 # ╟─c9ea0f72-2a67-11eb-20ba-376ca9c8014f
 # ╟─3b24e1b0-2b46-11eb-383b-c57cbf3e68f1
-# ╟─c3f086f4-2a9a-11eb-0978-27532cbecebf
-# ╟─bff89550-2a9a-11eb-3038-d70249c96219
-# ╟─dc9d12d0-2a9a-11eb-3dae-85b3b6029658
 # ╟─c0298712-2a88-11eb-09af-bf2c39167aa6
 # ╟─e2e4cfac-2a63-11eb-1b7f-9d8d5d304b43
 # ╟─e3ee80c0-12dd-11eb-110a-c336bb978c51
@@ -1331,7 +1400,8 @@ We still need to find more realistic initial values. Right now, the contrast bet
 # ╟─c4424838-12e2-11eb-25eb-058344b39c8b
 # ╟─3d12c114-2a0a-11eb-131e-d1a39b4f440b
 # ╟─6b3b6030-2066-11eb-3343-e19284638efb
-# ╠═b19df5b0-2c05-11eb-0f59-83fa0aa6d0bb
+# ╟─3dffa000-2db7-11eb-263b-57fa833d5785
+# ╠═b952d290-2db7-11eb-3fa9-2bc8d77b9fd6
 # ╟─88c56350-2c08-11eb-14e9-77e71d749e6d
 # ╟─014495d6-2cda-11eb-05d7-91e5a467647e
 # ╟─d6a56496-2cda-11eb-3d54-d7141a49a446
@@ -1360,21 +1430,30 @@ We still need to find more realistic initial values. Right now, the contrast bet
 # ╠═adf007c2-2d98-11eb-3004-dfe1b1303454
 # ╠═be456570-2d98-11eb-0c4e-cd92e0af728b
 # ╠═4cba7260-2c08-11eb-0a81-abdff2f867de
-# ╠═e80b0532-2b4b-11eb-26fa-cd09eca808bc
-# ╠═42bb2f70-2b4a-11eb-1637-e50e1fad45f3
-# ╠═b99b5b00-2b4b-11eb-260e-21363d1f4a9b
-# ╠═a3e524d0-2b55-11eb-09e2-25a968d79640
-# ╠═388898b0-2b56-11eb-2537-c596394b9e20
+# ╟─e80b0532-2b4b-11eb-26fa-cd09eca808bc
+# ╟─d9296db0-2dba-11eb-3bb5-9533a338dad8
 # ╠═629454e0-2b48-11eb-2ff0-abed400c49f9
+# ╠═287395d0-2dbb-11eb-3ca7-ddcea24a074f
 # ╠═d63c5fe0-2b49-11eb-07fd-a7ec98af3a89
+# ╟─8d729390-2dbc-11eb-0628-f3ed9c9f5ffd
+# ╠═db1b6060-2dbf-11eb-313f-1f8b856408a3
+# ╠═2ace4750-2dbe-11eb-0074-0f3a7a929176
+# ╟─5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
+# ╟─71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
+# ╠═0de643d0-2dbf-11eb-3a4c-538c176923f4
+# ╠═cfd87ad0-2dba-11eb-2396-0de0100bbed8
 # ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
+# ╠═9ad50752-2dcd-11eb-301b-c9f95775fd7d
+# ╠═4a3624a0-2dcd-11eb-39d7-97119a6a44d7
+# ╠═3baa1540-2dcd-11eb-320f-33bbf243e80c
 # ╠═de7456c0-2b4b-11eb-13c8-01b196821de4
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
+# ╟─2274f6b0-2dc5-11eb-10a1-e980bd461ea0
 # ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
 # ╠═6c20ca1e-2b48-11eb-1c3c-418118408c4c
 # ╠═fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
-# ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
+# ╠═ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 # ╠═8de8dda0-2d0f-11eb-105b-9d8779275e6c
 # ╠═b059c6e0-2b4a-11eb-216a-39bb43c7b423
 # ╟─5fd346d0-2b4d-11eb-066b-9ba9c9d97613
@@ -1383,7 +1462,7 @@ We still need to find more realistic initial values. Right now, the contrast bet
 # ╠═57dcf660-2b57-11eb-1518-b7e2e65abfcc
 # ╠═f5010a40-2b56-11eb-266a-a71b92692172
 # ╠═ef647620-2c01-11eb-185e-3f36f98fcfaf
-# ╠═127bcb0e-2c0a-11eb-23df-a75767910fcb
+# ╟─127bcb0e-2c0a-11eb-23df-a75767910fcb
 # ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
 # ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
 # ╟─2ef83140-2d16-11eb-1d8c-a13048a8e04f
