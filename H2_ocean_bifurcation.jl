@@ -745,7 +745,7 @@ _Note that latitude is the horizontal axis in this graph, not the vertical._
 """
 
 # ╔═╡ 0de643d0-2dbf-11eb-3a4c-538c176923f4
-function y_to_lat(y; grid::Grid)
+function y_to_lat(y::Real; grid::Grid)
 	π/2 * 0.5 * (y / grid.L + 1.0)
 end
 
@@ -778,19 +778,13 @@ let
 end
 
 # ╔═╡ f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
-function absorbed_solar_radiation(T, model::RadiationOceanModel)
+function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
 	absorption = 1.0 .- α(T, model)
 	
 	S = S_at.(model.grid.y; grid=model.grid, S_mean=model.params.S_mean)
 	
 	S .* absorption ./ 4. ./ model.params.C
 end
-
-# ╔═╡ 9ad50752-2dcd-11eb-301b-c9f95775fd7d
-
-
-# ╔═╡ 4a3624a0-2dcd-11eb-39d7-97119a6a44d7
-(0:4) .* rand(5,5)
 
 # ╔═╡ 6745f610-2b48-11eb-2f6c-79e0009dc9c3
 function outgoing_thermal_radiation(T; C, A, B)
@@ -820,6 +814,13 @@ let
 	)
 end
 
+# ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
+md"""
+#### Exercise 3.3 - _New timestep method_
+
+👉 asdfasdfasdfasdf
+"""
+
 # ╔═╡ 068795ee-2b4c-11eb-3e58-353eb8978c1c
 function timestep!(sim::ClimateModelSimulation{RadiationOceanModel})
 	update_ghostcells!(sim.T)
@@ -832,7 +833,7 @@ function timestep!(sim::ClimateModelSimulation{RadiationOceanModel})
 	sim.T .+= sim.Δt*tendencies
 	
 	sim.iteration += 1
-end;
+end
 
 # ╔═╡ 8346b590-2b41-11eb-0bc1-1ba79bb77dfb
 function runtime(N)
@@ -885,11 +886,6 @@ radiation_sim = let
 	Δt = 400*60*60
 	
 	ClimateModelSimulation(model, copy(IC), Δt)
-end
-
-# ╔═╡ 3baa1540-2dcd-11eb-320f-33bbf243e80c
-for _ in 1:200
-	timestep!(radiation_sim)
 end
 
 # ╔═╡ 5fd346d0-2b4d-11eb-066b-9ba9c9d97613
@@ -1327,15 +1323,6 @@ md"""
 Just like in our EBM, the ocean radiates heat as a function of temperature, and we approximate this relationship linearly. $(todo(""))
 """
 
-# ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
-md"""
-#### Exercise 3.3 - _New timestep method_
-
-$(todo(md"Is this too difficult? Maybe we can modify our advect and diffuse methods to return a 1:end 1:end array instead of 2:end-1 2:end-1. 
-
-i.e. pad it with zeros. That way you can just add them all together."))
-"""
-
 # ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
 md"""
 
@@ -1438,14 +1425,11 @@ We still need to find more realistic initial values. Right now, the contrast bet
 # ╟─8d729390-2dbc-11eb-0628-f3ed9c9f5ffd
 # ╠═db1b6060-2dbf-11eb-313f-1f8b856408a3
 # ╠═2ace4750-2dbe-11eb-0074-0f3a7a929176
-# ╟─5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
+# ╠═5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
 # ╟─71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
 # ╠═0de643d0-2dbf-11eb-3a4c-538c176923f4
 # ╠═cfd87ad0-2dba-11eb-2396-0de0100bbed8
 # ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
-# ╠═9ad50752-2dcd-11eb-301b-c9f95775fd7d
-# ╠═4a3624a0-2dcd-11eb-39d7-97119a6a44d7
-# ╠═3baa1540-2dcd-11eb-320f-33bbf243e80c
 # ╠═de7456c0-2b4b-11eb-13c8-01b196821de4
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
 # ╟─2274f6b0-2dc5-11eb-10a1-e980bd461ea0
