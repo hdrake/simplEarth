@@ -102,7 +102,7 @@ end
 md"""
 #### Advection & diffusion
 
-Notive that both functions have a main method with the following signature:
+Notice that both functions have a main method with the following signature:
 
 `(::Array{Float64,2}, ::ClimateModel)` _maps to_ `::Array{Float64,2}`.
 
@@ -171,7 +171,9 @@ Grid(5,300.0e3)
 
 # ╔═╡ 39404240-2cfe-11eb-2e3c-710e37f8cd4b
 md"""
-Next, let's look at three types. Two structs: `OceanModel` and `OceanModelParameters`, and an abstract type: `ClimateModel`.
+Next, let's look at three types.
+
+Two structs: `OceanModel` and `OceanModelParameters`, and an abstract type: `ClimateModel`.
 """
 
 # ╔═╡ 0d63e6b2-2b49-11eb-3413-43977d299d90
@@ -180,7 +182,7 @@ Base.@kwdef struct OceanModelParameters
 	κ::Float64=1.e4
 end
 
-# ╔═╡ 32663184-2a81-11eb-0dd1-dd1e10ed9ec6
+# ╔═╡ c9171c56-2dd8-11eb-189b-95d964a9724a
 abstract type ClimateModel end
 
 # ╔═╡ f4c884fc-2a97-11eb-1ba9-01bf579f8b43
@@ -235,7 +237,7 @@ begin
 end;
 
 # ╔═╡ 5f5e4120-2cfe-11eb-1fa7-99fdd734f7a7
-OceanModel <: ClimateModel
+OceanModel <: ClimateModel # is subtype
 
 # ╔═╡ 74aa7512-2a9c-11eb-118c-c7a5b60eac1b
 md"""
@@ -292,7 +294,7 @@ default_grid = Grid(10, 6000.0e3);
 
 # ╔═╡ 31cb7aae-2d04-11eb-30cb-a365a6a4aa6b
 md"""
-Uncomment (`Ctrl+/` or `Cmd+/`) one of the lines below two choose a different velocity field.
+Uncomment (`Ctrl+/` or `Cmd+/`) one of the lines below to choose between the different velocity fields:
 """
 
 # ╔═╡ 50e89130-2d04-11eb-1c8e-a34775aec40c
@@ -708,7 +710,7 @@ end
 md"""
 An area of ocean below 0°C is covered in ice, which is more reflective, and therefore absorbs less solar radiation. In our EBM model, this _positive feedback_ leads to a bifurcation: under the same external conditions, the climate system has multiple equilibria.
 
-In this week's two-dimensional model, the factor ``\alpha`` is also two-dimensional: instead of a global albedo, every grid cell has its own temperature, which determines its own albedo. We can now have an ocean with warm and cold regions, which absorb different amounts of radiation. The same positive feedback can have a _local_ effect.
+In this week's two-dimensional model, the factor ``\alpha`` is also two-dimensional: instead of a global albedo, every grid cell has its own temperature, which determines its own albedo, $\alpha(T(x,y,t))$. We can now have an ocean with warm and cold regions, which absorb different amounts of radiation. The same positive feedback can have a _local_ effect.
 
 Here is a second method for `α` that takes a 2D array `T` with the current ocean temperatures and a `RadiationOceanModel`, and returns the 2D array of albedos. We use the [dot operator](https://docs.julialang.org/en/v1/manual/mathematical-operations/#man-dot-operators) to apply `α` pointwise to `T`, also called _broadcasting_.
 """
@@ -731,11 +733,11 @@ end
 
 # ╔═╡ 8d729390-2dbc-11eb-0628-f3ed9c9f5ffd
 md"""
-##### Solar insulation
+##### Solar insolation
 
-Our rectangular grid represents the North Atlantic Ocean, stretching from the equator to the North Pole in the latitudinal direction (`y`), and from the east coast of North America to the west coast of Europe in the longitudinal direction (`x`).
+Our rectangular grid represents the North Atlantic Ocean, stretching from the equator (latitude = 0°) to the North Pole (latitude = 90°) in the latitudinal direction (`y`), and from the east coast of North America to the west coast of Europe in the longitudinal direction (`x`). In reality, climate models have to explicitly deal with the curvature of the Earth when constructing their model grids. Here, we will just treat the North Atlantic Ocean as a rectangle with roughly the correct dimensions.
 
-Just like the albedo, every grid cell will have a local amount of solar insulation. In our model, we use the **yearly average** at the latitude of a grid cell. This is given by: ([_source_](http://www.atmos.albany.edu/facstaff/brose/classes/ATM623_Spring2015/Notes/Lectures/Lecture11%20--%20Insolation.html))
+Just like the albedo, every grid cell will have a local amount of solar insulation. In our model, we use the **annual average** at the latitude of a grid cell $S(y)/4$. This is given by: ([_source_](http://www.atmos.albany.edu/facstaff/brose/classes/ATM623_Spring2015/Notes/Lectures/Lecture11%20--%20Insolation.html))
 
 """
 
@@ -763,17 +765,17 @@ let
 	λ = rad2deg.(y_to_lat.(y; grid=grid))
 	S = S_at.(y; grid=grid, S_mean=params.S_mean)
 	p = plot(
-		λ, S,
-		ylabel="Solar insulation [W/m²]",
+		λ, S/4,
+		ylabel="Annual average solar insolation [W/m²]",
 		xlabel="Latitude [°]",
 		label=nothing,
 		lw=3,
-		ylim=(0,maximum(S)*1.05)
+		ylim=(0,maximum(S/4)*1.05)
 	)
 	plot!(p,
-		λ, fill(params.S_mean, size(y)),
+		λ, fill(params.S_mean/4., size(y)),
 		linestyle=:dash,
-		label="Global mean"
+		label="Global mean S/4"
 	)	
 end
 
@@ -788,8 +790,15 @@ function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanMode
 	
 	S = S_at.(model.grid.y; grid=model.grid, S_mean=model.params.S_mean)
 	
-	S .* absorption ./ 4. ./ model.params.C
+	S .* absorption ./ 4 ./ model.params.C
 end
+
+# ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
+md"""
+#### Exercise 3.2 - _Outgoing radiation_
+
+Just like in our EBM from before, when our ocean heats up by absorbing solar radiation, it also _emits radiation back to space_. This **outgoing thermal radiation** is what allows the ocean to eventually come to an equilibrium. The difference here is that each individual grid cell of our model radiatives according to it's local temperature $T_{i,\,j}$.
+"""
 
 # ╔═╡ 6745f610-2b48-11eb-2f6c-79e0009dc9c3
 function outgoing_thermal_radiation(T; C, A, B)
@@ -1240,7 +1249,7 @@ $(todo(md"talk about grid size, ghost cells"))
 
 # ╔═╡ 87e59680-2d0c-11eb-03c7-1d845ca6a1a5
 md"""
-What you experienced is _numerical instability_ in our simulation method. This is not caused by floating point errors -- it is a theoretical limitation of our method.
+What you experienced is a _numerical instability_ of the discretization method in our simulation. This is not caused by floating point errors -- it is a theoretical limitation of our method.
 
 To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
 
@@ -1281,6 +1290,14 @@ So, in 3D:
 md"""
 compare to Moore's Law
 
+HENRI's APPROACH
+
+Moore's law is the observation that the number of transistors in a dense integrated circuit doubles about every two years. In the context of climate modelling, we can interpret this as meaning that the computational complexity allowed by our best high-performance computers $\mathcal{C}$ doubles every two years:
+
+$\mathcal{C}(t) = \mathcal{C}(2020) * 2^{(t-2020)/2}$
+
+__Exercise:__ Present-day simulations have a grid spacing of $\Delta x = 30$ km (or about $N_{x} = L/\Delta x \approx \frac{20000\text{ km}}{30\text{ km}} \approx 700$). By extrapolating Moore's law forward into the future, estimate how long it would take for $\Delta x$ to reach to the $500$ meter scale of clouds, one of the important climate processes ($N_{x} = L/\Delta x \approx 40 000$)?
+
 """ |> todo
 
 # ╔═╡ 4cba7260-2c08-11eb-0a81-abdff2f867de
@@ -1298,21 +1315,6 @@ md"""
 
 
 """ |> todo
-
-# ╔═╡ db1b6060-2dbf-11eb-313f-1f8b856408a3
-md"""
-
-divide by 4 here? it looks like B Rose does
-
-in the plot, "Global mean" should definitely be divided by 4
-""" |> todo
-
-# ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
-md"""
-#### Exercise 3.2 - _Outgoing radiation_
-
-Just like in our EBM, the ocean radiates heat as a function of temperature, and we approximate this relationship linearly. $(todo("i got stuck"))
-"""
 
 # ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
 md"""
@@ -1350,7 +1352,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╠═e7f563f0-2d04-11eb-036d-992da68470a6
 # ╟─39404240-2cfe-11eb-2e3c-710e37f8cd4b
 # ╠═0d63e6b2-2b49-11eb-3413-43977d299d90
-# ╠═32663184-2a81-11eb-0dd1-dd1e10ed9ec6
+# ╠═c9171c56-2dd8-11eb-189b-95d964a9724a
 # ╠═d3796644-2a05-11eb-11b8-87b6e8c311f9
 # ╠═5f5e4120-2cfe-11eb-1fa7-99fdd734f7a7
 # ╟─74aa7512-2a9c-11eb-118c-c7a5b60eac1b
@@ -1403,7 +1405,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─e1d01f70-2d0d-11eb-1367-5b5305d94774
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
-# ╠═fced660c-2cd9-11eb-1737-0110789f429e
+# ╟─fced660c-2cd9-11eb-1737-0110789f429e
 # ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
 # ╟─545cf530-2b48-11eb-378c-3f8eeb89bcba
 # ╟─705ddb90-2d8d-11eb-0c78-13eea6a2df38
@@ -1419,14 +1421,13 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─287395d0-2dbb-11eb-3ca7-ddcea24a074f
 # ╠═d63c5fe0-2b49-11eb-07fd-a7ec98af3a89
 # ╟─8d729390-2dbc-11eb-0628-f3ed9c9f5ffd
-# ╠═db1b6060-2dbf-11eb-313f-1f8b856408a3
 # ╠═2ace4750-2dbe-11eb-0074-0f3a7a929176
 # ╟─5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
 # ╟─71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
 # ╠═0de643d0-2dbf-11eb-3a4c-538c176923f4
 # ╠═86a004ce-2dd5-11eb-1dca-5702d793ef39
 # ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
-# ╠═de7456c0-2b4b-11eb-13c8-01b196821de4
+# ╟─de7456c0-2b4b-11eb-13c8-01b196821de4
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
 # ╟─2274f6b0-2dc5-11eb-10a1-e980bd461ea0
 # ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
