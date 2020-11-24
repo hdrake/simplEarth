@@ -618,6 +618,24 @@ html"""
 <img src="https://www.nap.edu/openbook/13430/xhtml/images/p_78.jpg" height=450>
 """
 
+# ╔═╡ fced660c-2cd9-11eb-1737-0110789f429e
+md"""
+Moore's law is the observation that the number of transistors in a dense integrated circuit doubles about every two years. In the context of climate modelling, we can interpret this as meaning that the computational complexity allowed by our best high-performance computers $\mathcal{C}$ doubles every two years:
+
+$\mathcal{C}(t) = \mathcal{C}(2020) * 2^{(t-2020)/2}$
+
+Present-day simulations have a grid spacing of $\Delta x = 30$ km (or about $N_{x} = L/\Delta x \approx \frac{20000\text{ km}}{30\text{ km}} \approx 700$). 
+
+👉 By extrapolating Moore's law forward into the future, estimate how long it would take for $\Delta x$ to reach to the $500$ meter scale of clouds, one of the important climate processes ($N_{x} = L/\Delta x \approx 40 000$).
+
+"""
+
+# ╔═╡ 299d5540-2e6a-11eb-2698-05e889127454
+cloud_resolution_possible_at = let
+	
+	missing
+end
+
 # ╔═╡ 545cf530-2b48-11eb-378c-3f8eeb89bcba
 md"""
 ## **Exercise 3** - _Radiation_
@@ -1281,20 +1299,6 @@ We need to:
 - Explain this scaling factor.
 """ |> todo
 
-# ╔═╡ fced660c-2cd9-11eb-1737-0110789f429e
-md"""
-compare to Moore's Law
-
-HENRI's APPROACH
-
-Moore's law is the observation that the number of transistors in a dense integrated circuit doubles about every two years. In the context of climate modelling, we can interpret this as meaning that the computational complexity allowed by our best high-performance computers $\mathcal{C}$ doubles every two years:
-
-$\mathcal{C}(t) = \mathcal{C}(2020) * 2^{(t-2020)/2}$
-
-__Exercise:__ Present-day simulations have a grid spacing of $\Delta x = 30$ km (or about $N_{x} = L/\Delta x \approx \frac{20000\text{ km}}{30\text{ km}} \approx 700$). By extrapolating Moore's law forward into the future, estimate how long it would take for $\Delta x$ to reach to the $500$ meter scale of clouds, one of the important climate processes ($N_{x} = L/\Delta x \approx 40 000$)?
-
-""" |> todo
-
 # ╔═╡ 4cba7260-2c08-11eb-0a81-abdff2f867de
 md"""
 
@@ -1405,6 +1409,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
 # ╟─fced660c-2cd9-11eb-1737-0110789f429e
+# ╠═299d5540-2e6a-11eb-2698-05e889127454
 # ╟─545cf530-2b48-11eb-378c-3f8eeb89bcba
 # ╟─705ddb90-2d8d-11eb-0c78-13eea6a2df38
 # ╠═90e1aa00-2b48-11eb-1a2d-8701a3069e50
