@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.10
+# v0.12.11
 
 using Markdown
 using InteractiveUtils
@@ -458,7 +458,7 @@ function InitBox(G; value=50., nx=2, ny=2, xspan=false, yspan=false)
 end
 
 # ╔═╡ 6f19cd80-2c06-11eb-278d-178c1590856f
-# ocean_T_init = InitBox(default_grid; value=40);
+# ocean_T_init = InitBox(default_grid; value=50);
 ocean_T_init = InitBox(default_grid, value=50, xspan=true);
 # ocean_T_init = linearT(default_grid); 
 
@@ -510,23 +510,19 @@ Our climate model algorithm can be summarized by the recursive formula:
 
 $T_{i,\, j}^{n+1} = T^{n}_{i,j} + \Delta t * \left( \text{tendencies} \right)$
 
-For a time $t_{M} = M \Delta t$, the complexity is
+for each time step ``n \in \left\{1, \dots, M \right\}``, and for each grid point ``i \in \left\{1, \dots, N_x \right\}, j \in \left\{1, \dots, N_y \right\}``.
 
-$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) * \mathcal{O}(\text{tendencies}),$
+Our goal is to simulate an ocean of fixed size (e.g. ``6000`` km), for a fixed amount of time (e.g. ``100`` years). By choosing smaller ``\Delta t``, ``\Delta x`` and ``\Delta y``, we get a more accurate simulation, but for the same _size_, it requires more steps. i.e.
 
-where $M$ is the number of timesteps (assuming $\Delta t$ constant) and $\mathcal{O}(\text{tendencies})$ is the computational complexity of computing the tendency for each $i \in [1, N_{x}]$ and $j \in [1, N_{y}]$ for a single timestep. For a fixed aspect ratio $N_{y} = 2N_{x}$, our nested-for-loop implementation has a complexity
+$M = \mathcal{O}(\Delta t^{-1}) \qquad N_x = \mathcal{O}(\Delta x^{-1}) \qquad N_y = \mathcal{O}(\Delta y^{-1}).$
 
-$\mathcal{O}(\text{tendencies}) = \mathcal{O}(2N_{x}^{2}).$
+Now, the _total runtime_ of our simulation is proportional to the number of steps we need to take, which is ``M\cdot N_x \cdot N_y``. For a fixed aspect ratio $N_{y} = 2N_{x}$, we get
 
-Thus, the computational complexity of our 2D climate model appears to be:
-
-$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) \mathcal{O}(N_{x}^{2}),$
-
-i.e. quadratic in the spatial resolution $N_{x}$.
+$\text{runtime} = \mathcal{O}(M)\mathcal{O}(2N_{x}^{2}) = \mathcal{O}(M)\mathcal{O}(N_{x}^{2}).$
 
 #### Exercise 2.1
 
-For constant ``M``, we want to verify that $\mathcal{O}(T(t_{M})) = \mathcal{O}(N_{x}^{2})$ holds for our numerical model. 
+For constant ``M``, we want to verify that $\text{runtime} = \mathcal{O}(N_{x}^{2})$ holds for our numerical model. 
 
 👉 Write a function `model_runtime` that takes `N` as an argument, and sets up a model with grid of resolution `N`, and returns the runtime of a single `timestep!`.
 
@@ -567,17 +563,49 @@ Hi!
 
 """
 
+# ╔═╡ 87e59680-2d0c-11eb-03c7-1d845ca6a1a5
+md"""
+What you experienced is a _numerical instability_ of the discretization method in our simulation. This is not caused by floating point errors -- it is a theoretical limitation of our method.
+
+To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
+
+$L_{CFL} \equiv \max(|\vec{u}|) \Delta t < \Delta x$
+
+or 
+
+$\Delta t  < \frac{\Delta x}{\max(|\vec{u}|) },$
+
+which is known as **the Courant-Freidrichs-Levy (CFL) condition**. 
+
+👉 Write a function `CFL_advection` that takes a `ClimateModel` and computes the CFL value: ``{\Delta x} / {\max(|\vec{u}|) }``.
+"""
+
 # ╔═╡ ad7b7ed6-2a9c-11eb-06b7-0f5595167575
-function CFL_adv(sim::ClimateModelSimulation)
-	maximum(sqrt.(sim.model.u.^2 + sim.model.v.^2)) * sim.Δt / sim.model.grid.Δx
+function CFL_advection(model::ClimateModel)
+	model.grid.Δx / maximum(sqrt.(model.u.^2 + model.v.^2))
 end
+
+# ╔═╡ 7d3bf550-2e68-11eb-3526-cda9ff3f914e
+ocean_sim.Δt, CFL_advection(ocean_sim.model)
+
+# ╔═╡ cb3e2990-2e67-11eb-2312-61395c479a15
+md"""
+This inequality states that if we want to decrease the grid spacing $\Delta x$ (or increase the *resolution* $N_{x}$), we also have to decrease the timestep $\Delta t$ by the same factor. In other words, the timestep can not be thought of as fixed -- it depends on the spatial resolution: $\Delta t \equiv \Delta t_{0} \Delta x$. This means that ``M = \mathcal{O}(N_x)``.
+
+Revisiting our complexity equation, we now have
+
+$\text{runtime} = \mathcal{O}(M) \mathcal{O}(N_x^2) = \mathcal{O}(N_x^3).$
+"""
+
+# ╔═╡ cddf1330-2e67-11eb-39dc-b7fd40273003
+
 
 # ╔═╡ 433a9c1e-2ce0-11eb-319c-e9c785b080ce
 md"""
 #### Exercise 2.3
 In practice, state-of-the-art climate models are 3-D, not 2-D. It turns out that to preserve the aspect ratio of oceanic motions, the *vertical* grid resolution should also be increased $N_{z} \propto N_{x}$, such that in reality the computational complexity of climate models is:
 
-$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) \mathcal{O}(N_{x}^4).$
+$\text{runtime} = \mathcal{O}(N_{x}^4).$
 
 This is the fundamental challenge of high-performance climate computing: to increase the resolution of the models by a factor of $2$, the model's run-time increases by a factor of $2^4 = 16$.
 
@@ -589,12 +617,6 @@ html"""
 
 <img src="https://www.nap.edu/openbook/13430/xhtml/images/p_78.jpg" height=450>
 """
-
-# ╔═╡ d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
-md"**The CFL condition**
-
-The CFL condition is defined by $\text{CFL} = \dfrac{\max\left(\sqrt{u² + v²}\right)Δt}{Δx} =$ $(round(CFL_adv(ocean_sim), digits=2))
-"
 
 # ╔═╡ 545cf530-2b48-11eb-378c-3f8eeb89bcba
 md"""
@@ -969,7 +991,7 @@ md"""
 
 # ╔═╡ 2ae47330-2d15-11eb-1d2e-55343fa3b01a
 md"""
-👉 For ``S=1380`` (present-day value), does `T_init=-50` give a different result than `T_init=+50`? What about `T_ini+55`? By trying various values for `T_init`, **how many stable states do you find?**
+👉 For ``S=1380`` (present-day value), does `T_init=-50` give a different result than `T_init=+50`? What about `T_init=+55`? By trying various values for `T_init`, **how many stable states do you find?**
 """
 
 # ╔═╡ 5294aad0-2d15-11eb-091d-59d7517c4dc2
@@ -1206,6 +1228,9 @@ runtime = @elapsed do_something()
 To get a more precise benchmark, you can average a fixed number of runs, by putting `@elapsed` in front of a `for` loop, for example.
 """)
 
+# ╔═╡ 323eb5f0-2e64-11eb-1d9c-27297e1fba63
+hint(md"In our computations, $\max(|\vec{u}|) = \max\left(\sqrt{u² + v²}\right)$.")
+
 # ╔═╡ ec39a792-2bf7-11eb-11e5-515b39f1adf6
 md"""
 **How do you determine that the model has reached equilibrium?**
@@ -1247,43 +1272,13 @@ Let's look at our first type, `Grid`. Notice that it only has one 'constructor f
 $(todo(md"talk about grid size, ghost cells"))
 """
 
-# ╔═╡ 87e59680-2d0c-11eb-03c7-1d845ca6a1a5
+# ╔═╡ 6b8aff40-2e68-11eb-390a-7180b1150be3
 md"""
-What you experienced is a _numerical instability_ of the discretization method in our simulation. This is not caused by floating point errors -- it is a theoretical limitation of our method.
+I still get numerical errors when ``\Delta t`` is close to dx/maxu. Even if ``\Delta t`` is `0.1` times dx/maxu, you still get numerical errors.
 
-To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
-
-$L_{CFL} \equiv \max(|\vec{u}|) \Delta t < \Delta x$
-
-or 
-
-$\Delta t  < \frac{\Delta x}{\max(|\vec{u}|) },$
-
-which is known as **the Courant-Freidrichs-Levy (CFL) condition**. This inequality states that if we want to decrease the grid spacing $\Delta x$ (or increase the *resolution* $N_{x}$), we also have to decrease the timestep $\Delta t$ by the same factor. In other words, the timestep can not be thought of as fixed an in fact also depends on the spatial resolution: $\Delta t \equiv \Delta t_{0} N_{x}$.
-
-Revisiting our complexity equation, we now have
-
-$\mathcal{O}(T(t_{M})) = \mathcal{O}(M) * \mathcal{O}(\Delta t) * \mathcal{O}(\text{tendencies}) = \mathcal{O}(M) \mathcal{O}(N_{x}^{3}),$
-
-👉 EXERCISE: VERIFY THAT THIS IS TRUE BY SETTING $\Delta t = 0.1 \frac{\Delta x}{\max(|\vec{u}|) }$ TO ENSURE THE CFL CONDITION ALWAYS HOLDS
-
-$(todo(md"We need to think about how this exercise actually _verifies_ the condition, instead of just implementing it. They need to find that the same Δt can be stable/unstable, depending on N."))
-"""
-
-# ╔═╡ e1d01f70-2d0d-11eb-1367-5b5305d94774
-md"""
-
-To Henri:
-
-I thought that we assume that we want to simulate a fixed amount of time, but depending on Δt, this will require a variable number of steps, M.
-
-
-So $M = O(1 / Δt)$, right? And $Δt = O(1 / N)$, (not ``O(N)``), 
-
-So, in 3D:
-
-``runtime = O(M)O(N^3) = O(N^4)``
-
+We need to:
+- Find the right scaling factor (should be less than 0.1)
+- Explain this scaling factor.
 """ |> todo
 
 # ╔═╡ fced660c-2cd9-11eb-1737-0110789f429e
@@ -1388,7 +1383,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─3dffa000-2db7-11eb-263b-57fa833d5785
 # ╠═b952d290-2db7-11eb-3fa9-2bc8d77b9fd6
 # ╟─88c56350-2c08-11eb-14e9-77e71d749e6d
-# ╟─014495d6-2cda-11eb-05d7-91e5a467647e
+# ╠═014495d6-2cda-11eb-05d7-91e5a467647e
 # ╟─d6a56496-2cda-11eb-3d54-d7141a49a446
 # ╠═126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
 # ╠═8346b590-2b41-11eb-0bc1-1ba79bb77dfb
@@ -1402,11 +1397,14 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╠═87de1c70-2d0c-11eb-2c22-f76eeca58f33
 # ╟─87e59680-2d0c-11eb-03c7-1d845ca6a1a5
 # ╠═ad7b7ed6-2a9c-11eb-06b7-0f5595167575
-# ╟─e1d01f70-2d0d-11eb-1367-5b5305d94774
+# ╠═7d3bf550-2e68-11eb-3526-cda9ff3f914e
+# ╟─323eb5f0-2e64-11eb-1d9c-27297e1fba63
+# ╠═6b8aff40-2e68-11eb-390a-7180b1150be3
+# ╠═cb3e2990-2e67-11eb-2312-61395c479a15
+# ╠═cddf1330-2e67-11eb-39dc-b7fd40273003
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
 # ╟─fced660c-2cd9-11eb-1737-0110789f429e
-# ╟─d9e23a5a-2a8b-11eb-23f1-73ff28be9f12
 # ╟─545cf530-2b48-11eb-378c-3f8eeb89bcba
 # ╟─705ddb90-2d8d-11eb-0c78-13eea6a2df38
 # ╠═90e1aa00-2b48-11eb-1a2d-8701a3069e50
