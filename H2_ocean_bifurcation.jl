@@ -132,6 +132,13 @@ function pad_zeros(A::AbstractArray{T,N}) where {T,N}
 	)
 end
 
+# ╔═╡ 13eb3966-2a9a-11eb-086c-05510a3f5b80
+md"""
+#### Data structures
+
+Let's look at our first type, `Grid`. Notice that it only has one 'constructor function', which takes `N` (number of longitudinal grid points) and `L` (longitudinal size in meters) as arguments.
+"""
+
 # ╔═╡ cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
 begin
 	struct Grid
@@ -821,7 +828,7 @@ end
 
 # ╔═╡ 86a004ce-2dd5-11eb-1dca-5702d793ef39
 md"""
-👉 TODODTOODODT
+👉 Write a method `absorbed_solar_radiation` that takes a 2D array `T` with the current ocean temperatures and a `RadiationOceanModel`, and returns the tendencies corresponding to absorbed radiation. This is the analogue of `advect` and `diffuse`.
 """
 
 # ╔═╡ f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
@@ -832,6 +839,12 @@ function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanMode
 	
 	S .* absorption ./ 4 ./ model.params.C
 end
+
+# ╔═╡ f24e8570-2e6c-11eb-2c21-d319af7cba81
+# function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
+	
+# 	return missing
+# end
 
 # ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
 md"""
@@ -855,6 +868,12 @@ function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanMo
 	outgoing_thermal_radiation(T; A=model.params.A, B=model.params.B, C=model.params.C)
 end
 
+# ╔═╡ fc55f710-2e6c-11eb-3cea-cfc00c02fc26
+# function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
+	
+# 	return missing
+# end
+
 # ╔═╡ 6c20ca1e-2b48-11eb-1c3c-418118408c4c
 let
 	params = RadiationOceanModelParameters()
@@ -870,9 +889,9 @@ end
 
 # ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 md"""
-#### Exercise 3.3 - _New timestep method_
+#### Exercise 3.3 - _Running the model_
 
-👉 asdfasdfasdfasdf
+Let's define a new `timestep!` method for our new model. This is exactly the same as our advection-diffusion model, with the addition of the two radiation tendencies.
 """
 
 # ╔═╡ 068795ee-2b4c-11eb-3e58-353eb8978c1c
@@ -920,7 +939,7 @@ end |> as_svg
 
 # ╔═╡ ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 md"""
-#### Exercise 3.4 - _Running the model_
+We can now simulate our radiation ocean model, reusing much of the code from our advection-diffusion simulation.
 """
 
 # ╔═╡ b059c6e0-2b4a-11eb-216a-39bb43c7b423
@@ -1002,6 +1021,12 @@ function eq_T(S, T_init)
 	mean(sim.T)
 end
 
+# ╔═╡ 0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
+# function eq_T(S, T_init)
+	
+# 	return missing
+# end
+
 # ╔═╡ 2ef83140-2d16-11eb-1d8c-a13048a8e04f
 md"""
 #### Exercise 4.2
@@ -1071,11 +1096,15 @@ bifurcation_ST = [(S,T) for S in [1000, 1380, 2000] for T in [-50, 0, 50]]
 # bifurcation_ST = [(S,T) for S in 1180:100:1680 for T in [-50, 0, 50]]
 
 # ╔═╡ 9f54c570-2b90-11eb-0e94-07e475a1908f
+# TODO: DELETE ME
+
 bifurcation_result = ThreadsX.map(bifurcation_ST) do p
 	eq_T(p...)
 end
 
 # ╔═╡ b0db7730-2b90-11eb-126b-33b04be4d686
+# TODO: DELETE ME
+
 scatter(
 	first.(bifurcation_ST), bifurcation_result,
 	label=nothing,
@@ -1281,44 +1310,21 @@ todo(text) = HTML("""<div
 	style="background: rgb(220, 200, 255); padding: 2em; border-radius: 1em;"
 	><h1>TODO</h1>$(repr(MIME"text/html"(), text))</div>""")
 
-# ╔═╡ 13eb3966-2a9a-11eb-086c-05510a3f5b80
-md"""
-#### Data structures
-
-Let's look at our first type, `Grid`. Notice that it only has one 'constructor function', which takes `N` (number of longitudinal grid points) and `L` (longitudinal size in meters) as arguments.
-
-$(todo(md"talk about grid size, ghost cells"))
-"""
-
 # ╔═╡ 6b8aff40-2e68-11eb-390a-7180b1150be3
 md"""
 I still get numerical errors when ``\Delta t`` is close to dx/maxu. Even if ``\Delta t`` is `0.1` times dx/maxu, you still get numerical errors.
 
 We need to:
 - Find the right scaling factor (should be less than 0.1)
-- Explain this scaling factor.
-""" |> todo
-
-# ╔═╡ 4cba7260-2c08-11eb-0a81-abdff2f867de
-md"""
-
-### What we will give:
-- The struct `RadiationOceanModelParameters` below, with our tuned initial values
-- The 0D functions for absorbed and outgoing radiation. With demonstrations
-
-### What they will write:
-- The 2D methods for absorbed and outgoing radiation, with signature `(T::Array{Float64,2}, model::RadiationOceanModel)`
-- The `timestep!(sim::ClimateModelSimulation{RadiationOceanModel})` method
-- 
-
-
-
+- **Explain this scaling factor.** Does it not contradict our argument?
 """ |> todo
 
 # ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
 md"""
 
-We still need to find more realistic initial values. Right now, the contrast between pole and equator is too large, maybe more adv + diffusion, and then we need to re-tune the rest to have three stable states at S=1380
+We still need to find more realistic initial values. Right now, the contrast between pole and equator is too large, maybe more adv + diffusion, and then we need to re-tune the rest to have three stable states at S=1380.
+
+When these are found, write them in the RadiationOceanModelParameters struct.
 
 **the exercises are designed for three stable states at S=1380**
 
@@ -1346,7 +1352,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╠═b629d89a-2a95-11eb-2f27-3dfa45789be4
 # ╠═a8d8f8d2-2cfa-11eb-3c3e-d54f7b32e4a2
 # ╟─2beb6ec0-2dcc-11eb-1768-0b8e4fba1597
-# ╠═13eb3966-2a9a-11eb-086c-05510a3f5b80
+# ╟─13eb3966-2a9a-11eb-086c-05510a3f5b80
 # ╠═cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
 # ╠═e7f563f0-2d04-11eb-036d-992da68470a6
 # ╟─39404240-2cfe-11eb-2e3c-710e37f8cd4b
@@ -1387,7 +1393,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─3dffa000-2db7-11eb-263b-57fa833d5785
 # ╠═b952d290-2db7-11eb-3fa9-2bc8d77b9fd6
 # ╟─88c56350-2c08-11eb-14e9-77e71d749e6d
-# ╠═014495d6-2cda-11eb-05d7-91e5a467647e
+# ╟─014495d6-2cda-11eb-05d7-91e5a467647e
 # ╟─d6a56496-2cda-11eb-3d54-d7141a49a446
 # ╠═126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
 # ╠═8346b590-2b41-11eb-0bc1-1ba79bb77dfb
@@ -1404,7 +1410,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╠═7d3bf550-2e68-11eb-3526-cda9ff3f914e
 # ╟─323eb5f0-2e64-11eb-1d9c-27297e1fba63
 # ╠═6b8aff40-2e68-11eb-390a-7180b1150be3
-# ╠═cb3e2990-2e67-11eb-2312-61395c479a15
+# ╟─cb3e2990-2e67-11eb-2312-61395c479a15
 # ╠═cddf1330-2e67-11eb-39dc-b7fd40273003
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
@@ -1417,7 +1423,6 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─e5b95760-2d98-11eb-0ea3-8bfcf07031d6
 # ╠═adf007c2-2d98-11eb-3004-dfe1b1303454
 # ╠═be456570-2d98-11eb-0c4e-cd92e0af728b
-# ╠═4cba7260-2c08-11eb-0a81-abdff2f867de
 # ╟─e80b0532-2b4b-11eb-26fa-cd09eca808bc
 # ╟─d9296db0-2dba-11eb-3bb5-9533a338dad8
 # ╠═629454e0-2b48-11eb-2ff0-abed400c49f9
@@ -1428,31 +1433,34 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
 # ╟─71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
 # ╠═0de643d0-2dbf-11eb-3a4c-538c176923f4
-# ╠═86a004ce-2dd5-11eb-1dca-5702d793ef39
+# ╟─86a004ce-2dd5-11eb-1dca-5702d793ef39
 # ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
+# ╠═f24e8570-2e6c-11eb-2c21-d319af7cba81
 # ╟─de7456c0-2b4b-11eb-13c8-01b196821de4
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
 # ╟─2274f6b0-2dc5-11eb-10a1-e980bd461ea0
 # ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
+# ╠═fc55f710-2e6c-11eb-3cea-cfc00c02fc26
 # ╠═6c20ca1e-2b48-11eb-1c3c-418118408c4c
-# ╠═fe492480-2b4b-11eb-050e-9b9b2e2bf50f
+# ╟─fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
-# ╠═ad95c4e0-2b4a-11eb-3584-dda89970ffdf
+# ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 # ╠═8de8dda0-2d0f-11eb-105b-9d8779275e6c
 # ╠═b059c6e0-2b4a-11eb-216a-39bb43c7b423
 # ╟─5fd346d0-2b4d-11eb-066b-9ba9c9d97613
 # ╟─6568b850-2b4d-11eb-02e9-696654ac2d37
+# ╠═ef647620-2c01-11eb-185e-3f36f98fcfaf
 # ╠═50c6d850-2b57-11eb-2330-1d1547219b5e
 # ╠═57dcf660-2b57-11eb-1518-b7e2e65abfcc
 # ╠═f5010a40-2b56-11eb-266a-a71b92692172
-# ╠═ef647620-2c01-11eb-185e-3f36f98fcfaf
 # ╟─127bcb0e-2c0a-11eb-23df-a75767910fcb
 # ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
+# ╠═0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
 # ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
 # ╟─2ef83140-2d16-11eb-1d8c-a13048a8e04f
 # ╟─2ae47330-2d15-11eb-1d2e-55343fa3b01a
 # ╠═5294aad0-2d15-11eb-091d-59d7517c4dc2
-# ╠═abd2475e-2d15-11eb-26dc-05253cf65232
+# ╟─abd2475e-2d15-11eb-26dc-05253cf65232
 # ╠═bdd86250-2d15-11eb-0b62-7903ca714312
 # ╠═bed2c7e0-2d15-11eb-14e3-93f5d1b6f3a1
 # ╟─c40b7360-2d15-11eb-0558-d95d615f9b9b
