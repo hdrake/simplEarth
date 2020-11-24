@@ -737,7 +737,7 @@ md"""
 
 Our rectangular grid represents the North Atlantic Ocean, stretching from the equator (latitude = 0°) to the North Pole (latitude = 90°) in the latitudinal direction (`y`), and from the east coast of North America to the west coast of Europe in the longitudinal direction (`x`). In reality, climate models have to explicitly deal with the curvature of the Earth when constructing their model grids. Here, we will just treat the North Atlantic Ocean as a rectangle with roughly the correct dimensions.
 
-Just like the albedo, every grid cell will have a local amount of solar insulation. In our model, we use the **annual average** at the latitude of a grid cell $S(y)/4$. This is given by: ([_source_](http://www.atmos.albany.edu/facstaff/brose/classes/ATM623_Spring2015/Notes/Lectures/Lecture11%20--%20Insolation.html))
+Just like the albedo, every grid cell will have a local amount of solar insolation. In our model, we use the **annual average** at the latitude of a grid cell $S(y)/4$. This is given by: ([_source_](http://www.atmos.albany.edu/facstaff/brose/classes/ATM623_Spring2015/Notes/Lectures/Lecture11%20--%20Insolation.html))
 
 """
 
@@ -1039,7 +1039,7 @@ end
 scatter(
 	first.(bifurcation_ST), bifurcation_result,
 	label=nothing,
-	xlabel="Solar insulation",
+	xlabel="Solar insolation",
 	ylabel="Equilibrium temperature",
 	color=:black,
 	) |> as_svg
