@@ -546,7 +546,7 @@ md"""
 👉 Call your `runtime` function on a range of values for `N`, and use a plot to demonstrate that the predicted runtime complexity holds.
 """
 
-# ╔═╡ b50d25c0-2d0b-11eb-3b0c-1b178bbddecd
+# ╔═╡ af02d23e-2e93-11eb-3547-85d2aa07081b
 
 
 # ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
@@ -574,15 +574,19 @@ Hi!
 md"""
 What you experienced is a _numerical instability_ of the discretization method in our simulation. This is not caused by floating point errors -- it is a theoretical limitation of our method.
 
-To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is less than the width $\Delta x = \Delta y$ of a single grid cell:
+To ensure the stability of our finite-difference approximation for advection, heat should not be displaced more than one grid cell in a single timestep. Mathematically, we can ensure this by checking that the distance $L_{CFL} \equiv \max(|\vec{u}|) \Delta t$ is significantly less than the width $\Delta x = \Delta y$ of a single grid cell:
 
-$L_{CFL} \equiv \max(|\vec{u}|) \Delta t < \Delta x$
+$L_{CFL} \equiv \max(|\vec{u}|) \Delta t \ll \Delta x$
 
 or 
 
-$\Delta t  < \frac{\Delta x}{\max(|\vec{u}|) },$
+$\Delta t \ll \frac{\Delta x}{\max(|\vec{u}|) },$
 
 which is known as **the Courant-Freidrichs-Levy (CFL) condition**. 
+
+The exact meaning of ``\ll`` here depends on the simulation at hand, but in our case, it means that there is at least an order of magnitude difference:
+
+$\Delta t < 0.1 \frac{\Delta x}{\max(|\vec{u}|) }.$
 
 👉 Write a function `CFL_advection` that takes a `ClimateModel` and computes the CFL value: ``{\Delta x} / {\max(|\vec{u}|) }``.
 """
@@ -593,23 +597,27 @@ function CFL_advection(model::ClimateModel)
 end
 
 # ╔═╡ 7d3bf550-2e68-11eb-3526-cda9ff3f914e
-ocean_sim.Δt, CFL_advection(ocean_sim.model)
+ocean_sim.Δt, 0.1 * CFL_advection(ocean_sim.model)
+
+# ╔═╡ 3e908bf0-2e94-11eb-28de-a3b1b7435492
+md"""
+👉 Using the interactive simulation of Exercise 1, verify that the CFL condition is (somewhat) true. Increase the magnitude of ``\vec{u}`` until you start to see numerical artefacts. Now, halve the value fo ``\Delta t``, and again, increase the magnitude of ``\vec{u}``. You should find that _halving ``\Delta t`` allows for twice the velocity magnitude_. The same link exists between ``\Delta t`` and ``\Delta x``.
+"""
 
 # ╔═╡ cb3e2990-2e67-11eb-2312-61395c479a15
 md"""
-This inequality states that if we want to decrease the grid spacing $\Delta x$ (or increase the *resolution* $N_{x}$), we also have to decrease the timestep $\Delta t$ by the same factor. In other words, the timestep can not be thought of as fixed -- it depends on the spatial resolution: $\Delta t \equiv \Delta t_{0} \Delta x$. This means that ``M = \mathcal{O}(N_x)``.
+The CFL inequality states that if we want to decrease the grid spacing $\Delta x$ (or increase the *resolution* $N_{x}$), we also have to decrease the timestep $\Delta t$ by the same factor. In other words, the timestep can not be thought of as fixed -- it depends on the spatial resolution: $\Delta t \equiv \Delta t_{0} \Delta x$. This means that ``M = \mathcal{O}(N_x)``.
 
 Revisiting our complexity equation, we now have
 
 $\text{runtime} = \mathcal{O}(M) \mathcal{O}(N_x^2) = \mathcal{O}(N_x^3).$
+
+In other words, in a 2-D model, **2x the spatial resolution requires 8x the computational power**.
 """
-
-# ╔═╡ cddf1330-2e67-11eb-39dc-b7fd40273003
-
 
 # ╔═╡ 433a9c1e-2ce0-11eb-319c-e9c785b080ce
 md"""
-#### Exercise 2.3
+#### Exercise 2.3 - _Moore's Law_
 In practice, state-of-the-art climate models are 3-D, not 2-D. It turns out that to preserve the aspect ratio of oceanic motions, the *vertical* grid resolution should also be increased $N_{z} \propto N_{x}$, such that in reality the computational complexity of climate models is:
 
 $\text{runtime} = \mathcal{O}(N_{x}^4).$
@@ -1311,15 +1319,6 @@ todo(text) = HTML("""<div
 	style="background: rgb(220, 200, 255); padding: 2em; border-radius: 1em;"
 	><h1>TODO</h1>$(repr(MIME"text/html"(), text))</div>""")
 
-# ╔═╡ 6b8aff40-2e68-11eb-390a-7180b1150be3
-md"""
-I still get numerical errors when ``\Delta t`` is close to dx/maxu. Even if ``\Delta t`` is `0.1` times dx/maxu, you still get numerical errors.
-
-We need to:
-- Find the right scaling factor (should be less than 0.1)
-- **Explain this scaling factor.** Does it not contradict our argument?
-""" |> todo
-
 # ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
 md"""
 
@@ -1400,7 +1399,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╠═8346b590-2b41-11eb-0bc1-1ba79bb77dfb
 # ╟─171c6880-2d0b-11eb-0180-454f2876cf51
 # ╟─923af680-2d0b-11eb-3f6a-db4bf29bb6a9
-# ╠═b50d25c0-2d0b-11eb-3b0c-1b178bbddecd
+# ╠═af02d23e-2e93-11eb-3547-85d2aa07081b
 # ╠═16905a6a-2a78-11eb-19ea-81adddc21088
 # ╠═a8136ed0-2d0e-11eb-01b3-4101bd813faf
 # ╠═794c2148-2a78-11eb-2756-5bd28b7726fa
@@ -1410,9 +1409,8 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╠═ad7b7ed6-2a9c-11eb-06b7-0f5595167575
 # ╠═7d3bf550-2e68-11eb-3526-cda9ff3f914e
 # ╟─323eb5f0-2e64-11eb-1d9c-27297e1fba63
-# ╠═6b8aff40-2e68-11eb-390a-7180b1150be3
+# ╟─3e908bf0-2e94-11eb-28de-a3b1b7435492
 # ╟─cb3e2990-2e67-11eb-2312-61395c479a15
-# ╠═cddf1330-2e67-11eb-39dc-b7fd40273003
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
 # ╟─213f65ce-2ce1-11eb-19d6-5bf5c24d7ed7
 # ╟─fced660c-2cd9-11eb-1737-0110789f429e
@@ -1454,7 +1452,7 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╠═50c6d850-2b57-11eb-2330-1d1547219b5e
 # ╠═57dcf660-2b57-11eb-1518-b7e2e65abfcc
 # ╠═f5010a40-2b56-11eb-266a-a71b92692172
-# ╟─127bcb0e-2c0a-11eb-23df-a75767910fcb
+# ╠═127bcb0e-2c0a-11eb-23df-a75767910fcb
 # ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
 # ╠═0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
 # ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
