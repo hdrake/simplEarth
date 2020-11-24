@@ -698,7 +698,7 @@ Below we define two new types: `RadiationOceanModel` and `RadiationOceanModelPar
 
 # ╔═╡ 57535c60-2b49-11eb-07cc-ffc5b4d1f13c
 Base.@kwdef struct RadiationOceanModelParameters
-	κ::Float64=3.e4
+	κ::Float64=4.e4
 	
 	C::Float64=51.0 * 60*60*24*365.25 # converted from [W*year/m^2/K] to [J/m^2/K]
 	
@@ -707,7 +707,7 @@ Base.@kwdef struct RadiationOceanModelParameters
 	
 	S_mean::Float64 = 1380
 	α0::Float64=0.3
-	αi::Float64=0.5
+	αi::Float64=0.55
 	ΔT::Float64=2.0
 end
 
@@ -952,97 +952,45 @@ We can now simulate our radiation ocean model, reusing much of the code from our
 
 # ╔═╡ b059c6e0-2b4a-11eb-216a-39bb43c7b423
 radiation_sim = let
-	G = Grid(10, 6.e6)
-	P = RadiationOceanModelParameters(S_mean=1380, A=200, α0=0.3, αi=0.4, κ=2e4)
+	grid = Grid(10, 6.e6)
+	# you can specify non-default parameters like so:
+	# params = RadiationOceanModelParameters(S_mean=1500, A=210, κ=2e4)
+	params = RadiationOceanModelParameters()
 	
-	#u, v = zeros(G), zeros(G)
-	# u, v = PointVortex(G, Ω=0.5)
-	u, v = DoubleGyre(G)
-
-	# IC = InitBox(G; value=50.)
-	# IC = InitBox(G, xspan=true)
-	IC = constantT(G; value=0)
+	#u, v = zeros(grid), zeros(grid)
+	# u, v = PointVortex(grid, Ω=0.5)
+	u, v = DoubleGyre(grid)
 	
-	model = RadiationOceanModel(G, P, u, v)
+	T_init_value = 
+	T_init = constantT(grid; value=T_init_value)
+	
+	model = RadiationOceanModel(grid, params, u, v)
 	Δt = 400*60*60
 	
-	ClimateModelSimulation(model, copy(IC), Δt)
+	ClimateModelSimulation(model, copy(T_init), Δt)
 end
 
 # ╔═╡ 5fd346d0-2b4d-11eb-066b-9ba9c9d97613
 @bind go_radiation Clock(.1)
 
-# ╔═╡ 50c6d850-2b57-11eb-2330-1d1547219b5e
-(absorbed_solar_radiation(radiation_sim.T, radiation_sim.model) |> mean) * radiation_sim.model.params.C
-
-# ╔═╡ 57dcf660-2b57-11eb-1518-b7e2e65abfcc
-(outgoing_thermal_radiation(radiation_sim.T, radiation_sim.model) |> mean) * radiation_sim.model.params.C
-
-# ╔═╡ f5010a40-2b56-11eb-266a-a71b92692172
-mean(radiation_sim.T)
-
-# ╔═╡ 127bcb0e-2c0a-11eb-23df-a75767910fcb
+# ╔═╡ 6fc5b760-2e97-11eb-1d7f-0d666b0a41d5
 md"""
-## **Exercise 4** - _Bifurcation diagram_
-
-So far, we are able to set up a model and run it interactively. You see that the model quickly goes from the initial temperatures to a _stable state_: a state with balanced energy (radiation out, radiation in). Changing the initial state slightly will result in the same stable state. 
-
-But notice that there are **multiple**
-
-In this final exercise, we will TODO
-
-#### Exercise 4.1 - _Equilibrium temperature_
-
-👉 Write a function `eq_T` that takes two argments, `S` and `T_init`, that sets up a radiation ocean model with `S` as `S_mean`, and with `T_init` as the constant initial temperature. Run the model until you have reached equilibrium (approximately), and return the average temperature.
+👉 Play around with the simulation to find the effect of each parameter. In particular, discover the effect of the solar insolation, `S_mean`, the initial temperatures, `T_init`, the liquid and ice albedos: `α0` and `αi`, and the amount of emitted heat at 0°C, `A`.
 """
 
-# ╔═╡ c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
-function eq_T(S, T_init)
-	G = Grid(10, 6.e6)
-	P = RadiationOceanModelParameters(κ=3e4, S_mean=S, αi=.5, A=210)
-	
-	#u, v = zeros(G), zeros(G)
-	# u, v = PointVortex(G, Ω=0.5)
-	u, v = DoubleGyre(G)
-
-	# IC = InitBox(G; value=50.)
-	# IC = InitBox(G, xspan=true)
-	IC = constantT(G; value=T_init)
-	
-	model = RadiationOceanModel(G, P, u*2. ^U_ex, v*2. ^U_ex)
-	Δt = 400*60*60
-	
-	sim = ClimateModelSimulation(model, copy(IC), Δt)
-	
-	while (
-			abs(
-				mean(absorbed_solar_radiation(sim.T, sim.model)) * sim.model.params.C - 
-				mean(outgoing_thermal_radiation(sim.T, sim.model)) * sim.model.params.C
-			) > 8.0 || sim.iteration < 1_000) && (
-			sim.iteration < 6_000
-			)
-		for i in 1:500
-			timestep!(sim)
-		end
-	end
-	
-	mean(sim.T)
-end
-
-# ╔═╡ 0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
-# function eq_T(S, T_init)
-	
-# 	return missing
-# end
-
-# ╔═╡ 2ef83140-2d16-11eb-1d8c-a13048a8e04f
+# ╔═╡ 5a755e00-2e98-11eb-0f83-997a60409484
 md"""
-#### Exercise 4.2
+#### Exercise 3.4 - _Stable states_
+
+So far, we are able to set up a model and run it interactively. You see that the model quickly goes from the initial temperatures to a _stable state_: a state with balanced energy (radiation out, radiation in). Changing the initial state slightly will probably result in the same stable state. 
+
+But let's see what happens
+
 """
 
 # ╔═╡ 2ae47330-2d15-11eb-1d2e-55343fa3b01a
 md"""
-👉 For ``S=1380`` (present-day value), does `T_init=-50` give a different result than `T_init=+50`? What about `T_init=+55`? By trying various values for `T_init`, **how many stable states do you find?**
+👉 For ``S=1380`` (present-day value) and default parameters, does `T_init_value=-50` give a different result than `T_init_value=+50`? What about `T_init_value=+55`? By trying various values for `T_init_value`, **how many stable states do you find?**
 """
 
 # ╔═╡ 5294aad0-2d15-11eb-091d-59d7517c4dc2
@@ -1071,9 +1019,26 @@ I found ...
 
 """
 
+# ╔═╡ b5703af0-2e98-11eb-1e8c-3d2b51bd9995
+md"""
+#### Exercise 3.5
+
+That's right, we have found a _bifurcation_! Under the right conditions, there are multiple stable states. But under different conditions, there is only one stable state. 
+
+**Hypothesis:** The multiple stable states at ``S = 1380`` are caused by the feedback effect of the ice albedo. A cold ocean reflects more heat and stays cold, a warm ocean absorbs more heat and stays warm.
+
+👉 Find a way to confirm this hypothesis by changing the model parameters in the interactive model. Describe your findings.
+"""
+
+# ╔═╡ d9141ca0-2e99-11eb-3ef6-8591c16bb546
+albedo_hypothesis_description = md"""
+
+Bonjour !
+"""
+
 # ╔═╡ c40b7360-2d15-11eb-0558-d95d615f9b9b
 md"""
-👉 Use the interactive simulation to check these simulations manually. Why is the number of stable states different for a lower or higher value of ``S``?
+👉 Why is the number of stable states different for a lower or higher value of ``S``?
 """
 
 # ╔═╡ 02767460-2d16-11eb-2074-07657f84e22d
@@ -1083,11 +1048,57 @@ Hi! 🍪
 
 """
 
+# ╔═╡ 127bcb0e-2c0a-11eb-23df-a75767910fcb
+md"""
+## **Exercise 4** - _Bifurcation diagram_
+
+So far, we are able to set up a model and run it interactively, and we discovered that by changing the initial value of `S_mean`, we find a different number of stable states.
+
+In this final exercise, we will generate a visualization to help us understand the relationship between `S_mean` and the number of stable states. Instead of running a single model interactively, we write a function that takes the model parameters as input, runs the model until equilibrium, and returns the final mean temperature. We will run this high-level function for various initial values, generating a single graph: the _bifurcation diagram_.
+
+#### Exercise 4.1 - _Equilibrium temperature_
+
+👉 Write a function `eq_T` that takes two argments, `S` and `T_init_value`, that sets up a radiation ocean model with `S` as `S_mean`, and with `T_init_value` as the constant initial temperature. Run the model until you have reached equilibrium (approximately), and return the average temperature.
+"""
+
+# ╔═╡ c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
+function eq_T(S, T_init_value)
+	G = Grid(10, 6.e6)
+	P = RadiationOceanModelParameters(κ=3e4, S_mean=S, αi=.5, A=210)
+	
+	u, v = DoubleGyre(G)
+
+	IC = constantT(G; value=T_init_value)
+	
+	model = RadiationOceanModel(G, P, u*2. ^U_ex, v*2. ^U_ex)
+	Δt = 400*60*60
+	
+	sim = ClimateModelSimulation(model, copy(IC), Δt)
+	
+	while (
+			abs(
+				mean(absorbed_solar_radiation(sim.T, sim.model)) * sim.model.params.C - 
+				mean(outgoing_thermal_radiation(sim.T, sim.model)) * sim.model.params.C
+			) > 8.0 || sim.iteration < 1_000) && (
+			sim.iteration < 6_000
+			)
+		for i in 1:500
+			timestep!(sim)
+		end
+	end
+	
+	mean(sim.T)
+end
+
+# ╔═╡ 0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
+# function eq_T(S, T_init)
+	
+# 	return missing
+# end
+
 # ╔═╡ 2495e330-2c0a-11eb-3a10-530f8b87a4eb
 md"""
-That's right, we have found a _bifurcation_!
-
-#### Exercise 4.3
+#### Exercise 4.2
 
 👉 Make a bifurcation diagram. For a couple of pairs `(S,T_init)`, calculate the equilibrium temperature. Create a scatter plot with ``S`` on the horizontal axis, and ``T_{\text{equilibrium}}`` on the vertical. 
 
@@ -1319,20 +1330,6 @@ todo(text) = HTML("""<div
 	style="background: rgb(220, 200, 255); padding: 2em; border-radius: 1em;"
 	><h1>TODO</h1>$(repr(MIME"text/html"(), text))</div>""")
 
-# ╔═╡ 8de8dda0-2d0f-11eb-105b-9d8779275e6c
-md"""
-
-We still need to find more realistic initial values. Right now, the contrast between pole and equator is too large, maybe more adv + diffusion, and then we need to re-tune the rest to have three stable states at S=1380.
-
-When these are found, write them in the RadiationOceanModelParameters struct.
-
-**the exercises are designed for three stable states at S=1380**
-
-""" |> todo
-
-# ╔═╡ ef647620-2c01-11eb-185e-3f36f98fcfaf
-todo(md"Write text-based exercises to encourage experiments")
-
 # ╔═╡ Cell order:
 # ╟─67c3dcc0-2c05-11eb-3a84-9dfea24f95a8
 # ╟─6a4641e0-2c05-11eb-3430-6f14650c2ad3
@@ -1444,26 +1441,24 @@ todo(md"Write text-based exercises to encourage experiments")
 # ╟─fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
 # ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
-# ╠═8de8dda0-2d0f-11eb-105b-9d8779275e6c
 # ╠═b059c6e0-2b4a-11eb-216a-39bb43c7b423
 # ╟─5fd346d0-2b4d-11eb-066b-9ba9c9d97613
 # ╟─6568b850-2b4d-11eb-02e9-696654ac2d37
-# ╠═ef647620-2c01-11eb-185e-3f36f98fcfaf
-# ╠═50c6d850-2b57-11eb-2330-1d1547219b5e
-# ╠═57dcf660-2b57-11eb-1518-b7e2e65abfcc
-# ╠═f5010a40-2b56-11eb-266a-a71b92692172
-# ╠═127bcb0e-2c0a-11eb-23df-a75767910fcb
-# ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
-# ╠═0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
-# ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
-# ╟─2ef83140-2d16-11eb-1d8c-a13048a8e04f
+# ╟─6fc5b760-2e97-11eb-1d7f-0d666b0a41d5
+# ╠═5a755e00-2e98-11eb-0f83-997a60409484
 # ╟─2ae47330-2d15-11eb-1d2e-55343fa3b01a
 # ╠═5294aad0-2d15-11eb-091d-59d7517c4dc2
 # ╟─abd2475e-2d15-11eb-26dc-05253cf65232
 # ╠═bdd86250-2d15-11eb-0b62-7903ca714312
 # ╠═bed2c7e0-2d15-11eb-14e3-93f5d1b6f3a1
+# ╟─b5703af0-2e98-11eb-1e8c-3d2b51bd9995
+# ╠═d9141ca0-2e99-11eb-3ef6-8591c16bb546
 # ╟─c40b7360-2d15-11eb-0558-d95d615f9b9b
 # ╠═02767460-2d16-11eb-2074-07657f84e22d
+# ╟─127bcb0e-2c0a-11eb-23df-a75767910fcb
+# ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
+# ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
+# ╠═0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
 # ╟─2495e330-2c0a-11eb-3a10-530f8b87a4eb
 # ╠═59da0470-2b8f-11eb-098c-993effcedecf
 # ╠═9f54c570-2b90-11eb-0e94-07e475a1908f
