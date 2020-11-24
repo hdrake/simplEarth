@@ -136,7 +136,7 @@ end
 md"""
 #### Data structures
 
-Let's look at our first type, `Grid`. Notice that it only has one 'constructor function', which takes `N` (number of longitudinal grid points) and `L` (longitudinal size in meters) as arguments.
+Let's look at our first type, `Grid`. Notice that it only has one 'constructor function', which takes `N` (number of longitudinal grid points) and `L` (longitudinal size in meters) as arguments. The struct contains more fields, these are precomputed and stored for performance.
 """
 
 # ╔═╡ cd2ee4ca-2a06-11eb-0e61-e9a2ecf72bd6
@@ -588,7 +588,7 @@ The exact meaning of ``\ll`` here depends on the simulation at hand, but in our 
 
 $\Delta t < 0.1 \frac{\Delta x}{\max(|\vec{u}|) }.$
 
-👉 Write a function `CFL_advection` that takes a `ClimateModel` and computes the CFL value: ``{\Delta x} / {\max(|\vec{u}|) }``.
+Given below is a function `CFL_advection` that takes a `ClimateModel` and computes the CFL value: ``{\Delta x} / {\max(|\vec{u}|) }``.
 """
 
 # ╔═╡ ad7b7ed6-2a9c-11eb-06b7-0f5595167575
@@ -876,12 +876,6 @@ function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanMo
 	outgoing_thermal_radiation(T; A=model.params.A, B=model.params.B, C=model.params.C)
 end
 
-# ╔═╡ fc55f710-2e6c-11eb-3cea-cfc00c02fc26
-# function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
-	
-# 	return missing
-# end
-
 # ╔═╡ 6c20ca1e-2b48-11eb-1c3c-418118408c4c
 let
 	params = RadiationOceanModelParameters()
@@ -894,6 +888,12 @@ let
 		size=(500,250)
 	)
 end
+
+# ╔═╡ fc55f710-2e6c-11eb-3cea-cfc00c02fc26
+# function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
+	
+# 	return missing
+# end
 
 # ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 md"""
@@ -1097,6 +1097,9 @@ md"""
 👉 Use the function `eq_T` to verify your answer to Exercise 3.4.
 """
 
+# ╔═╡ 59ecd040-2e9c-11eb-05e3-0bc96e9cddec
+
+
 # ╔═╡ 2495e330-2c0a-11eb-3a10-530f8b87a4eb
 md"""
 #### Exercise 4.2
@@ -1296,9 +1299,6 @@ runtime = @elapsed do_something()
 To get a more precise benchmark, you can average a fixed number of runs, by putting `@elapsed` in front of a `for` loop, for example.
 """)
 
-# ╔═╡ 323eb5f0-2e64-11eb-1d9c-27297e1fba63
-hint(md"In our computations, $\max(|\vec{u}|) = \max\left(\sqrt{u² + v²}\right)$.")
-
 # ╔═╡ ec39a792-2bf7-11eb-11e5-515b39f1adf6
 md"""
 **How do you determine that the model has reached equilibrium?**
@@ -1413,7 +1413,6 @@ todo(text) = HTML("""<div
 # ╟─87e59680-2d0c-11eb-03c7-1d845ca6a1a5
 # ╠═ad7b7ed6-2a9c-11eb-06b7-0f5595167575
 # ╠═7d3bf550-2e68-11eb-3526-cda9ff3f914e
-# ╟─323eb5f0-2e64-11eb-1d9c-27297e1fba63
 # ╟─3e908bf0-2e94-11eb-28de-a3b1b7435492
 # ╟─cb3e2990-2e67-11eb-2312-61395c479a15
 # ╟─433a9c1e-2ce0-11eb-319c-e9c785b080ce
@@ -1436,16 +1435,16 @@ todo(text) = HTML("""<div
 # ╠═2ace4750-2dbe-11eb-0074-0f3a7a929176
 # ╟─5caa4172-2dbe-11eb-2d5a-f5fa621d21a8
 # ╟─71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
-# ╠═0de643d0-2dbf-11eb-3a4c-538c176923f4
+# ╟─0de643d0-2dbf-11eb-3a4c-538c176923f4
 # ╟─86a004ce-2dd5-11eb-1dca-5702d793ef39
 # ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
 # ╠═f24e8570-2e6c-11eb-2c21-d319af7cba81
 # ╟─de7456c0-2b4b-11eb-13c8-01b196821de4
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
+# ╟─6c20ca1e-2b48-11eb-1c3c-418118408c4c
 # ╟─2274f6b0-2dc5-11eb-10a1-e980bd461ea0
 # ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
 # ╠═fc55f710-2e6c-11eb-3cea-cfc00c02fc26
-# ╠═6c20ca1e-2b48-11eb-1c3c-418118408c4c
 # ╟─fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
 # ╟─ad95c4e0-2b4a-11eb-3584-dda89970ffdf
@@ -1466,7 +1465,8 @@ todo(text) = HTML("""<div
 # ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
 # ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
 # ╠═0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
-# ╠═f70f52f0-2e9a-11eb-1bab-13c3b7ad3ca4
+# ╟─f70f52f0-2e9a-11eb-1bab-13c3b7ad3ca4
+# ╠═59ecd040-2e9c-11eb-05e3-0bc96e9cddec
 # ╟─590c50c0-2e9b-11eb-2bb2-cf35f65a447e
 # ╟─2495e330-2c0a-11eb-3a10-530f8b87a4eb
 # ╠═59da0470-2b8f-11eb-098c-993effcedecf
