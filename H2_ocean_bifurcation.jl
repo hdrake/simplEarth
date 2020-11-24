@@ -244,7 +244,7 @@ begin
 end;
 
 # ╔═╡ 5f5e4120-2cfe-11eb-1fa7-99fdd734f7a7
-OceanModel <: ClimateModel # is subtype
+OceanModel <: ClimateModel # it's a subtype!
 
 # ╔═╡ 74aa7512-2a9c-11eb-118c-c7a5b60eac1b
 md"""
@@ -961,7 +961,7 @@ radiation_sim = let
 	# u, v = PointVortex(grid, Ω=0.5)
 	u, v = DoubleGyre(grid)
 	
-	T_init_value = 
+	T_init_value = 10
 	T_init = constantT(grid; value=T_init_value)
 	
 	model = RadiationOceanModel(grid, params, u, v)
@@ -984,12 +984,8 @@ md"""
 
 So far, we are able to set up a model and run it interactively. You see that the model quickly goes from the initial temperatures to a _stable state_: a state with balanced energy (radiation out, radiation in). Changing the initial state slightly will probably result in the same stable state. 
 
-But let's see what happens
+But let's see what happens when we initialize with extremely high or low initial temperatures...
 
-"""
-
-# ╔═╡ 2ae47330-2d15-11eb-1d2e-55343fa3b01a
-md"""
 👉 For ``S=1380`` (present-day value) and default parameters, does `T_init_value=-50` give a different result than `T_init_value=+50`? What about `T_init_value=+55`? By trying various values for `T_init_value`, **how many stable states do you find?**
 """
 
@@ -1091,10 +1087,15 @@ function eq_T(S, T_init_value)
 end
 
 # ╔═╡ 0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
-# function eq_T(S, T_init)
+# function eq_T(S, T_init_value)
 	
 # 	return missing
 # end
+
+# ╔═╡ f70f52f0-2e9a-11eb-1bab-13c3b7ad3ca4
+md"""
+👉 Use the function `eq_T` to verify your answer to Exercise 3.4.
+"""
 
 # ╔═╡ 2495e330-2c0a-11eb-3a10-530f8b87a4eb
 md"""
@@ -1307,6 +1308,13 @@ The simplest way is to use the interactive simulation above to find a fixed time
 Using a long time period is more accurate, but it means that the runtime will be long. If this is a problem, you can use a dynamic stopping condition instead. For example, you can stop the simulation early when the total incoming and total outgoing radiation are roughly equal.
 """ |> hint
 
+# ╔═╡ 590c50c0-2e9b-11eb-2bb2-cf35f65a447e
+md"""
+Create an array of values for `T_init_value` (not too many!), and run `eq_T` for each. Find clusters in the results.
+
+This is a good opportunity to check whether your implementation of `eq_T` is correct! Use the interactive simulation to check the results manually.
+""" |> hint
+
 # ╔═╡ 58094d90-2c07-11eb-2987-15c068fefd8f
 almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
 
@@ -1445,8 +1453,7 @@ todo(text) = HTML("""<div
 # ╟─5fd346d0-2b4d-11eb-066b-9ba9c9d97613
 # ╟─6568b850-2b4d-11eb-02e9-696654ac2d37
 # ╟─6fc5b760-2e97-11eb-1d7f-0d666b0a41d5
-# ╠═5a755e00-2e98-11eb-0f83-997a60409484
-# ╟─2ae47330-2d15-11eb-1d2e-55343fa3b01a
+# ╟─5a755e00-2e98-11eb-0f83-997a60409484
 # ╠═5294aad0-2d15-11eb-091d-59d7517c4dc2
 # ╟─abd2475e-2d15-11eb-26dc-05253cf65232
 # ╠═bdd86250-2d15-11eb-0b62-7903ca714312
@@ -1459,6 +1466,8 @@ todo(text) = HTML("""<div
 # ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
 # ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
 # ╠═0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
+# ╠═f70f52f0-2e9a-11eb-1bab-13c3b7ad3ca4
+# ╟─590c50c0-2e9b-11eb-2bb2-cf35f65a447e
 # ╟─2495e330-2c0a-11eb-3a10-530f8b87a4eb
 # ╠═59da0470-2b8f-11eb-098c-993effcedecf
 # ╠═9f54c570-2b90-11eb-0e94-07e475a1908f
