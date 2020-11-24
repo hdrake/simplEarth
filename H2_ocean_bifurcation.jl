@@ -40,7 +40,7 @@ begin
 end
 
 # ╔═╡ 67c3dcc0-2c05-11eb-3a84-9dfea24f95a8
-md"_homework 10, version 0_"
+md"_homework 10, version 1_"
 
 # ╔═╡ 621230b0-2c05-11eb-2a98-5bd1d7be9038
 md"""
@@ -536,10 +536,10 @@ For constant ``M``, we want to verify that $\text{runtime} = \mathcal{O}(N_{x}^{
 """
 
 # ╔═╡ 126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
-# function runtime(N)
+function runtime(N)
 	
-# 	return missing
-# end
+	return missing
+end
 
 # ╔═╡ 923af680-2d0b-11eb-3f6a-db4bf29bb6a9
 md"""
@@ -548,9 +548,6 @@ md"""
 
 # ╔═╡ af02d23e-2e93-11eb-3547-85d2aa07081b
 
-
-# ╔═╡ 16905a6a-2a78-11eb-19ea-81adddc21088
-Nvec = 8:8:200
 
 # ╔═╡ a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
 md"""
@@ -839,20 +836,11 @@ md"""
 👉 Write a method `absorbed_solar_radiation` that takes a 2D array `T` with the current ocean temperatures and a `RadiationOceanModel`, and returns the tendencies corresponding to absorbed radiation. This is the analogue of `advect` and `diffuse`.
 """
 
-# ╔═╡ f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
-function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
-	absorption = 1.0 .- α(T, model)
-	
-	S = S_at.(model.grid.y; grid=model.grid, S_mean=model.params.S_mean)
-	
-	S .* absorption ./ 4 ./ model.params.C
-end
-
 # ╔═╡ f24e8570-2e6c-11eb-2c21-d319af7cba81
-# function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
+function absorbed_solar_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
 	
-# 	return missing
-# end
+	return missing
+end
 
 # ╔═╡ de7456c0-2b4b-11eb-13c8-01b196821de4
 md"""
@@ -871,9 +859,10 @@ md"""
 👉 Write a method `outgoing_termal_radiation` that takes a 2D array `T` with the current ocean temperatures and a `RadiationOceanModel`, and returns the tendencies corresponding to outgoing radiation. This is the analogue of `advect` and `diffuse`.
 """
 
-# ╔═╡ a033fa20-2b49-11eb-20e0-5dd968b0c0c6
+# ╔═╡ fc55f710-2e6c-11eb-3cea-cfc00c02fc26
 function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
-	outgoing_thermal_radiation(T; A=model.params.A, B=model.params.B, C=model.params.C)
+	
+	return missing
 end
 
 # ╔═╡ 6c20ca1e-2b48-11eb-1c3c-418118408c4c
@@ -888,12 +877,6 @@ let
 		size=(500,250)
 	)
 end
-
-# ╔═╡ fc55f710-2e6c-11eb-3cea-cfc00c02fc26
-# function outgoing_thermal_radiation(T::Array{Float64,2}, model::RadiationOceanModel)
-	
-# 	return missing
-# end
 
 # ╔═╡ fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 md"""
@@ -916,35 +899,6 @@ function timestep!(sim::ClimateModelSimulation{RadiationOceanModel})
 	sim.iteration += 1
 end
 
-# ╔═╡ 8346b590-2b41-11eb-0bc1-1ba79bb77dfb
-function runtime(N)
-	G = Grid(N, 6.e6);
-	P = OceanModelParameters(1.e4);
-
-	#u, v = DoubleGyre(G)
-	#u, v = PointVortex(G, Ω=0.5)
-	u, v = zeros(G), zeros(G)
-
-	model = OceanModel(G, P, u, v)
-
-	IC = InitBox(G)
-	#IC = InitBox(G, nx=G.Nx÷2-1)
-	#IC = linearT(G)
-
-	Δt = 6*60*60
-	S = ClimateModelSimulation(model, copy(IC), Δt)
-
-	return @elapsed timestep!(S)
-end
-
-# ╔═╡ a8136ed0-2d0e-11eb-01b3-4101bd813faf
-tvec = runtime.(Nvec)
-
-# ╔═╡ 794c2148-2a78-11eb-2756-5bd28b7726fa
-begin
-	plot(Nvec, tvec, xlabel="Number of Grid Cells (in x-direction)", ylabel="elapsed time per timestep [s]")
-end |> as_svg
-
 # ╔═╡ ad95c4e0-2b4a-11eb-3584-dda89970ffdf
 md"""
 We can now simulate our radiation ocean model, reusing much of the code from our advection-diffusion simulation.
@@ -957,8 +911,6 @@ radiation_sim = let
 	# params = RadiationOceanModelParameters(S_mean=1500, A=210, κ=2e4)
 	params = RadiationOceanModelParameters()
 	
-	#u, v = zeros(grid), zeros(grid)
-	# u, v = PointVortex(grid, Ω=0.5)
 	u, v = DoubleGyre(grid)
 	
 	T_init_value = 10
@@ -1057,40 +1009,11 @@ In this final exercise, we will generate a visualization to help us understand t
 👉 Write a function `eq_T` that takes two argments, `S` and `T_init_value`, that sets up a radiation ocean model with `S` as `S_mean`, and with `T_init_value` as the constant initial temperature. Run the model until you have reached equilibrium (approximately), and return the average temperature.
 """
 
-# ╔═╡ c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
-function eq_T(S, T_init_value)
-	G = Grid(10, 6.e6)
-	P = RadiationOceanModelParameters(κ=3e4, S_mean=S, αi=.5, A=210)
-	
-	u, v = DoubleGyre(G)
-
-	IC = constantT(G; value=T_init_value)
-	
-	model = RadiationOceanModel(G, P, u*2. ^U_ex, v*2. ^U_ex)
-	Δt = 400*60*60
-	
-	sim = ClimateModelSimulation(model, copy(IC), Δt)
-	
-	while (
-			abs(
-				mean(absorbed_solar_radiation(sim.T, sim.model)) * sim.model.params.C - 
-				mean(outgoing_thermal_radiation(sim.T, sim.model)) * sim.model.params.C
-			) > 8.0 || sim.iteration < 1_000) && (
-			sim.iteration < 6_000
-			)
-		for i in 1:500
-			timestep!(sim)
-		end
-	end
-	
-	mean(sim.T)
-end
-
 # ╔═╡ 0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
-# function eq_T(S, T_init_value)
+function eq_T(S, T_init_value)
 	
-# 	return missing
-# end
+	return missing
+end
 
 # ╔═╡ f70f52f0-2e9a-11eb-1bab-13c3b7ad3ca4
 md"""
@@ -1113,28 +1036,14 @@ md"""
 """
 
 # ╔═╡ 59da0470-2b8f-11eb-098c-993effcedecf
-# bifurcation_ST = [(S,T) for S in 1350:10:1600 for T in [-50, 0, 50]]
-
+# you can change me!
 bifurcation_ST = [(S,T) for S in [1000, 1380, 2000] for T in [-50, 0, 50]]
-# bifurcation_ST = [(S,T) for S in 1180:100:1680 for T in [-50, 0, 50]]
 
-# ╔═╡ 9f54c570-2b90-11eb-0e94-07e475a1908f
-# TODO: DELETE ME
+# ╔═╡ 9eacf3d0-2e9d-11eb-3c19-1dcfadccf18d
 
-bifurcation_result = ThreadsX.map(bifurcation_ST) do p
-	eq_T(p...)
-end
 
-# ╔═╡ b0db7730-2b90-11eb-126b-33b04be4d686
-# TODO: DELETE ME
+# ╔═╡ 9e653c70-2e9d-11eb-0af5-25dc140d5824
 
-scatter(
-	first.(bifurcation_ST), bifurcation_result,
-	label=nothing,
-	xlabel="Solar insolation",
-	ylabel="Equilibrium temperature",
-	color=:black,
-	) |> as_svg
 
 # ╔═╡ 92ae22de-2d88-11eb-1d03-2977c539ba23
 md"""
@@ -1401,13 +1310,9 @@ todo(text) = HTML("""<div
 # ╟─014495d6-2cda-11eb-05d7-91e5a467647e
 # ╟─d6a56496-2cda-11eb-3d54-d7141a49a446
 # ╠═126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
-# ╠═8346b590-2b41-11eb-0bc1-1ba79bb77dfb
 # ╟─171c6880-2d0b-11eb-0180-454f2876cf51
 # ╟─923af680-2d0b-11eb-3f6a-db4bf29bb6a9
 # ╠═af02d23e-2e93-11eb-3547-85d2aa07081b
-# ╠═16905a6a-2a78-11eb-19ea-81adddc21088
-# ╠═a8136ed0-2d0e-11eb-01b3-4101bd813faf
-# ╠═794c2148-2a78-11eb-2756-5bd28b7726fa
 # ╟─a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
 # ╠═87de1c70-2d0c-11eb-2c22-f76eeca58f33
 # ╟─87e59680-2d0c-11eb-03c7-1d845ca6a1a5
@@ -1437,13 +1342,11 @@ todo(text) = HTML("""<div
 # ╟─71f531ae-2dbf-11eb-1d0c-0758eb89bf1d
 # ╟─0de643d0-2dbf-11eb-3a4c-538c176923f4
 # ╟─86a004ce-2dd5-11eb-1dca-5702d793ef39
-# ╠═f2e2f820-2b49-11eb-1c6c-19ae8157b2b9
 # ╠═f24e8570-2e6c-11eb-2c21-d319af7cba81
 # ╟─de7456c0-2b4b-11eb-13c8-01b196821de4
 # ╠═6745f610-2b48-11eb-2f6c-79e0009dc9c3
 # ╟─6c20ca1e-2b48-11eb-1c3c-418118408c4c
 # ╟─2274f6b0-2dc5-11eb-10a1-e980bd461ea0
-# ╠═a033fa20-2b49-11eb-20e0-5dd968b0c0c6
 # ╠═fc55f710-2e6c-11eb-3cea-cfc00c02fc26
 # ╟─fe492480-2b4b-11eb-050e-9b9b2e2bf50f
 # ╠═068795ee-2b4c-11eb-3e58-353eb8978c1c
@@ -1462,16 +1365,15 @@ todo(text) = HTML("""<div
 # ╟─c40b7360-2d15-11eb-0558-d95d615f9b9b
 # ╠═02767460-2d16-11eb-2074-07657f84e22d
 # ╟─127bcb0e-2c0a-11eb-23df-a75767910fcb
-# ╠═c40870d0-2b8e-11eb-0fa6-d7fcb1c6611b
-# ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
 # ╠═0d197fe0-2e6d-11eb-2346-2daf4e80a9a7
+# ╟─ec39a792-2bf7-11eb-11e5-515b39f1adf6
 # ╟─f70f52f0-2e9a-11eb-1bab-13c3b7ad3ca4
 # ╠═59ecd040-2e9c-11eb-05e3-0bc96e9cddec
 # ╟─590c50c0-2e9b-11eb-2bb2-cf35f65a447e
 # ╟─2495e330-2c0a-11eb-3a10-530f8b87a4eb
 # ╠═59da0470-2b8f-11eb-098c-993effcedecf
-# ╠═9f54c570-2b90-11eb-0e94-07e475a1908f
-# ╠═b0db7730-2b90-11eb-126b-33b04be4d686
+# ╠═9eacf3d0-2e9d-11eb-3c19-1dcfadccf18d
+# ╠═9e653c70-2e9d-11eb-0af5-25dc140d5824
 # ╟─92ae22de-2d88-11eb-1d03-2977c539ba23
 # ╠═547d92d0-2d88-11eb-18b5-0fc468ae0026
 # ╠═60bbba90-2d88-11eb-1616-87d6e15c0795
