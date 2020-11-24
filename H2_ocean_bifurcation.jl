@@ -1143,7 +1143,8 @@ _(MIT students only)_
 Please see the link for the transcript document on [Canvas](https://canvas.mit.edu/courses/5637).
 We want each of you to correct about 500 lines, but don’t spend more than 20 minutes on it.
 See the the beginning of the document for more instructions.
-:point_right: Please mention the name of the video(s) and the line ranges you edited:
+
+👉 Please mention the name of the video(s) and the line ranges you edited:
 """
 
 # ╔═╡ 57c0d2e0-2c07-11eb-1091-15fec09c4e8b
